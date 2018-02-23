@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	NAME = "logstore"
+	Name = "logstore"
 )
 
 func main() {
 	app := cli.NewApp()
-	app.Name = NAME
+	app.Name = Name
 	app.Commands = []cli.Command{
 		{
 			Name:        "receiver",
