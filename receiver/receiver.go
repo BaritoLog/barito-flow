@@ -6,30 +6,33 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/urfave/cli"
 )
 
-const (
-	Version = "0.1"
-)
-
-func Start(c *cli.Context) (err error) {
-	fmt.Printf("Reciever v%s\n", Version)
-
-	r := mux.NewRouter()
-	r.HandleFunc("/", handler).Methods("POST")
-
-	err = http.ListenAndServe(":8080", r)
-	return
+type Receiver interface {
+	Start() (err error)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+type LogstoreReceiver struct {
+}
 
-	if err != nil {
-		http.Error(w, "Body is nil", http.StatusUnprocessableEntity)
-		return
-	}
+func NewLogstoreReceiver() (receiver *LogstoreReceiver) {
+	return &LogstoreReceiver{}
+}
 
-	fmt.Printf("%s", string(body))
+func (r LogstoreReceiver) Start() (err error) {
+
+	router := mux.NewRouter()
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(w, "Body is nil", http.StatusUnprocessableEntity)
+			return
+		}
+
+		fmt.Printf("%s", string(body))
+	}).Methods("POST")
+
+	err = http.ListenAndServe(":8080", router)
+	return
 }
