@@ -10,17 +10,18 @@ import (
 )
 
 const (
-	Name    = "logstore"
+	Name    = "barito"
 	Version = "0.1.0"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = Name
+	app.Usage = "Barito Raftman Cli"
 	app.Version = Version
 	app.Commands = []cli.Command{
-		{Name: "receiver", Description: "Start Receiver", Aliases: []string{"r"}, Action: startReceiver},
-		{Name: "forwarder", Description: "Start Forwarder", Aliases: []string{"f"}, Action: startForwarder},
+		{Name: "receiver", Usage: "Start Receiver", Aliases: []string{"r"}, Action: startReceiver},
+		{Name: "forwarder", Usage: "Start Forwarder", Aliases: []string{"f"}, Action: startForwarder},
 	}
 
 	err := app.Run(os.Args)
@@ -30,9 +31,11 @@ func main() {
 }
 
 func startReceiver(c *cli.Context) (err error) {
-	fmt.Println("Receiver - Under Construction")
+	fmt.Println("Receiver")
 
-	lsReceiver := receiver.NewLogstoreReceiver()
+	addr := ":8080"
+
+	lsReceiver := receiver.NewLogstoreReceiver(addr)
 	err = lsReceiver.Start()
 
 	return

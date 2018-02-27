@@ -6,33 +6,46 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/imantung/go-boilerplate/http/heartbeat"
 )
 
+// interface of receiver
 type Receiver interface {
 	Start() (err error)
 }
 
-type LogstoreReceiver struct {
+// receiver implementation
+type receiver struct {
+	addr string
 }
 
-func NewLogstoreReceiver() (receiver *LogstoreReceiver) {
-	return &LogstoreReceiver{}
+// NewLogstoreReceiver
+func NewLogstoreReceiver(addr string) Receiver {
+	return &receiver{
+		addr: addr,
+	}
 }
 
-func (r LogstoreReceiver) Start() (err error) {
+// Start
+func (r receiver) Start() (err error) {
 
 	router := mux.NewRouter()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+	router.HandleFunc("/produce", r.ProduceHandler).Methods("POST")
+	router.HandleFunc("/check-health", heartbeat.Handler)
 
-		if err != nil {
-			http.Error(w, "Body is nil", http.StatusUnprocessableEntity)
-			return
-		}
-
-		fmt.Printf("%s", string(body))
-	}).Methods("POST")
-
-	err = http.ListenAndServe(":8080", router)
+	err = http.ListenAndServe(r.addr, router)
 	return
+}
+
+// ProducerHandler
+func (r receiver) ProduceHandler(respWriter http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+
+	if err != nil {
+		http.Error(respWriter, "Body is nil", http.StatusUnprocessableEntity)
+		return
+	}
+
+	fmt.Printf("%s", string(body))
+
 }
