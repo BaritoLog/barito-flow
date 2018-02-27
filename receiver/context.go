@@ -50,7 +50,6 @@ func (c *context) router() (router *mux.Router) {
 	return
 }
 
-// ProducerHandler
 func (c *context) produceHandler(writer http.ResponseWriter, req *http.Request) {
 	// body, _ := ioutil.ReadAll(req.Body)
 	// TODO: parsing url to get group_id/store_id/service_id
