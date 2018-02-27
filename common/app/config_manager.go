@@ -2,7 +2,6 @@ package app
 
 // Configuration
 type Configuration interface {
-	Version() string
 }
 
 // ConfigurationManager
