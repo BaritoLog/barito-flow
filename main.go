@@ -17,11 +17,11 @@ const (
 func main() {
 	app := cli.NewApp()
 	app.Name = Name
-	app.Usage = "Barito Raftman Cli"
+	app.Usage = "Provide kafka reciever and log forwarder for Barito project"
 	app.Version = Version
 	app.Commands = []cli.Command{
-		{Name: "receiver", Usage: "Start Receiver", Aliases: []string{"r"}, Action: startReceiver},
-		{Name: "forwarder", Usage: "Start Forwarder", Aliases: []string{"f"}, Action: startForwarder},
+		{Name: "receiver", Usage: "Kafka Receiver", Aliases: []string{"r"}, Action: startReceiver},
+		{Name: "forwarder", Usage: "Log Forwarder", Aliases: []string{"f"}, Action: startForwarder},
 	}
 
 	err := app.Run(os.Args)
