@@ -51,8 +51,9 @@ func (c *context) Configuration() Configuration {
 }
 
 // ProducerHandler
-func (c *context) ProduceHandler(respWriter http.ResponseWriter, req *http.Request) {
+func (c *context) ProduceHandler(writer http.ResponseWriter, req *http.Request) {
 	// body, _ := ioutil.ReadAll(req.Body)
 	// TODO: parsing url to get group_id/store_id/service_id
 
+	writer.WriteHeader(http.StatusOK)
 }

@@ -24,7 +24,7 @@ func TestContext_Init(t *testing.T) {
 
 }
 
-func TextContext_ProduceHandler(t *testing.T) {
+func TestContext_ProduceHandler(t *testing.T) {
 	ctx := context{}
 
 	// submit to /produce
