@@ -2,7 +2,6 @@ package app
 
 // Configuration
 type Configuration interface {
-	Get(key string) string
 	Version() string
 }
 
