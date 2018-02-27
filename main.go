@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"logstore/common/app"
 	"logstore/receiver"
 	"os"
 
@@ -31,13 +32,12 @@ func main() {
 }
 
 func startReceiver(c *cli.Context) (err error) {
-	fmt.Println("Receiver")
+	runner := app.NewRunner(
+		receiver.NewContext(),
+		receiver.NewConfigurationManager(),
+	)
 
-	addr := ":8080"
-
-	lsReceiver := receiver.NewLogstoreReceiver(addr)
-	err = lsReceiver.Start()
-
+	err = runner.Run()
 	return
 }
 
