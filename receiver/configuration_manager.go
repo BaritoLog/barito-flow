@@ -1,6 +1,6 @@
 package receiver
 
-import "logstore/common/app"
+import "barito-agent/common/app"
 
 // ConfigurationManager
 type ConfigurationManager interface {

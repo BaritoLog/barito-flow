@@ -1,7 +1,7 @@
 package receiver
 
 import (
-	"logstore/common/app"
+	"barito-agent/common/app"
 	"net/http"
 
 	"github.com/gorilla/mux"

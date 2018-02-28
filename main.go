@@ -1,24 +1,24 @@
 package main
 
 import (
+	"barito-agent/common/app"
+	"barito-agent/receiver"
 	"fmt"
 	"log"
-	"logstore/common/app"
-	"logstore/receiver"
 	"os"
 
 	"github.com/urfave/cli"
 )
 
 const (
-	Name    = "barito"
+	Name    = "barito-agent"
 	Version = "0.1.0"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = Name
-	app.Usage = "Provide kafka reciever and log forwarder for Barito project"
+	app.Usage = "Provide kafka reciever or log forwarder for Barito project"
 	app.Version = Version
 	app.Commands = []cli.Command{
 		{Name: "receiver", Usage: "Kafka Receiver", Aliases: []string{"r"}, Action: startReceiver},
