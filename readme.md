@@ -1,8 +1,8 @@
-### Barito Agent
+# Barito Agent
 
 Provide kafka reciever or log forwarder for Barito project
 
-### Setup Development
+## Setup Development
 
 ```sh
 cd $GOPATH/src
@@ -12,7 +12,7 @@ cd barito-agent
 go build
 ```
 
-### Receiver
+## Receiver
 
 Responsible to:
 - expose a produce URL to receive log message
@@ -29,7 +29,7 @@ Run
 ```
 
 
-### Forwarder
+## Forwarder
 
 Responsible to:
 - consume log message from kafka
