@@ -1,6 +1,6 @@
-# Barito Agent
+# Barito Flow
 
-Provide kafka reciever or log forwarder for Barito project
+Building flow of Barito river with provide kafka reciever or log forwarder 
 
 ## Setup Development
 
