@@ -57,7 +57,7 @@ func TestContext_ProduceHandler(t *testing.T) {
 	// submit to /produce
 	req, _ := http.NewRequest(
 		"POST",
-		"/produce",
+		"/str/18/st/1/fw/1/cl/10/produce/kafka-dummy-topic",
 		strings.NewReader("expected body"),
 	)
 	rec := httptest.NewRecorder()

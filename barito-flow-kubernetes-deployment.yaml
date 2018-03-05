@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: barito-flow
+spec:
+  selector:
+    matchLabels:
+      run: barito-flow
+  template:
+    metadata:
+      labels:
+        run: barito-flow
+    spec:
+      hostname: barito-flow
+      containers:
+      - name: barito-flow
+        image: barito-flow:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080

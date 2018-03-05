@@ -45,3 +45,12 @@ Run
 # or
 ./barito-agent f
 ```
+---
+## Kubernetes
+
+`$ docker build -t barito-flow:latest .`
+`$ kubectl apply -f barito-flow-kubernetes-deployment.yaml`
+`$ kubectl apply -f barito-flow-kubernetes-service.yaml`
+---
+
+Note: You can run `deploy.sh` to automate above steps

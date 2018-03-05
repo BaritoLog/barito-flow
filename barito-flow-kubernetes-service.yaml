@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: barito-flow
+  labels:
+    run: barito-flow
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+  selector:
+    run: barito-flow
