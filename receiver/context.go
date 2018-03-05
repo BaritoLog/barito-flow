@@ -1,12 +1,12 @@
 package receiver
 
 import (
-	"barito-agent/common/app"
 	"net/http"
 
+	"github.com/BaritoLog/go-boilerplate/app"
+	"github.com/BaritoLog/go-boilerplate/httpkit"
+	"github.com/BaritoLog/go-boilerplate/httpkit/heartbeat"
 	"github.com/gorilla/mux"
-	"github.com/imantung/go-boilerplate/httpkit"
-	"github.com/imantung/go-boilerplate/httpkit/heartbeat"
 )
 
 // Context of receiver part

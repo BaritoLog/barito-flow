@@ -1,12 +1,12 @@
 package main
 
 import (
-	"barito-agent/common/app"
-	"barito-agent/receiver"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/BaritoLog/barito-flow/receiver"
+	"github.com/BaritoLog/go-boilerplate/app"
 	"github.com/urfave/cli"
 )
 

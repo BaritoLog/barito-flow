@@ -1,6 +1,6 @@
 package receiver
 
-import "barito-agent/common/app"
+import "github.com/BaritoLog/go-boilerplate/app"
 
 // ConfigurationManager
 type ConfigurationManager interface {

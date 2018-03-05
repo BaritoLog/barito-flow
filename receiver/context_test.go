@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/imantung/go-boilerplate/errkit"
-	"github.com/imantung/go-boilerplate/httpkit"
-	"github.com/imantung/go-boilerplate/testkit"
+	"github.com/BaritoLog/go-boilerplate/errkit"
+	"github.com/BaritoLog/go-boilerplate/httpkit"
+	"github.com/BaritoLog/go-boilerplate/testkit"
 )
 
 func TestNewContext(t *testing.T) {
@@ -35,7 +35,7 @@ func TestContext_Init(t *testing.T) {
 
 	testkit.FatalIf(
 		t,
-		server.Handler != nil,
+		server.Handler == nil,
 		"Handler should be initiate",
 	)
 }

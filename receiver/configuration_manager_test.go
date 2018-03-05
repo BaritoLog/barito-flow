@@ -3,7 +3,7 @@ package receiver
 import (
 	"testing"
 
-	"github.com/imantung/go-boilerplate/testkit"
+	"github.com/BaritoLog/go-boilerplate/testkit"
 )
 
 func TestConfigurationManager_Retrieve(t *testing.T) {
