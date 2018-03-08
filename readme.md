@@ -6,9 +6,9 @@ Building flow of Barito river with provide kafka reciever or log forwarder
 
 ```sh
 cd $GOPATH/src
-git clone git@source.golabs.io:infrastructure/barito/barito-agent.git 
+git clone git@github.com:BaritoLog/barito-flow.git 
 
-cd barito-agent
+cd barito-flow
 go build
 ```
 
