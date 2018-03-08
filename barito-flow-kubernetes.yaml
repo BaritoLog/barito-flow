@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: barito-flow
+spec:
+  selector:
+    matchLabels:
+      run: barito-flow
+  template:
+    metadata:
+      labels:
+        run: barito-flow
+    spec:
+      hostname: barito-flow
+      containers:
+      - name: barito-flow
+        image: barito-flow:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: barito-flow
+  labels:
+    run: barito-flow
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+  selector:
+    run: barito-flow
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ext-kafka
+  namespace: default
+spec:
+  clusterIP: None
+  ports:
+  - port: 2181
+    name: zk
+    protocol: TCP
+    targetPort: 2181
+  - port: 9092
+    name: kafka
+    protocol: TCP
+    targetPort: 9092
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: ext-kafka
+  namespace: default
+subsets:
+- addresses:
+  # Change this to your zookeepr & kafka host
+  - ip: 192.168.99.1
+  ports:
+  - port: 2181
+    name: zk
+  - port: 9092
+    name: kafka

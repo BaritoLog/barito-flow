@@ -1,7 +1,15 @@
 #!/bin/sh
 
-docker build -t barito-flow:latest .
+ENV=$1
+if [ "${ENV}" = "development" ]
+then
+    GOOS=linux GOARCH=amd64 go build
+    docker build -t barito-flow:latest -f Dockerfile.development .
+else
+    docker build -t barito-flow:latest .
+fi
+
 kubectl delete deployment barito-flow
 kubectl delete service barito-flow
-kubectl apply -f barito-flow-kubernetes-deployment.yaml
-kubectl apply -f barito-flow-kubernetes-service.yaml
+kubectl delete service ext-kafka
+kubectl apply -f barito-flow-kubernetes.yaml

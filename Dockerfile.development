@@ -1,0 +1,7 @@
+FROM golang
+
+COPY barito-flow /go/bin
+COPY entrypoint.sh /go
+EXPOSE 8080
+
+CMD ["/go/entrypoint.sh"]

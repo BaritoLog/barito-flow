@@ -23,7 +23,7 @@ func TestNewContext(t *testing.T) {
 func TestContext_Init(t *testing.T) {
 	ctx := context{}
 
-	err := ctx.Init(Configuration{addr: ":8888"})
+	err := ctx.Init(Configuration{addr: ":8888", kafkaBrokers: "localhost:9092"})
 	testkit.FatalIfError(t, err)
 
 	server := ctx.server.(*http.Server)

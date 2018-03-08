@@ -46,12 +46,19 @@ Run
 ./barito-agent f
 ```
 
+## Kafka
+
+Make sure you have run zookeeper & kafka-server, and change `kafkaBrokers` in `receiver/configuration.go` with your brokers list. 
+
+
 ## Kubernetes
 
 ```sh
 $ docker build -t barito-flow:latest .
-$ kubectl apply -f barito-flow-kubernetes-deployment.yaml
-$ kubectl apply -f barito-flow-kubernetes-service.yaml
+$ kubectl apply -f barito-flow-kubernetes.yaml
 ```
 
-Note: You can run `deploy.sh` to automate above steps
+Note: You can run `deploy.sh` to automate above steps. 
+Usage : 
+* `$ deploy.sh development` to build docker from local files
+* `$ deploy.sh` to build docker from docker hub
