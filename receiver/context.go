@@ -4,16 +4,15 @@ import (
 	"net/http"
 	"strings"
 
-	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
 
 	"github.com/BaritoLog/go-boilerplate/app"
 	"github.com/BaritoLog/go-boilerplate/httpkit"
 	"github.com/BaritoLog/go-boilerplate/httpkit/heartbeat"
 	"github.com/Shopify/sarama"
 	"github.com/gorilla/mux"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Context of receiver part
@@ -37,14 +36,16 @@ func NewContext() Context {
 func (c *context) Init(config app.Configuration) (err error) {
 
 	conf := config.(Configuration)
-	fmt.Printf("init context\n%+v\n", conf)
+	log.Infof("Initiate receiver context: %+v\n", conf)
 
+	log.Infof("Prepare kafka producer")
 	brokers := strings.Split(conf.kafkaBrokers, ",")
 	c.producer, err = sarama.NewSyncProducer(brokers, c.kafkaConfig())
 	if err != nil {
 		return
 	}
 
+	log.Infof("Prepare HTTP Server")
 	c.server = &http.Server{
 		Addr:    conf.addr,
 		Handler: c.router(),
@@ -61,7 +62,10 @@ func (c *context) Run() (err error) {
 
 func (c *context) router() (router *mux.Router) {
 	router = mux.NewRouter()
-	router.HandleFunc("/str/{stream_id}/st/{store_id}/fw/{forwarder_id}/cl/{client_id}/produce/{topic}", c.produceHandler).Methods("POST")
+	router.HandleFunc(
+		"/str/{stream_id}/st/{store_id}/fw/{forwarder_id}/cl/{client_id}/produce/{topic}",
+		c.produceHandler,
+	).Methods("POST")
 	router.HandleFunc("/check-health", heartbeat.Handler)
 
 	return
@@ -87,18 +91,16 @@ func (c *context) produceHandler(writer http.ResponseWriter, req *http.Request) 
 	body, _ := ioutil.ReadAll(req.Body)
 
 	message := string(body)
-	l := log.New(os.Stdout, "BARITO-RECEIVER : ", 0)
 
 	err := c.ProduceMessage(topic, message)
 
 	if err != nil {
-		l.Printf("Failed to produce:, %s", err)
+		log.Errorf("Failed to produce:, %s", err)
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
-	} else {
-		l.Printf("Produce to kafka with topic %s", topic)
-		writer.WriteHeader(http.StatusOK)
 	}
+
+	writer.WriteHeader(http.StatusOK)
 
 }
 

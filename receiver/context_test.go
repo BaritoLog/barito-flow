@@ -13,7 +13,13 @@ import (
 	"github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
+
+	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+	log.SetLevel(log.FatalLevel)
+}
 
 func TestNewContext(t *testing.T) {
 	ctx := NewContext()
