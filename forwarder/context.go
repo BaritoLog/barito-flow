@@ -4,10 +4,9 @@ import (
 	"strings"
 
 	"fmt"
-	"log"
-	"os"
 	"github.com/BaritoLog/go-boilerplate/app"
 	"github.com/bsm/sarama-cluster"
+	log "github.com/sirupsen/logrus"
 )
 
 // Context of forwarder part
@@ -54,13 +53,13 @@ func (c *context) Consume() (err error) {
 
 	go func() {
 		for err := range consumer.Errors() {
-			log.Printf("Error: %s\n", err.Error())
+			log.Fatalf("Error: %s\n", err.Error())
 		}
 	}()
 
 	go func() {
 		for ntf := range consumer.Notifications() {
-			log.Printf("Rebalanced: %+v\n", ntf)
+			log.Infof("Rebalanced: %+v\n", ntf)
 		}
 	}()
 
@@ -68,7 +67,7 @@ func (c *context) Consume() (err error) {
 		select {
 		case msg, ok := <-consumer.Messages():
 			if ok {
-				fmt.Fprintf(os.Stdout, "%s/%d/%d\t%s\t%s\n", msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
+				log.Infof("%s/%d/%d\t%s\t%s\n", msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
 				consumer.MarkOffset(msg, "") // mark message as processed
 			}
 		}

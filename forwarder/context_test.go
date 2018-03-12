@@ -4,7 +4,13 @@ import (
 	"testing"
 
 	"github.com/BaritoLog/go-boilerplate/testkit"
+	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+	log.SetLevel(log.FatalLevel)
+}
+
 
 func TestNewContext(t *testing.T) {
 	ctx := NewContext()
