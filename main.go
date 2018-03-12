@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/BaritoLog/barito-flow/receiver"
+	"github.com/BaritoLog/barito-flow/forwarder"
 	"github.com/BaritoLog/go-boilerplate/app"
 	"github.com/urfave/cli"
 )
@@ -42,7 +43,12 @@ func startReceiver(c *cli.Context) (err error) {
 }
 
 func startForwarder(c *cli.Context) (err error) {
-	fmt.Println("Forwarder - Under Construction")
+	runner := app.NewRunner(
+		forwarder.NewContext(),
+		forwarder.NewConfigurationManager(),
+	)
+
+	err = runner.Run()
 
 	return
 }

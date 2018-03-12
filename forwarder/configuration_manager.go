@@ -1,4 +1,4 @@
-package receiver
+package forwarder
 
 import "github.com/BaritoLog/go-boilerplate/app"
 
@@ -19,6 +19,8 @@ func (m configurationManager) Retrieve() (config app.Configuration, err error) {
 	config = Configuration{
 		addr: ":8080",
 		kafkaBrokers: "localhost:9092",
+		kafkaConsumerGroupId: "barito-consumer",
+		kafkaConsumerTopic: "kafka-dummy-topic",
 	}
 	return
 }
