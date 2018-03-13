@@ -21,6 +21,8 @@ func (m configurationManager) Retrieve() (config app.Configuration, err error) {
 		kafkaBrokers: "localhost:9092",
 		kafkaConsumerGroupId: "barito-consumer",
 		kafkaConsumerTopic: "kafka-dummy-topic",
+		elasticsearchUrls: "http://localhost:9200",
+		elasticsearchIndexPrefix: "baritolog",
 	}
 	return
 }

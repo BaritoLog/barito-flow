@@ -50,6 +50,9 @@ Run
 
 Make sure you have run zookeeper & kafka-server, and change `kafkaBrokers` in `receiver/configuration.go` with your brokers list. 
 
+## Elasticsearch
+
+Make sure you have Elasticsearch 6.x installed and running, and change `elasticsearchUrls` & `elasticsearchIndexPrefix` in `forwarder/configuration.go` with your settings.
 
 ## Kubernetes
 

@@ -5,4 +5,6 @@ type Configuration struct {
 	kafkaBrokers string
 	kafkaConsumerGroupId string
 	kafkaConsumerTopic string
+	elasticsearchUrls string
+	elasticsearchIndexPrefix string
 }
