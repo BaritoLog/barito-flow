@@ -18,9 +18,9 @@ func TestRaft(t *testing.T) {
 	to := NewConsoleDownstream(buff)
 
 	raft := NewRaft(from, to)
-	go raft.Start()
+	raft.Start()
 
-	wait, _ := time.ParseDuration("1s")
+	wait, _ := time.ParseDuration("1ms")
 	time.Sleep(wait)
 
 	FatalIf(t, buff.String() != "some input\n", "wrong input")
@@ -35,7 +35,12 @@ func TestRaft_Drifting_ErrorWhenStore(t *testing.T) {
 	}
 
 	raft := NewRaft(from, to)
-	err := raft.Start()
+	raft.Start()
+
+	wait, _ := time.ParseDuration("1ms")
+	time.Sleep(wait)
+
+	err := <-raft.ErrorChannel()
 	FatalIfWrongError(t, err, "some error")
 
 }

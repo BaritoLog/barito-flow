@@ -77,7 +77,7 @@ func start(c *cli.Context) (err error) {
 	to := common.NewConsoleDownstream(os.Stdout)
 
 	raft := common.NewRaft(from, to)
-	err = raft.Start()
+	raft.Start()
 
 	return
 
