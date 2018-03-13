@@ -17,7 +17,7 @@ type consoleUpstream struct {
 func (u *consoleUpstream) StartTransport() {
 	for {
 		text, _ := u.reader.ReadString('\n')
-		u.timberCh <- Timber(text)
+		u.timberCh <- Timber{Data: []byte(text)}
 		time.Sleep(u.interval)
 	}
 }

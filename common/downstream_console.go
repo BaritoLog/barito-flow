@@ -12,6 +12,6 @@ type consoleDownstream struct {
 
 // Store
 func (d consoleDownstream) Store(timber Timber) (err error) {
-	fmt.Fprintf(d.writer, "%s", timber)
+	fmt.Fprintf(d.writer, "%s", timber.Data)
 	return
 }
