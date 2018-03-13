@@ -1,14 +1,14 @@
 package common
 
-import "io"
-
 // Downstream
 type Downstream interface {
 	Store(timber Timber) error
 }
 
-func NewConsoleDownstream(writer io.Writer) Downstream {
-	return &consoleDownstream{
-		writer: writer,
-	}
+type DummyDownstream struct {
+	ErrStore error
+}
+
+func (d *DummyDownstream) Store(timber Timber) (err error) {
+	return d.ErrStore
 }
