@@ -21,6 +21,7 @@ type raft struct {
 
 // Drifting
 func (r *raft) Start() {
+	r.from.SetErrorChannel(r.errCh)
 
 	go r.from.StartTransport()
 	go r.start()

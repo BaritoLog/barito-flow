@@ -9,14 +9,15 @@ import (
 // Upstream
 type Upstream interface {
 	StartTransport()
-	TimberChannel() (timberChannel chan Timber)
+	TimberChannel() (timberCh chan Timber)
+	SetErrorChannel(errCh chan error)
 }
 
 func NewConsoleUpstream(reader io.Reader) Upstream {
 	interval, _ := time.ParseDuration("100ms")
 	return &consoleUpstream{
-		reader:        bufio.NewReader(reader),
-		timberChannel: make(chan Timber),
-		interval:      interval,
+		reader:   bufio.NewReader(reader),
+		timberCh: make(chan Timber),
+		interval: interval,
 	}
 }
