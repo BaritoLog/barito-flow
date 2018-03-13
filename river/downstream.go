@@ -1,4 +1,4 @@
-package common
+package river
 
 // Downstream
 type Downstream interface {

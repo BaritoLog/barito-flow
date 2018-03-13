@@ -1,4 +1,4 @@
-package common
+package river
 
 type Timber struct {
 	Location string

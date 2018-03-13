@@ -1,4 +1,4 @@
-package common
+package river
 
 type Raft interface {
 	Start()
