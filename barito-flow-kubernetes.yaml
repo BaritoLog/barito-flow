@@ -14,7 +14,7 @@ spec:
       hostname: barito-flow
       containers:
       - name: barito-flow
-        image: barito-flow:latest
+        image: barito-flow:0.0.1
         imagePullPolicy: Never
         ports:
         - containerPort: 8080

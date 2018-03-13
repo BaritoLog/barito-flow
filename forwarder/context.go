@@ -139,6 +139,9 @@ func (c *context) kafkaConfig() (config *cluster.Config) {
 func (c *context) Stream(message []byte) (err error) {
 	var f,g interface{}
 	err = json.Unmarshal(message, &f)
+	if err != nil {
+		return
+	}
 	m := f.(map[string]interface{})
 
 	indexName := fmt.Sprintf("%s-%s", c.configuration.elasticsearchIndexPrefix,time.Now().Format("2006.01.02"))
