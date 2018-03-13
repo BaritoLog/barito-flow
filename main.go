@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/BaritoLog/barito-flow/common"
+	"github.com/BaritoLog/barito-flow/cmds"
 	"github.com/BaritoLog/barito-flow/forwarder"
 	"github.com/BaritoLog/barito-flow/receiver"
 	"github.com/BaritoLog/go-boilerplate/app"
@@ -39,7 +39,7 @@ func main() {
 				Name:      "start",
 				ShortName: "s",
 				Usage:     "start barito flow",
-				Action:    start,
+				Action:    cmds.Start,
 			},
 		},
 	}
@@ -69,16 +69,4 @@ func startForwarder(c *cli.Context) (err error) {
 	err = runner.Run()
 
 	return
-}
-
-func start(c *cli.Context) (err error) {
-
-	from := common.NewConsoleUpstream(os.Stdin)
-	to := common.NewConsoleDownstream(os.Stdout)
-
-	raft := common.NewRaft(from, to)
-	raft.Start()
-
-	return
-
 }
