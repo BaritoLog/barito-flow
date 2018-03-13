@@ -16,13 +16,11 @@ type consoleUpstream struct {
 func (u *consoleUpstream) StartTransport() {
 
 	for {
-
 		text, _ := u.reader.ReadString('\n')
 		u.timberChannel <- Timber(text)
 		time.Sleep(u.interval)
 	}
 
-	return
 }
 
 // Flow
