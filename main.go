@@ -5,8 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/BaritoLog/barito-flow/receiver"
+	"github.com/BaritoLog/barito-flow/common"
 	"github.com/BaritoLog/barito-flow/forwarder"
+	"github.com/BaritoLog/barito-flow/receiver"
 	"github.com/BaritoLog/go-boilerplate/app"
 	"github.com/urfave/cli"
 )
@@ -17,13 +18,30 @@ const (
 )
 
 func main() {
-	app := cli.NewApp()
-	app.Name = Name
-	app.Usage = "Provide kafka reciever or log forwarder for Barito project"
-	app.Version = Version
-	app.Commands = []cli.Command{
-		{Name: "receiver", Usage: "Kafka Receiver", Aliases: []string{"r"}, Action: startReceiver},
-		{Name: "forwarder", Usage: "Log Forwarder", Aliases: []string{"f"}, Action: startForwarder},
+	app := cli.App{
+		Name:    Name,
+		Usage:   "Provide kafka reciever or log forwarder for Barito project",
+		Version: Version,
+		Commands: []cli.Command{
+			{
+				Name:      "receiver",
+				ShortName: "r",
+				Usage:     "Kafka Receiver",
+				Action:    startReceiver,
+			},
+			{
+				Name:      "forwarder",
+				ShortName: "f",
+				Usage:     "Log Forwarder",
+				Action:    startForwarder,
+			},
+			{
+				Name:      "start",
+				ShortName: "s",
+				Usage:     "start barito flow",
+				Action:    start,
+			},
+		},
 	}
 
 	err := app.Run(os.Args)
@@ -51,4 +69,16 @@ func startForwarder(c *cli.Context) (err error) {
 	err = runner.Run()
 
 	return
+}
+
+func start(c *cli.Context) (err error) {
+
+	from := common.NewConsoleUpstream(os.Stdin)
+	to := common.NewConsoleDownstream(os.Stdout)
+
+	raft := common.NewRaft(from, to)
+	err = raft.Start()
+
+	return
+
 }
