@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/BaritoLog/barito-flow/river"
@@ -13,18 +14,27 @@ type StartConfig struct {
 	DownstreamConfig interface{} `json:"downstream_config"`
 }
 
-func (c StartConfig) Upstream() river.Upstream {
+func (c StartConfig) Upstream() (upstream river.Upstream, err error) {
 	switch c.UpstreamName {
 	case "stdin":
-		return river.NewConsoleUpstream(os.Stdin)
+		upstream = river.NewConsoleUpstream(os.Stdin)
+		return
 	}
-	return nil
+
+	err = fmt.Errorf(c.UpstreamName)
+	return
 }
 
-func (c StartConfig) Downstream() river.Downstream {
+func (c StartConfig) Downstream() (downstream river.Downstream, err error) {
 	switch c.DownstreamName {
 	case "stdout":
-		return river.NewConsoleDownstream(os.Stdout)
+		downstream = river.NewConsoleDownstream(os.Stdout)
+		return
+	case "kafka":
+		downstream, err = river.NewKafkaDownstream(c.DownstreamConfig)
+		return
 	}
-	return nil
+
+	err = fmt.Errorf("can't find downstream with name '%s'", c.DownstreamName)
+	return
 }
