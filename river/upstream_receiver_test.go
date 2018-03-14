@@ -52,3 +52,12 @@ func TestReceiverUpstream_ProduceHandler_Success(t *testing.T) {
 	FatalIf(t, loc != "kafka-dummy-topic", "wrong location: %s", loc)
 	FatalIf(t, data != "some log", "wrong location: %s", data)
 }
+
+func TestReceiverUpstream_SetErrorChannel(t *testing.T) {
+	errCh := make(chan error)
+	receiver := receiverUpstream{}
+
+	receiver.SetErrorChannel(errCh)
+	FatalIf(t, errCh != receiver.ErrorChannel(), "SetErrorChannel is not working")
+
+}

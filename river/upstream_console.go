@@ -53,3 +53,7 @@ func (u *consoleUpstream) TimberChannel() chan Timber {
 func (u *consoleUpstream) SetErrorChannel(errCh chan error) {
 	u.errCh = errCh
 }
+
+func (u *consoleUpstream) ErrorChannel() chan error {
+	return u.errCh
+}

@@ -50,6 +50,10 @@ func (u *receiverUpstream) SetErrorChannel(errCh chan error) {
 	u.errCh = errCh
 }
 
+func (u *receiverUpstream) ErrorChannel() chan error {
+	return u.errCh
+}
+
 func (u *receiverUpstream) router() (router *mux.Router) {
 	router = mux.NewRouter()
 	router.HandleFunc(

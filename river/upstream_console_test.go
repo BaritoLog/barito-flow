@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/BaritoLog/go-boilerplate/testkit"
+	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 )
 
@@ -19,7 +19,16 @@ func TestConsoleUpstream(t *testing.T) {
 	loc := timber.Location
 	data := string(timber.Data)
 
-	testkit.FatalIf(t, loc != "some location", "wrong location: %s", loc)
-	testkit.FatalIf(t, data != "some input", "wrong data: %s", data)
+	FatalIf(t, loc != "some location", "wrong location: %s", loc)
+	FatalIf(t, data != "some input", "wrong data: %s", data)
+
+}
+
+func TestConsoleUpstream_SetErrorChannel(t *testing.T) {
+	errCh := make(chan error)
+	console := consoleUpstream{}
+
+	console.SetErrorChannel(errCh)
+	FatalIf(t, errCh != console.ErrorChannel(), "SetErrorChannel is not working")
 
 }
