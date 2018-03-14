@@ -1,8 +1,9 @@
 package river
 
-type Raft interface {
-	Start()
-	ErrorChannel() (errCh chan error)
+type raft struct {
+	from  Upstream
+	to    Downstream
+	errCh chan error
 }
 
 func NewRaft(from Upstream, to Downstream) Raft {
@@ -11,12 +12,6 @@ func NewRaft(from Upstream, to Downstream) Raft {
 		to:    to,
 		errCh: make(chan error),
 	}
-}
-
-type raft struct {
-	from  Upstream
-	to    Downstream
-	errCh chan error
 }
 
 // Drifting

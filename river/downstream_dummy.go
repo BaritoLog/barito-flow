@@ -1,10 +1,5 @@
 package river
 
-// Downstream
-type Downstream interface {
-	Store(timber Timber) error
-}
-
 type DummyDownstream struct {
 	ErrStore error
 }
