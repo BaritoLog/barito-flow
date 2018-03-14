@@ -22,6 +22,9 @@ func (c StartConfig) Upstream() (upstream river.Upstream, err error) {
 	case "kafka":
 		upstream, err = river.NewKafkaUpstream(c.UpStreamConfig)
 		return
+	case "receiver":
+		upstream, err = river.NewReceiverUpstream(c.UpStreamConfig)
+		return
 	}
 
 	err = fmt.Errorf(c.UpstreamName)

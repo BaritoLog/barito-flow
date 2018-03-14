@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/BaritoLog/barito-flow/cmds"
-	"github.com/BaritoLog/barito-flow/receiver"
-	"github.com/BaritoLog/go-boilerplate/app"
 	"github.com/urfave/cli"
 )
 
@@ -25,8 +23,8 @@ func main() {
 			{
 				Name:      "receiver",
 				ShortName: "r",
-				Usage:     "Kafka Receiver",
-				Action:    startReceiver,
+				Usage:     "start Log Receiver",
+				Action:    cmds.Receiver,
 			},
 			{
 				Name:      "forwarder",
@@ -47,14 +45,4 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Some error occurred: %s", err.Error()))
 	}
-}
-
-func startReceiver(c *cli.Context) (err error) {
-	runner := app.NewRunner(
-		receiver.NewContext(),
-		receiver.NewConfigurationManager(),
-	)
-
-	err = runner.Run()
-	return
 }
