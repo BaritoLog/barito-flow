@@ -2,6 +2,7 @@ package river
 
 import (
 	"bufio"
+	"io"
 	"strings"
 	"time"
 )
@@ -12,6 +13,15 @@ type consoleUpstream struct {
 	timberCh chan Timber
 	errCh    chan error
 	interval time.Duration
+}
+
+func NewConsoleUpstream(reader io.Reader) Upstream {
+	interval, _ := time.ParseDuration("100ms")
+	return &consoleUpstream{
+		reader:   bufio.NewReader(reader),
+		timberCh: make(chan Timber),
+		interval: interval,
+	}
 }
 
 // Start
