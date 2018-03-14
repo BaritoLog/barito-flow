@@ -30,3 +30,8 @@ func TestNewDownstreamKafka_Unreachable(t *testing.T) {
 	_, err := NewKafkaDownstream(conf)
 	FatalIfWrongError(t, err, "kafka: client has run out of available brokers to talk to (Is your cluster reachable?)")
 }
+
+func TestNewDownstreamKafka_WrongTypeParameter(t *testing.T) {
+	_, err := NewKafkaDownstream("meh")
+	FatalIfWrongError(t, err, "Parameter must be KafkaDownstreamConfig")
+}

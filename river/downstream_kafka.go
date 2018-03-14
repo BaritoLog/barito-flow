@@ -1,12 +1,20 @@
 package river
 
-import "github.com/Shopify/sarama"
+import (
+	"github.com/BaritoLog/go-boilerplate/errkit"
+	"github.com/Shopify/sarama"
+)
 
 type KafkaDownstream struct {
 	producer sarama.SyncProducer
 }
 
-func NewKafkaDownstream(conf KafkaDownstreamConfig) (Downstream, error) {
+func NewKafkaDownstream(v interface{}) (Downstream, error) {
+	conf, ok := v.(KafkaDownstreamConfig)
+	if !ok {
+		return nil, errkit.Error("Parameter must be KafkaDownstreamConfig")
+	}
+
 	producer, err := sarama.NewSyncProducer(conf.Brokers, conf.SaramaConfig())
 	if err != nil {
 		return nil, err
