@@ -19,6 +19,9 @@ func (c StartConfig) Upstream() (upstream river.Upstream, err error) {
 	case "stdin":
 		upstream = river.NewConsoleUpstream(os.Stdin)
 		return
+	case "kafka":
+		upstream, err = river.NewKafkaUpstream(c.UpStreamConfig)
+		return
 	}
 
 	err = fmt.Errorf(c.UpstreamName)
@@ -32,6 +35,9 @@ func (c StartConfig) Downstream() (downstream river.Downstream, err error) {
 		return
 	case "kafka":
 		downstream, err = river.NewKafkaDownstream(c.DownstreamConfig)
+		return
+	case "elasticsearch":
+		downstream, err = river.NewElasticsearchDownstream(c.DownstreamConfig)
 		return
 	}
 

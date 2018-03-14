@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/BaritoLog/barito-flow/cmds"
-	"github.com/BaritoLog/barito-flow/forwarder"
 	"github.com/BaritoLog/barito-flow/receiver"
 	"github.com/BaritoLog/go-boilerplate/app"
 	"github.com/urfave/cli"
@@ -32,8 +31,8 @@ func main() {
 			{
 				Name:      "forwarder",
 				ShortName: "f",
-				Usage:     "Log Forwarder",
-				Action:    startForwarder,
+				Usage:     "start Log Forwarder",
+				Action:    cmds.Forwarder,
 			},
 			{
 				Name:      "start",
@@ -57,16 +56,5 @@ func startReceiver(c *cli.Context) (err error) {
 	)
 
 	err = runner.Run()
-	return
-}
-
-func startForwarder(c *cli.Context) (err error) {
-	runner := app.NewRunner(
-		forwarder.NewContext(),
-		forwarder.NewConfigurationManager(),
-	)
-
-	err = runner.Run()
-
 	return
 }
