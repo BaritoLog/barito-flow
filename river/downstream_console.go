@@ -19,6 +19,6 @@ func NewConsoleDownstream(writer io.Writer) Downstream {
 
 // Store
 func (d consoleDownstream) Store(timber Timber) (err error) {
-	fmt.Fprintf(d.writer, "%s", timber.Data)
+	fmt.Fprintf(d.writer, "%s||%s\n", timber.Location, timber.Data)
 	return
 }

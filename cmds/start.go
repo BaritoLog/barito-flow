@@ -1,8 +1,6 @@
 package cmds
 
 import (
-	"runtime"
-
 	"github.com/BaritoLog/barito-flow/river"
 	"github.com/urfave/cli"
 )
@@ -19,8 +17,13 @@ func Start(c *cli.Context) (err error) {
 	)
 	raft.Start()
 
+	errCh := raft.ErrorChannel()
+
 	for {
-		runtime.Gosched()
+		select {
+		case err = <-errCh:
+			return err
+		}
 	}
 
 	return

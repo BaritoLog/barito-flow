@@ -2,6 +2,7 @@ package river
 
 import (
 	"bufio"
+	"strings"
 	"time"
 )
 
@@ -17,7 +18,19 @@ type consoleUpstream struct {
 func (u *consoleUpstream) StartTransport() {
 	for {
 		text, _ := u.reader.ReadString('\n')
-		u.timberCh <- Timber{Data: []byte(text)}
+		text = text[:len(text)-1]
+		chunks := strings.Split(text, "||")
+
+		location := chunks[0]
+		data := ""
+		if len(chunks) > 1 {
+			data = chunks[1]
+		}
+
+		u.timberCh <- Timber{
+			Location: location,
+			Data:     []byte(data),
+		}
 		time.Sleep(u.interval)
 	}
 }
