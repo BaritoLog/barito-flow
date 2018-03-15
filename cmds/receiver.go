@@ -3,32 +3,29 @@ package cmds
 import (
 	"github.com/BaritoLog/barito-flow/river"
 	"github.com/urfave/cli"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func Receiver(c *cli.Context) (err error) {
-	config := StartConfig{
-		UpstreamName: "receiver",
-		UpStreamConfig: river.ReceiverUpstreamConfig{
-			Addr: ":8080",
-		},
-		DownstreamName: "kafka",
-		DownstreamConfig: river.KafkaDownstreamConfig{
-			Brokers: []string{"localhost:9092"},
-			ProducerRetryMax: 10,
-		},
-	}
 
-	upstream, err := config.Upstream()
+	conf, err := NewReceiverConfigByEnv()
+	if err != nil {
+		return
+	}
+	conf.Info(log.StandardLogger())
+
+	receiver, err := conf.ReceiverUpstream()
 	if err != nil {
 		return
 	}
 
-	downstream, err := config.Downstream()
+	kafka, err := conf.KafkaDownstream()
 	if err != nil {
 		return
 	}
 
-	raft := river.NewRaft(upstream, downstream)
+	raft := river.NewRaft(receiver, kafka)
 	raft.Start()
 
 	errCh := raft.ErrorChannel()
