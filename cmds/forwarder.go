@@ -13,7 +13,7 @@ func Forwarder(c *cli.Context) (err error) {
 	}
 	conf.Info(log.StandardLogger())
 
-	forwarder, err := conf.ForwarderUpstream()
+	kafka, err := conf.KafkaUpstream()
 	if err != nil {
 		return
 	}
@@ -22,7 +22,7 @@ func Forwarder(c *cli.Context) (err error) {
 	if err != nil {
 		return
 	}
-	raft := river.NewRaft(forwarder, elasticsearch)
+	raft := river.NewRaft(kafka, elasticsearch)
 	raft.Start()
 
 	errCh := raft.ErrorChannel()

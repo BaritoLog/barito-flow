@@ -60,8 +60,8 @@ func NewForwarderConfigByEnv() (*ForwarderConfig, error) {
 	return config, nil
 }
 
-// ForwarderUpstreamConfig
-func (c ForwarderConfig) ForwarderUpstream() (river.Upstream, error) {
+// KafkaUpstreamConfig
+func (c ForwarderConfig) KafkaUpstream() (river.Upstream, error) {
 	return river.NewKafkaUpstream(river.KafkaUpstreamConfig{
 		Brokers:         c.KafkaBrokers,
 		ConsumerGroupId: c.KafkaConsumerGroupId,
