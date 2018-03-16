@@ -38,6 +38,12 @@ func main() {
 				Usage:     "start barito flow",
 				Action:    cmds.Start,
 			},
+			{
+				Name:      "rtail",
+				ShortName: "rtail",
+				Usage:     "start barito rtail",
+				Action:    cmds.Rtail,
+			},
 		},
 	}
 
