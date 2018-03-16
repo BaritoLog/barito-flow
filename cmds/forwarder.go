@@ -3,33 +3,26 @@ package cmds
 import (
 	"github.com/BaritoLog/barito-flow/river"
 	"github.com/urfave/cli"
+	log "github.com/sirupsen/logrus"
 )
 
 func Forwarder(c *cli.Context) (err error) {
-	config := StartConfig{
-		UpstreamName: "kafka",
-		UpStreamConfig: river.KafkaUpstreamConfig{
-			Brokers:         []string{"localhost:9092"},
-			ConsumerGroupId: "barito-consumer",
-			ConsumerTopic:   []string{"kafka-dummy-topic"},
-		},
-		DownstreamName: "elasticsearch",
-		DownstreamConfig: river.ElasticsearchDownstreamConfig{
-			Urls:	"http://localhost:9200",
-		},
+	conf, err := NewForwarderConfigByEnv()
+	if err != nil {
+		return
 	}
+	conf.Info(log.StandardLogger())
 
-	upstream, err := config.Upstream()
+	forwarder, err := conf.ForwarderUpstream()
 	if err != nil {
 		return
 	}
 
-	downstream, err := config.Downstream()
+	elasticsearch, err := conf.ElasticsearchDownstream()
 	if err != nil {
 		return
 	}
-
-	raft := river.NewRaft(upstream, downstream)
+	raft := river.NewRaft(forwarder, elasticsearch)
 	raft.Start()
 
 	errCh := raft.ErrorChannel()
