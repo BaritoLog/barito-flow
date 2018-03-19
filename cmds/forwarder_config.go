@@ -1,11 +1,12 @@
 package cmds
 
 import (
+	"fmt"
 	"os"
+	"strings"
+
 	"github.com/BaritoLog/barito-flow/river"
 	"github.com/sirupsen/logrus"
-	"fmt"
-	"strings"
 )
 
 const (
@@ -30,19 +31,19 @@ func NewForwarderConfigByEnv() (*ForwarderConfig, error) {
 	if kafkaBrokersList == "" {
 		kafkaBrokers = []string{"localhost:9092"}
 	} else {
-		kafkaBrokers = strings.Split(kafkaBrokersList,",")
+		kafkaBrokers = strings.Split(kafkaBrokersList, ",")
 	}
 
 	kafkaConsumerGroupId := os.Getenv(EnvForwarderKafkaConsumerGroupId)
 	if kafkaConsumerGroupId == "" {
-		err := fmt.Errorf("%s", "Kafka consumer group id is empty")
-		panic(err)
+		err := fmt.Errorf("%s %s", EnvForwarderKafkaConsumerGroupId, "is empty")
+		return nil, err
 	}
 
 	kafkaConsumerTopic := os.Getenv(EnvForwarderKafkaConsumerTopic)
 	if kafkaConsumerTopic == "" {
-		err := fmt.Errorf("%s", "Kafka consumer topic is empty")
-		panic(err)
+		err := fmt.Errorf("%s %s", EnvForwarderKafkaConsumerTopic, "is empty")
+		return nil, err
 	}
 
 	elasticsearchUrl := os.Getenv(EnvForwarderElasticsearchUrl)
@@ -78,7 +79,7 @@ func (c ForwarderConfig) ElasticsearchDownstream() (river.Downstream, error) {
 
 func (c ForwarderConfig) Info(log *logrus.Logger) {
 	log.Infof("%s=%s", EnvForwarderKafkaBrokers, c.KafkaBrokers)
-	log.Infof("%s=%d", EnvForwarderKafkaConsumerGroupId, c.KafkaConsumerGroupId)
-	log.Infof("%s=%d", EnvForwarderKafkaConsumerTopic, c.KafkaConsumerTopic)
-	log.Infof("%s=%d", EnvForwarderElasticsearchUrl, c.ElasticsearchUrl)
+	log.Infof("%s=%s", EnvForwarderKafkaConsumerGroupId, c.KafkaConsumerGroupId)
+	log.Infof("%s=%s", EnvForwarderKafkaConsumerTopic, c.KafkaConsumerTopic)
+	log.Infof("%s=%s", EnvForwarderElasticsearchUrl, c.ElasticsearchUrl)
 }
