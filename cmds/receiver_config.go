@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -10,15 +11,17 @@ import (
 )
 
 const (
-	EnvAddress          = "BARITO_RECEIVER_ADDRESS"
-	EnvKafkaBrokers     = "BARITO_RECEIVER_KAFKA_BROKERS"
-	EnvProducerMaxRetry = "BARITO_RECEIVER_PRODUCER_MAX_RETRY"
+	EnvAddress                   = "BARITO_RECEIVER_ADDRESS"
+	EnvKafkaBrokers              = "BARITO_RECEIVER_KAFKA_BROKERS"
+	EnvProducerMaxRetry          = "BARITO_RECEIVER_PRODUCER_MAX_RETRY"
+	EnvReceiverApplicationSecret = "BARITO_RECEIVER_APPLICATION_SECRET"
 )
 
 type ReceiverConfig struct {
-	Address          string
-	KafkaBrokers     string
-	ProducerMaxRetry int
+	Address           string
+	KafkaBrokers      string
+	ProducerMaxRetry  int
+	ApplicationSecret string
 }
 
 // NewReceiverConfigByEnv
@@ -39,10 +42,16 @@ func NewReceiverConfigByEnv() (*ReceiverConfig, error) {
 		producerMaxRetry = 10
 	}
 
+	appSecret := os.Getenv(EnvReceiverApplicationSecret)
+	if appSecret == "" {
+		return nil, fmt.Errorf("%s", "Application secret is empty")
+	}
+
 	config := &ReceiverConfig{
-		Address:          address,
-		KafkaBrokers:     kafkaBrokers,
-		ProducerMaxRetry: producerMaxRetry,
+		Address:           address,
+		ApplicationSecret: appSecret,
+		KafkaBrokers:      kafkaBrokers,
+		ProducerMaxRetry:  producerMaxRetry,
 	}
 
 	return config, nil
@@ -51,7 +60,8 @@ func NewReceiverConfigByEnv() (*ReceiverConfig, error) {
 // ReceiverUpstreamConfig
 func (c ReceiverConfig) ReceiverUpstream() (river.Upstream, error) {
 	return river.NewReceiverUpstream(river.ReceiverUpstreamConfig{
-		Addr: c.Address,
+		Addr:      c.Address,
+		AppSecret: c.ApplicationSecret,
 	})
 }
 
@@ -67,4 +77,5 @@ func (c ReceiverConfig) Info(log *logrus.Logger) {
 	log.Infof("%s=%s", EnvAddress, c.Address)
 	log.Infof("%s=%s", EnvKafkaBrokers, c.KafkaBrokers)
 	log.Infof("%s=%d", EnvProducerMaxRetry, c.ProducerMaxRetry)
+	log.Infof("%s=%d", EnvReceiverApplicationSecret, c.ApplicationSecret)
 }

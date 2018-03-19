@@ -10,13 +10,15 @@ import (
 )
 
 type receiverUpstream struct {
-	addr     string
-	timberCh chan Timber
-	errCh    chan error
+	addr      string
+	appSecret string
+	timberCh  chan Timber
+	errCh     chan error
 }
 
 type ReceiverUpstreamConfig struct {
-	Addr string
+	Addr      string
+	AppSecret string
 }
 
 func NewReceiverUpstream(v interface{}) (Upstream, error) {
@@ -26,9 +28,10 @@ func NewReceiverUpstream(v interface{}) (Upstream, error) {
 	}
 
 	upstream := &receiverUpstream{
-		addr:     conf.Addr,
-		timberCh: make(chan Timber),
-		errCh:    make(chan error),
+		addr:      conf.Addr,
+		appSecret: conf.AppSecret,
+		timberCh:  make(chan Timber),
+		errCh:     make(chan error),
 	}
 	return upstream, nil
 }
@@ -75,6 +78,12 @@ func (u *receiverUpstream) produceHandler(writer http.ResponseWriter, req *http.
 
 	topic := params["topic"]
 	body, _ := ioutil.ReadAll(req.Body)
+	appSecret := req.Header.Get("Application-Secret")
+
+	if appSecret != u.appSecret {
+		http.Error(writer, "Application secret is not valid", http.StatusUnauthorized)
+		return
+	}
 
 	timber := Timber{
 		Location: topic,
