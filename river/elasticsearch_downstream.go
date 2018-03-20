@@ -30,7 +30,11 @@ func NewElasticsearchDownstream(v interface{}) (Downstream, error) {
 		return nil, errkit.Error("Parameter must be ElasticsearchDownstreamConfig")
 	}
 
-	client, err := elastic.NewClient(elastic.SetURL(conf.Urls))
+	client, err := elastic.NewClient(
+		elastic.SetURL(conf.Urls),
+		elastic.SetSniff(false),
+		elastic.SetHealthcheck(false),
+	)
 	if err != nil {
 		return nil, err
 	}
