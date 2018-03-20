@@ -10,6 +10,7 @@ type kafkaUpstream struct {
 	brokers         []string
 	consumerGroupId string
 	consumerTopic   []string
+	consumer        *cluster.Consumer
 	timberCh        chan Timber
 	errCh           chan error
 }
@@ -26,50 +27,34 @@ func NewKafkaUpstream(v interface{}) (Upstream, error) {
 		return nil, errkit.Error("Parameter must be KafkaUpstreamConfig")
 	}
 
+	config := cluster.NewConfig()
+	config.Consumer.Return.Errors = true
+	config.Group.Return.Notifications = true
+
+	consumer, err := cluster.NewConsumer(
+		conf.Brokers,
+		conf.ConsumerGroupId,
+		conf.ConsumerTopic,
+		config,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	upstream := &kafkaUpstream{
-		brokers:         conf.Brokers,
-		consumerGroupId: conf.ConsumerGroupId,
-		consumerTopic:   conf.ConsumerTopic,
-		timberCh:        make(chan Timber),
-		errCh:           make(chan error),
+		consumer: consumer,
+		timberCh: make(chan Timber),
+		errCh:    make(chan error),
 	}
 	return upstream, nil
 }
 
 func (u *kafkaUpstream) StartTransport() {
-	config := cluster.NewConfig()
-	config.Consumer.Return.Errors = true
-	config.Group.Return.Notifications = true
 
-	consumer, err := cluster.NewConsumer(u.brokers, u.consumerGroupId, u.consumerTopic, config)
-	if err != nil {
-		u.errCh <- err
-		return
-	}
+	go u.loopError()
+	go u.loopNofication()
 
-	go func() {
-		for err := range consumer.Errors() {
-			u.errCh <- err
-		}
-	}()
-
-	go func() {
-		for ntf := range consumer.Notifications() {
-			log.Infof("Rebalanced: %+v\n", ntf)
-		}
-	}()
-
-	for {
-		select {
-		case msg, ok := <-consumer.Messages():
-			if ok {
-				log.Infof("%s/%d/%d\t%s\t%s\n", msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
-				u.Consume(msg.Value)
-				consumer.MarkOffset(msg, "") // mark message as processed
-			}
-		}
-	}
-
+	u.loopMain()
 }
 
 func (u *kafkaUpstream) TimberChannel() chan Timber {
@@ -85,10 +70,32 @@ func (u *kafkaUpstream) ErrorChannel() chan error {
 	return u.errCh
 }
 
-func (u *kafkaUpstream) Consume(log []byte) {
-	timber := Timber{
-		Location: u.consumerTopic[0],
-		Data:     log,
+func (u *kafkaUpstream) loopError() {
+	for err := range u.consumer.Errors() {
+		u.errCh <- err
 	}
-	u.timberCh <- timber
+
+}
+
+func (u *kafkaUpstream) loopNofication() {
+	for ntf := range u.consumer.Notifications() {
+		log.Infof("Rebalanced: %+v\n", ntf)
+	}
+}
+
+func (u *kafkaUpstream) loopMain() {
+	for {
+		select {
+		case msg, ok := <-u.consumer.Messages():
+			if ok {
+				log.Infof("Consume Topic:'%s' at Partition:%d Offeet:%d\tKey:'%s'\tValue:%s\n",
+					msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
+				u.timberCh <- Timber{
+					Location: u.consumerTopic[0],
+					Data:     msg.Value,
+				}
+				u.consumer.MarkOffset(msg, "") // mark message as processed
+			}
+		}
+	}
 }
