@@ -2,8 +2,8 @@ package river
 
 import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
-	"github.com/bsm/sarama-cluster"
-	log "github.com/sirupsen/logrus"
+	cluster "github.com/bsm/sarama-cluster"
+	log "github.com/github.com/sirupsen/logrus"
 )
 
 type kafkaUpstream struct {
@@ -30,8 +30,8 @@ func NewKafkaUpstream(v interface{}) (Upstream, error) {
 		brokers:         conf.Brokers,
 		consumerGroupId: conf.ConsumerGroupId,
 		consumerTopic:   conf.ConsumerTopic,
-		timberCh:             make(chan Timber),
-		errCh:                make(chan error),
+		timberCh:        make(chan Timber),
+		errCh:           make(chan error),
 	}
 	return upstream, nil
 }
@@ -40,7 +40,12 @@ func (u *kafkaUpstream) StartTransport() {
 	config := cluster.NewConfig()
 	config.Consumer.Return.Errors = true
 	config.Group.Return.Notifications = true
+
 	consumer, err := cluster.NewConsumer(u.brokers, u.consumerGroupId, u.consumerTopic, config)
+	if err != nil {
+		u.errCh <- err
+		return
+	}
 
 	go func() {
 		for err := range consumer.Errors() {
@@ -65,7 +70,6 @@ func (u *kafkaUpstream) StartTransport() {
 		}
 	}
 
-	u.errCh <- err
 }
 
 func (u *kafkaUpstream) TimberChannel() chan Timber {
