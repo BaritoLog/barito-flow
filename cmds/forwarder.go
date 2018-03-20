@@ -30,7 +30,7 @@ func Forwarder(c *cli.Context) (err error) {
 	for {
 		select {
 		case err = <-errCh:
-			return err
+			log.Error(err)
 		}
 	}
 
