@@ -21,6 +21,7 @@ type KafkaUpstreamConfig struct {
 	ConsumerTopic   []string
 }
 
+// NewKafkaUpstream create new instance of KafkaUpstream
 func NewKafkaUpstream(v interface{}) (Upstream, error) {
 	conf, ok := v.(KafkaUpstreamConfig)
 	if !ok {
@@ -49,6 +50,7 @@ func NewKafkaUpstream(v interface{}) (Upstream, error) {
 	return upstream, nil
 }
 
+// StartTransport is looping to get tiber/message
 func (u *kafkaUpstream) StartTransport() {
 
 	go u.loopError()
@@ -57,15 +59,17 @@ func (u *kafkaUpstream) StartTransport() {
 	u.loopMain()
 }
 
+// TimberChannel return timber/message channel
 func (u *kafkaUpstream) TimberChannel() chan Timber {
 	return u.timberCh
-
 }
 
+// SetErrorChannel return error channel
 func (u *kafkaUpstream) SetErrorChannel(errCh chan error) {
 	u.errCh = errCh
 }
 
+// ErrorChannel
 func (u *kafkaUpstream) ErrorChannel() chan error {
 	return u.errCh
 }
@@ -74,7 +78,6 @@ func (u *kafkaUpstream) loopError() {
 	for err := range u.consumer.Errors() {
 		u.errCh <- err
 	}
-
 }
 
 func (u *kafkaUpstream) loopNofication() {
