@@ -1,7 +1,6 @@
 package cmds
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -44,7 +43,7 @@ func NewReceiverConfigByEnv() (*ReceiverConfig, error) {
 
 	appSecret := os.Getenv(EnvReceiverApplicationSecret)
 	if appSecret == "" {
-		return nil, fmt.Errorf("%s", "Application secret is empty")
+		appSecret = "secret"
 	}
 
 	config := &ReceiverConfig{
@@ -77,5 +76,5 @@ func (c ReceiverConfig) Info(log *logrus.Logger) {
 	log.Infof("%s=%s", EnvAddress, c.Address)
 	log.Infof("%s=%s", EnvKafkaBrokers, c.KafkaBrokers)
 	log.Infof("%s=%d", EnvProducerMaxRetry, c.ProducerMaxRetry)
-	log.Infof("%s=%d", EnvReceiverApplicationSecret, c.ApplicationSecret)
+	log.Infof("%s=%s", EnvReceiverApplicationSecret, c.ApplicationSecret)
 }
