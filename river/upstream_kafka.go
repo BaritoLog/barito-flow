@@ -3,7 +3,7 @@ package river
 import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	cluster "github.com/bsm/sarama-cluster"
-	log "github.com/github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type kafkaUpstream struct {
