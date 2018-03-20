@@ -28,6 +28,9 @@ func NewConsoleUpstream(reader io.Reader) Upstream {
 func (u *consoleUpstream) StartTransport() {
 	for {
 		text, _ := u.reader.ReadString('\n')
+		if len(text) < 1 {
+			continue
+		}
 		text = text[:len(text)-1]
 		chunks := strings.Split(text, "||")
 
