@@ -113,13 +113,8 @@ func (e *ElasticsearchDownstream) createIndexIfMissing(indexName string) bool {
 }
 
 func (e *ElasticsearchDownstream) send(indexName, typ string, timber Timber) error {
-	var message map[string]interface{}
-	err := json.Unmarshal(timber.Data, &message)
-	if err != nil {
-		message["data"] = timber.Data
-	}
-
-	_, err = e.client.Index().Index(indexName).Type(typ).BodyJson(message).Do(e.ctx)
+	message := ConvertToElasticMessage(timber)
+	_, err := e.client.Index().Index(indexName).Type(typ).BodyJson(message).Do(e.ctx)
 
 	return err
 }

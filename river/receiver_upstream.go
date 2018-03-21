@@ -1,7 +1,6 @@
 package river
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
@@ -69,15 +68,7 @@ func (u *receiverUpstream) router() (router *mux.Router) {
 }
 
 func (u *receiverUpstream) produceHandler(writer http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	// TODO: parse barito params and do something usefule
-	//streamId := params["stream_id"]
-	//storeId := params["store_id"]
-	//forwarderId := params["forwarder_id"]
-	//clientId := params["client_id"]
 
-	topic := params["topic"]
-	body, _ := ioutil.ReadAll(req.Body)
 	appSecret := req.Header.Get("Application-Secret")
 
 	if appSecret != u.appSecret {
@@ -85,13 +76,7 @@ func (u *receiverUpstream) produceHandler(writer http.ResponseWriter, req *http.
 		return
 	}
 
-	timber := Timber{
-		Location: topic,
-		Data:     body,
-	}
-
-	// fmt.Printf("%+v\n", <-timberCh)
-	u.timberCh <- timber
+	u.timberCh <- NewTimberFromRequest(req)
 
 	writer.WriteHeader(http.StatusOK)
 

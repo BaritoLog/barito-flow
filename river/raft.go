@@ -1,5 +1,11 @@
 package river
 
+// Raft
+type Raft interface {
+	Start()
+	ErrorChannel() (errCh chan error)
+}
+
 type raft struct {
 	from  Upstream
 	to    Downstream

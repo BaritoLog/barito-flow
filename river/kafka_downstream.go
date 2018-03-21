@@ -28,10 +28,7 @@ func NewKafkaDownstream(v interface{}) (Downstream, error) {
 }
 
 func (d *KafkaDownstream) Store(timber Timber) (err error) {
-	m := &sarama.ProducerMessage{
-		Topic: timber.Location,
-		Value: sarama.ByteEncoder(timber.Data),
-	}
-	_, _, err = d.producer.SendMessage(m)
+	message := ConvertToKafkaMessage(timber)
+	_, _, err = d.producer.SendMessage(message)
 	return
 }

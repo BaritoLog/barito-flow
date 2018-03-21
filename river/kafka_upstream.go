@@ -89,15 +89,13 @@ func (u *kafkaUpstream) loopNofication() {
 func (u *kafkaUpstream) loopMain() {
 	for {
 		select {
-		case msg, ok := <-u.consumer.Messages():
+		case message, ok := <-u.consumer.Messages():
 			if ok {
 				log.Infof("Consume Topic:'%s' at Partition:%d Offeet:%d\tKey:'%s'\tValue:%s\n",
-					msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
-				u.timberCh <- Timber{
-					Location: u.consumerTopic[0],
-					Data:     msg.Value,
-				}
-				u.consumer.MarkOffset(msg, "") // mark message as processed
+					message.Topic, message.Partition, message.Offset, message.Key, message.Value)
+
+				u.timberCh <- NewTimberFromKafkaMessage(message)
+				u.consumer.MarkOffset(message, "") // mark message as processed
 			}
 		}
 	}
