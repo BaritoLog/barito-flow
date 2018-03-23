@@ -48,7 +48,7 @@ func TestReceiverUpstream_ProduceHandler_Success(t *testing.T) {
 
 	timber := <-upstream.TimberChannel()
 	loc := timber.Location
-	data := string(timber.Data)
+	data := string(timber.Message)
 	FatalIf(t, loc != "kafka-dummy-topic", "wrong location: %s", loc)
 	FatalIf(t, data != "some log", "wrong location: %s", data)
 }

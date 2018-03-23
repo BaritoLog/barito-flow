@@ -1,14 +1,15 @@
 package river
 
 import (
-	"github.com/BaritoLog/go-boilerplate/errkit"
-	"golang.org/x/net/http2"
-	"net/http"
-	"github.com/gorilla/mux"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
+
+	"github.com/BaritoLog/go-boilerplate/errkit"
+	"github.com/gorilla/mux"
+	"golang.org/x/net/http2"
 )
 
 type RtailDownstreamConfig struct {
@@ -16,8 +17,8 @@ type RtailDownstreamConfig struct {
 }
 
 type RtailDownstream struct {
-	addr     string
-	logs     chan []byte
+	addr string
+	logs chan []byte
 }
 
 func NewRtailDownstream(v interface{}) (Downstream, error) {
@@ -27,7 +28,7 @@ func NewRtailDownstream(v interface{}) (Downstream, error) {
 	}
 
 	downstream := &RtailDownstream{
-		addr:     conf.Addr,
+		addr: conf.Addr,
 		logs: make(chan []byte),
 	}
 
@@ -71,6 +72,6 @@ func (d *RtailDownstream) tailHandler(writer http.ResponseWriter, req *http.Requ
 }
 
 func (d *RtailDownstream) Store(timber Timber) (err error) {
-	d.logs <- timber.Data
+	d.logs <- timber.Message
 	return
 }

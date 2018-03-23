@@ -17,7 +17,7 @@ func TestConsoleUpstream(t *testing.T) {
 
 	timber := <-upstream.TimberChannel()
 	loc := timber.Location
-	data := string(timber.Data)
+	data := string(timber.Message)
 
 	FatalIf(t, loc != "some location", "wrong location: %s", loc)
 	FatalIf(t, data != "some input", "wrong data: %s", data)

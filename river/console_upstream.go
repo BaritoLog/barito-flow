@@ -42,7 +42,7 @@ func (u *consoleUpstream) StartTransport() {
 
 		u.timberCh <- Timber{
 			Location: location,
-			Data:     []byte(data),
+			Message:  []byte(data),
 		}
 		time.Sleep(u.interval)
 	}

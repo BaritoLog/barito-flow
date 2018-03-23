@@ -16,7 +16,7 @@ func TestDownstreamKafka(t *testing.T) {
 	ds := KafkaDownstream{producer: producer}
 	err := ds.Store(Timber{
 		Location: "location",
-		Data:     []byte("some data"),
+		Message:  []byte("some data"),
 	})
 
 	FatalIfError(t, err)

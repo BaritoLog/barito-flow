@@ -14,7 +14,7 @@ import (
 // Timber
 type Timber struct {
 	Location string
-	Data     []byte
+	Message  []byte
 }
 
 // NewTimberFromRequest create timber instance from http request
@@ -31,7 +31,7 @@ func NewTimberFromRequest(req *http.Request) Timber {
 
 	timber := Timber{
 		Location: topic,
-		Data:     body,
+		Message:  body,
 	}
 
 	return timber
@@ -40,7 +40,7 @@ func NewTimberFromRequest(req *http.Request) Timber {
 func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 	timber := Timber{
 		Location: message.Topic,
-		Data:     message.Value,
+		Message:  message.Value,
 	}
 
 	return timber
@@ -50,16 +50,16 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 func ConvertToKafkaMessage(timber Timber) *sarama.ProducerMessage {
 	message := &sarama.ProducerMessage{
 		Topic: timber.Location,
-		Value: sarama.ByteEncoder(timber.Data),
+		Value: sarama.ByteEncoder(timber.Message),
 	}
 	return message
 }
 
 func ConvertToElasticMessage(timber Timber) map[string]interface{} {
 	var message map[string]interface{}
-	err := json.Unmarshal(timber.Data, &message)
+	err := json.Unmarshal(timber.Message, &message)
 	if err != nil {
-		message["data"] = timber.Data
+		message["data"] = timber.Message
 	}
 
 	return message
