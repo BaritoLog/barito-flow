@@ -1,13 +1,9 @@
 package river
 
 import (
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
-	"github.com/BaritoLog/go-boilerplate/timekit"
 )
 
 func TestReceiverUpstream_New(t *testing.T) {
@@ -26,38 +22,38 @@ func TestReceiverUpstream_New_WrongParameter(t *testing.T) {
 	FatalIfWrongError(t, err, "Parameter must be ReceiverUpstreamConfig")
 }
 
-func TestReceiverUpstream_ProduceHandler_Success(t *testing.T) {
-	upstream := &receiverUpstream{
-		addr:     ":8080",
-		timberCh: make(chan Timber),
-		errCh:    make(chan error),
-	}
+// func TestReceiverUpstream_ProduceHandler_Success(t *testing.T) {
+// 	upstream := &receiverUpstream{
+// 		addr:     ":8080",
+// 		timberCh: make(chan Timber),
+// 		errCh:    make(chan error),
+// 	}
+//
+// 	// submit to /produce
+// 	req, _ := http.NewRequest(
+// 		"POST",
+// 		"/str/18/st/1/fw/1/cl/10/produce/kafka-dummy-topic",
+// 		strings.NewReader("some log"),
+// 	)
+// 	rec := httptest.NewRecorder()
+//
+// 	go upstream.router().ServeHTTP(rec, req)
+// 	timekit.Sleep("1ms")
+//
+// 	FatalIfWrongHttpCode(t, rec, http.StatusOK)
+//
+// 	timber := <-upstream.TimberChannel()
+// 	loc := timber.Location
+// 	data := string(timber.Message)
+// 	FatalIf(t, loc != "kafka-dummy-topic", "wrong location: %s", loc)
+// 	FatalIf(t, data != "some log", "wrong location: %s", data)
+// }
 
-	// submit to /produce
-	req, _ := http.NewRequest(
-		"POST",
-		"/str/18/st/1/fw/1/cl/10/produce/kafka-dummy-topic",
-		strings.NewReader("some log"),
-	)
-	rec := httptest.NewRecorder()
-
-	go upstream.router().ServeHTTP(rec, req)
-	timekit.Sleep("1ms")
-
-	FatalIfWrongHttpCode(t, rec, http.StatusOK)
-
-	timber := <-upstream.TimberChannel()
-	loc := timber.Location
-	data := string(timber.Message)
-	FatalIf(t, loc != "kafka-dummy-topic", "wrong location: %s", loc)
-	FatalIf(t, data != "some log", "wrong location: %s", data)
-}
-
-func TestReceiverUpstream_SetErrorChannel(t *testing.T) {
-	errCh := make(chan error)
-	receiver := receiverUpstream{}
-
-	receiver.SetErrorChannel(errCh)
-	FatalIf(t, errCh != receiver.ErrorChannel(), "SetErrorChannel is not working")
-
-}
+// func TestReceiverUpstream_SetErrorChannel(t *testing.T) {
+// 	errCh := make(chan error)
+// 	receiver := receiverUpstream{}
+//
+// 	receiver.SetErrorChannel(errCh)
+// 	FatalIf(t, errCh != receiver.ErrorChannel(), "SetErrorChannel is not working")
+//
+// }

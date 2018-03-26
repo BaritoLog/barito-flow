@@ -1,10 +1,11 @@
 hash: 008605205a34144703cf5067e2a05817c5bac964b7a0b4538849c7bc89a32653
-updated: 2018-03-21T15:36:14.049678+07:00
+updated: 2018-03-26T16:40:56.409192+07:00
 imports:
 - name: github.com/BaritoLog/go-boilerplate
-  version: b502becd4dbcb48de0dce909d5af7c7194deff02
+  version: 3cfe8b742565b667b107ff41e396243e266831b3
   subpackages:
   - errkit
+  - httpkit
   - httpkit/heartbeat
   - testkit
   - timekit
@@ -29,13 +30,13 @@ imports:
 - name: github.com/gorilla/mux
   version: 4dbd923b0c9e99ff63ad54b0e9705ff92d3cdb06
 - name: github.com/mailru/easyjson
-  version: 517203d186eb343d3df4068565cc0446b450d2c4
+  version: 8b799c424f57fa123fc63a99d6383bc6e4c02578
   subpackages:
   - buffer
   - jlexer
   - jwriter
 - name: github.com/olivere/elastic
-  version: a27cdb14723843e6d704e6d24e62994224748bda
+  version: d78530f6439d6cd674892320b6917d7c4cb25f7f
   subpackages:
   - config
   - uritemplates
@@ -58,7 +59,7 @@ imports:
 - name: github.com/urfave/cli
   version: 8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff
 - name: golang.org/x/crypto
-  version: 80db560fac1fb3e6ac81dbc7f8ae4c061f5257bd
+  version: 88942b9c40a4c9d203b82b3731787b672d6e809b
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
@@ -69,17 +70,17 @@ imports:
   - idna
   - lex/httplex
 - name: golang.org/x/sys
-  version: 641605214e7dab930817f68e2fef560efbb033e5
+  version: 91ee8cde435411ca3f1cd365e8f20131aed4d0a1
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 8c34f848e18c4bd34d02db7f19a0ed1a0a8f5852
+  version: ab48842968a66deafa354805a8b031924668e059
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: gopkg.in/olivere/elastic.v6
-  version: f9243358b15391d76b5d0e2cb816442f9cded8cc
+  version: d78530f6439d6cd674892320b6917d7c4cb25f7f
 testImports: []
