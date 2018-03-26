@@ -4,17 +4,37 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/gorilla/mux"
 )
 
-// TODO: standarize kafka message & elastic message
-
 // Timber
 type Timber struct {
-	Location string
-	Message  []byte
+	Location  string      `json:"location"`
+	Tag       string      `json:"tag"`
+	Message   string      `json:"message"`
+	Timestamp time.Time   `json:"@timestamp"`
+	Trail     BaritoTrail `json:"barito_trail"`
+}
+
+// BaritoTrail
+type BaritoTrail struct {
+	receiver  ReceiverTrail  `json:"receiver"`
+	forwarder ForwarderTrail `json:"forwarder"`
+}
+
+// ReceiverTrail
+type ReceiverTrail struct {
+	EndPointURL             string    `json:"end_point_url"`
+	ReceivedAt              time.Time `json:"received_at"`
+	GenerateTimestampReason string    `json:"generate_timestamp_reason"`
+}
+
+// ForwarderTrail
+type ForwarderTrail struct {
+	ForwardedAt time.Time `json:"forwarded_at"`
 }
 
 // NewTimberFromRequest create timber instance from http request
@@ -31,7 +51,7 @@ func NewTimberFromRequest(req *http.Request) Timber {
 
 	timber := Timber{
 		Location: topic,
-		Message:  body,
+		Message:  string(body),
 	}
 
 	return timber
@@ -40,7 +60,7 @@ func NewTimberFromRequest(req *http.Request) Timber {
 func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 	timber := Timber{
 		Location: message.Topic,
-		Message:  message.Value,
+		Message:  string(message.Value),
 	}
 
 	return timber
@@ -57,7 +77,7 @@ func ConvertToKafkaMessage(timber Timber) *sarama.ProducerMessage {
 
 func ConvertToElasticMessage(timber Timber) map[string]interface{} {
 	var message map[string]interface{}
-	err := json.Unmarshal(timber.Message, &message)
+	err := json.Unmarshal([]byte(timber.Message), &message)
 	if err != nil {
 		message["data"] = timber.Message
 	}

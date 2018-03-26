@@ -11,7 +11,7 @@ func TestConsoleDownstream(t *testing.T) {
 
 	timber := Timber{
 		Location: "some location",
-		Message:  []byte("some data"),
+		Message:  "some data",
 	}
 
 	buff := bytes.Buffer{}
