@@ -1,12 +1,13 @@
 hash: 008605205a34144703cf5067e2a05817c5bac964b7a0b4538849c7bc89a32653
-updated: 2018-03-26T16:40:56.409192+07:00
+updated: 2018-03-26T19:02:29.836641+07:00
 imports:
 - name: github.com/BaritoLog/go-boilerplate
-  version: 3cfe8b742565b667b107ff41e396243e266831b3
+  version: 0578fb19cbeb1c598e1cca197750d86dea442d09
   subpackages:
   - errkit
   - httpkit
   - httpkit/heartbeat
+  - strslice
   - testkit
   - timekit
 - name: github.com/bsm/sarama-cluster
