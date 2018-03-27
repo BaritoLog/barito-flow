@@ -55,14 +55,14 @@ func NewTimberFromRequest(req *http.Request) Timber {
 	}
 
 	if timber.Timestamp.IsZero() {
-		timber.Timestamp = time.Now()
+		timber.Timestamp = time.Now().UTC()
 		hints = append(hints, HintNoTimestamp)
 	}
 
 	timber.Location = httpkit.PathParameter(req.URL.Path, "produce")
 	timber.ReceiverTrail = ReceiverTrail{
 		URLPath:    req.URL.Path,
-		ReceivedAt: time.Now(),
+		ReceivedAt: time.Now().UTC(),
 		Hints:      hints,
 	}
 
@@ -77,11 +77,6 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 	var timber Timber
 	json.Unmarshal(message.Value, &timber)
 
-	timber.ForwarderTrail = ForwarderTrail{
-		ForwardedAt: time.Now(),
-		Hints:       hints,
-	}
-
 	if timber.Location == "" {
 		timber.Location = message.Topic
 		hints = append(hints, HintNoLocation)
@@ -93,8 +88,13 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 	}
 
 	if timber.Timestamp.IsZero() {
-		timber.Timestamp = time.Now()
+		timber.Timestamp = time.Now().UTC()
 		hints = append(hints, HintNoTimestamp)
+	}
+
+	timber.ForwarderTrail = ForwarderTrail{
+		ForwardedAt: time.Now().UTC(),
+		Hints:       hints,
 	}
 
 	return timber
