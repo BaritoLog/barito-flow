@@ -79,17 +79,22 @@ func TestNewTimberFromKafka(t *testing.T) {
 	FatalIf(t, len(trail.Hints) > 0, "Trail hints must be empty: %v", len(trail.Hints))
 }
 
-func TestNewTimberFromKafka_NoLocation(t *testing.T) {
+func TestNewTimberFromKafka_WrongKafkaFormat(t *testing.T) {
 	message := &sarama.ConsumerMessage{
 		Topic: "some-topic",
-		Value: []byte(`{"@message":"some-message", "@timestamp":"2009-11-10T23:00:00Z"}`),
+		Value: []byte(`invalid_message`),
 	}
 
 	timber := NewTimberFromKafkaMessage(message)
 	FatalIf(t, timber.Location != "some-topic", "Wrong location: %s", timber.Location)
+	FatalIf(t, timber.Message != "invalid_message", "Wrong message: %s", timber.Message)
+	FatalIf(t, timber.Timestamp.IsZero(), "Timber timestamp can't be zero")
 
 	trail := timber.ForwarderTrail
-	FatalIf(t, strslice.Contain(trail.Hints, HintNoLocation),
-		"Trail hints must contain '%s': %v", HintNoLocation, trail.Hints)
+	hints := []string{HintNoMessage, HintNoLocation, HintNoTimestamp}
+	for _, hint := range hints {
+		FatalIf(t, strslice.Contain(trail.Hints, hint),
+			"Trail hints must contain '%s': %v", hint, trail.Hints)
+	}
 
 }

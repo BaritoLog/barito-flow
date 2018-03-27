@@ -87,6 +87,16 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 		hints = append(hints, HintNoLocation)
 	}
 
+	if timber.Message == "" {
+		timber.Message = string(message.Value)
+		hints = append(hints, HintNoMessage)
+	}
+
+	if timber.Timestamp.IsZero() {
+		timber.Timestamp = time.Now()
+		hints = append(hints, HintNoTimestamp)
+	}
+
 	return timber
 }
 
