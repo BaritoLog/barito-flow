@@ -83,7 +83,7 @@ func TestNewTimberFromKafka_InvalidMessage(t *testing.T) {
 	trail := timber.ForwarderTrail
 	hints := []string{HintNoMessage, HintNoLocation, HintNoTimestamp}
 	for _, hint := range hints {
-		FatalIf(t, strslice.Contain(trail.Hints, hint),
+		FatalIf(t, !strslice.Contain(trail.Hints, hint),
 			"Trail hints must contain '%s': %v", hint, trail.Hints)
 	}
 }
