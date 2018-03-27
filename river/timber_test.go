@@ -1,6 +1,7 @@
 package river
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
@@ -85,5 +86,19 @@ func TestNewTimberFromKafka_InvalidMessage(t *testing.T) {
 		FatalIf(t, strslice.Contain(trail.Hints, hint),
 			"Trail hints must contain '%s': %v", hint, trail.Hints)
 	}
+}
 
+func TestConvertToKafkaMessage(t *testing.T) {
+	timber := Timber{
+		Location:  "some-location",
+		Message:   "some-message",
+		Timestamp: timekit.UTC("2018-03-10T23:00:00Z"),
+	}
+
+	message := ConvertToKafkaMessage(timber)
+	FatalIf(t, message.Topic != timber.Location, "%s != %s", message.Topic, timber.Location)
+
+	get, _ := message.Value.Encode()
+	expected, _ := json.Marshal(timber)
+	FatalIf(t, string(get) != string(expected), "Wrong message value")
 }
