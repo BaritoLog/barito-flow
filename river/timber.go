@@ -109,13 +109,3 @@ func ConvertToKafkaMessage(timber Timber) *sarama.ProducerMessage {
 		Value: sarama.ByteEncoder(b),
 	}
 }
-
-func ConvertToElasticMessage(timber Timber) map[string]interface{} {
-	var message map[string]interface{}
-	err := json.Unmarshal([]byte(timber.Message), &message)
-	if err != nil {
-		message["data"] = timber.Message
-	}
-
-	return message
-}
