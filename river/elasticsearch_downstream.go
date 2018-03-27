@@ -2,10 +2,10 @@ package river
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/BaritoLog/barito-flow/es"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"gopkg.in/olivere/elastic.v6"
 )
@@ -64,47 +64,41 @@ func (e *ElasticsearchDownstream) createIndexIfMissing(indexName string) bool {
 
 	if !exists {
 
-		var raw string = fmt.Sprintf(`{
-		  "template" : "%s-*",
-		  "version" : 60001,
-		  "settings" : {
-		    "index.refresh_interval" : "5s"
-		  },
-		  "mappings" : {
-		    "_default_" : {
-		      "dynamic_templates" : [ {
-		        "message_field" : {
-		          "path_match" : "message",
-		          "match_mapping_type" : "string",
-		          "mapping" : {
-		            "type" : "text",
-		            "norms" : false
-		          }
-		        }
-		      }, {
-		        "string_fields" : {
-		          "match" : "*",
-		          "match_mapping_type" : "string",
-		          "mapping" : {
-		            "type" : "text", "norms" : false,
-		            "fields" : {
-		              "keyword" : { "type": "keyword", "ignore_above": 256 }
-		            }
-		          }
-		        }
-		      } ],
-		      "properties" : {
-		        "@timestamp": { "type": "date"},
-		        "@version": { "type": "keyword"}
-		      }
-		    }
-		  }
-		}`, INDEX_PREFIX)
+		index := es.NewIndex()
+		index.Template = fmt.Sprintf("%s-*", INDEX_PREFIX)
+		index.Version = 60001
 
-		var indexMapping map[string]interface{}
-		json.Unmarshal([]byte(raw), &indexMapping)
+		// setting
+		index.AddSetting("index.refresh_interval", "5s")
 
-		e.client.CreateIndex(indexName).BodyJson(indexMapping).Do(e.ctx)
+		// mapping
+		index.Doc = es.NewMappings()
+		index.Doc.AddDynamicTemplate("message_field", es.MatchConditions{
+			PathMatch:        "message",
+			MatchMappingType: "string",
+			Mapping: es.MatchMapping{
+				Type:  "text",
+				Norms: false,
+			},
+		})
+		index.Doc.AddDynamicTemplate("string_fields", es.MatchConditions{
+			Match:            "*",
+			MatchMappingType: "string",
+			Mapping: es.MatchMapping{
+				Type:  "text",
+				Norms: false,
+				Fields: map[string]es.Field{
+					"keyword": es.Field{
+						Type:        "text",
+						IgnoreAbove: 256,
+					},
+				},
+			},
+		})
+		index.Doc.AddPropertyWithType("@timestamp", "date")
+		index.Doc.AddPropertyWithType("@version", "keyword")
+
+		e.client.CreateIndex(indexName).BodyJson(index).Do(e.ctx)
 
 		return true
 	}
