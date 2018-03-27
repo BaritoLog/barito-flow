@@ -31,36 +31,25 @@ func TestNewTimberFromRequest(t *testing.T) {
 
 }
 
-func TestNewTimberFromRequest_NoMessage(t *testing.T) {
+func TestNewTimberFromRequest_InvalidRequest(t *testing.T) {
 
 	url := "/str/18/st/1/fw/1/cl/10/produce/kafka-dummy-topic"
-	body := strings.NewReader(`{"hello":"world", "@timestamp":"2009-11-10T23:00:00Z"}`)
+	body := strings.NewReader(`invalid_request`)
 
 	req, err := http.NewRequest("POST", url, body)
 	FatalIfError(t, err)
 
 	timber := NewTimberFromRequest(req)
-	FatalIf(t, timber.Message != `{"hello":"world", "@timestamp":"2009-11-10T23:00:00Z"}`,
+	FatalIf(t, timber.Message != `invalid_request`,
 		"Wrong timber message: %s", timber.Message)
 
 	trail := timber.ReceiverTrail
-	FatalIf(t, !strslice.Contain(trail.Hints, HintNoMessage),
-		"Trails warning must contain '%s': %v", HintNoMessage, trail.Hints)
-}
+	hints := []string{HintNoMessage, HintNoTimestamp}
+	for _, hint := range hints {
+		FatalIf(t, !strslice.Contain(trail.Hints, hint),
+			"Trails warning must contain '%s': %v", hint, trail.Hints)
+	}
 
-func TestNewTimberFromRequest_NoTimestamp(t *testing.T) {
-	url := "/str/18/st/1/fw/1/cl/10/produce/kafka-dummy-topic"
-	body := strings.NewReader(`{"@message":"hello world"`)
-
-	req, err := http.NewRequest("POST", url, body)
-	FatalIfError(t, err)
-
-	timber := NewTimberFromRequest(req)
-
-	trail := timber.ReceiverTrail
-	FatalIf(t, trail.ReceivedAt.IsZero(), "Trail received at must be set")
-	FatalIf(t, !strslice.Contain(trail.Hints, HintNoTimestamp),
-		"Trails warning must contain '%s': %v", HintNoTimestamp, trail.Hints)
 }
 
 func TestNewTimberFromKafka(t *testing.T) {
@@ -79,7 +68,7 @@ func TestNewTimberFromKafka(t *testing.T) {
 	FatalIf(t, len(trail.Hints) > 0, "Trail hints must be empty: %v", len(trail.Hints))
 }
 
-func TestNewTimberFromKafka_WrongKafkaFormat(t *testing.T) {
+func TestNewTimberFromKafka_InvalidMessage(t *testing.T) {
 	message := &sarama.ConsumerMessage{
 		Topic: "some-topic",
 		Value: []byte(`invalid_message`),
