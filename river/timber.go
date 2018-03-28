@@ -21,22 +21,22 @@ type Timber struct {
 	Location       string         `json:"location"`
 	Tag            string         `json:"tag"`
 	Message        string         `json:"@message"`
-	Timestamp      time.Time      `json:"@timestamp"`
+	Timestamp      string         `json:"@timestamp"`
 	ReceiverTrail  ReceiverTrail  `json:"barito_receiver_trail"`
 	ForwarderTrail ForwarderTrail `json:"barito_forwarder_trail"`
 }
 
 // ReceiverTrail
 type ReceiverTrail struct {
-	URLPath    string    `json:"url_path"`
-	ReceivedAt time.Time `json:"received_at"`
-	Hints      []string  `json:"hints"`
+	URLPath    string   `json:"url_path"`
+	ReceivedAt string   `json:"received_at"`
+	Hints      []string `json:"hints"`
 }
 
 // ForwarderTrail
 type ForwarderTrail struct {
-	ForwardedAt time.Time `json:"forwarded_at"`
-	Hints       []string  `json:"hints"`
+	ForwardedAt string   `json:"forwarded_at"`
+	Hints       []string `json:"hints"`
 }
 
 // NewTimberFromRequest create timber instance from http request
@@ -54,15 +54,15 @@ func NewTimberFromRequest(req *http.Request) Timber {
 		hints = append(hints, HintNoMessage)
 	}
 
-	if timber.Timestamp.IsZero() {
-		timber.Timestamp = time.Now().UTC()
+	if timber.Timestamp == "" {
+		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
 		hints = append(hints, HintNoTimestamp)
 	}
 
 	timber.Location = httpkit.PathParameter(req.URL.Path, "produce")
 	timber.ReceiverTrail = ReceiverTrail{
 		URLPath:    req.URL.Path,
-		ReceivedAt: time.Now().UTC(),
+		ReceivedAt: time.Now().UTC().Format(time.RFC3339),
 		Hints:      hints,
 	}
 
@@ -87,13 +87,13 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 		hints = append(hints, HintNoMessage)
 	}
 
-	if timber.Timestamp.IsZero() {
-		timber.Timestamp = time.Now().UTC()
+	if timber.Timestamp == "" {
+		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
 		hints = append(hints, HintNoTimestamp)
 	}
 
 	timber.ForwarderTrail = ForwarderTrail{
-		ForwardedAt: time.Now().UTC(),
+		ForwardedAt: time.Now().UTC().Format(time.RFC3339),
 		Hints:       hints,
 	}
 
