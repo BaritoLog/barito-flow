@@ -29,6 +29,6 @@ deploy:
   file:
     - baritoflow
   on:
-    tags: true
+    tags: false
       
       
