@@ -18,20 +18,17 @@ install:
 
 script:
   - go test ./...
-  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="barito-flow.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
+  # - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="barito-flow.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
+  - go build baritoflow
   - ls # debug purpose
 
 deploy:
   provider: releases
+  skip_cleanup: true
   api_key: $GITHUB_TOKEN
   file:
-    - barito-flow.windows.amd64.exe
-    - barito-flow.darwin.amd64
-    - barito-flow.linux.amd64
-  skip_cleanup: true
+    - baritoflow
   on:
-    repo: BaritoLog/barito-flow
     tags: true
-    condition: $LATEST = true
       
       
