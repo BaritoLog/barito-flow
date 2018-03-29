@@ -1,4 +1,5 @@
-# Barito Flow
+# Barito Flow 
+![alt](https://travis-ci.org/BaritoLog/barito-flow.svg?branch=master)
 
 Building flow of Barito river with provide kafka reciever or log forwarder 
 
