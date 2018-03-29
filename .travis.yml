@@ -13,3 +13,9 @@ notifications:
 script:
   - go test ./...
   - go build
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: barito-flow
+  skip_cleanup: true
