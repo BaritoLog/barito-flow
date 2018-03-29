@@ -19,7 +19,7 @@ install:
 script:
   - go test ./...
   # - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="barito-flow.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
-  - go build baritoflow
+  - go build -o baritoflow
   - ls # debug purpose
 
 deploy:
