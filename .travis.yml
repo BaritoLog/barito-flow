@@ -10,14 +10,28 @@ branches:
 notifications:
   email: false
 
+before_install:
+  - go get github.com/mitchellh/gox
+
+install:
+  - # skip
+
 script:
   - go test ./...
-  - go build
+  - if [ "${LATEST}" = "true" ]; then gox -os="linux darwin windows" -arch="amd64" -output="barito-flow.." -ldflags "-X main.Rev=`git rev-parse --short HEAD`" -verbose ./...; fi
+  - ls # debug purpose
 
 deploy:
   provider: releases
   api_key: $GITHUB_TOKEN
-  file: barito-flow
+  file:
+    - barito-flow.windows.amd64.exe
+    - barito-flow.darwin.amd64
+    - barito-flow.linux.amd64
   skip_cleanup: true
   on:
-      tags: true
+    repo: BaritoLog/barito-flow
+    tags: true
+    condition: $LATEST = true
+      
+      
