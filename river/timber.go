@@ -2,6 +2,7 @@ package river
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -22,8 +23,16 @@ type Timber struct {
 	Tag            string         `json:"tag"`
 	Message        string         `json:"@message"`
 	Timestamp      string         `json:"@timestamp"`
-	ReceiverTrail  ReceiverTrail  `json:"barito_receiver_trail"`
-	ForwarderTrail ForwarderTrail `json:"barito_forwarder_trail"`
+	ClientTrail    ClientTrail    `json:"client_trail"`
+	ReceiverTrail  ReceiverTrail  `json:"receiver_trail"`
+	ForwarderTrail ForwarderTrail `json:"forwarder_trail"`
+}
+
+// ClientTrail
+type ClientTrail struct {
+	IsK8s  bool     `json:"is_k8s"`
+	SentAt string   `json:"sent_at"`
+	Hints  []string `json:"hints"`
 }
 
 // ReceiverTrail
