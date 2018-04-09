@@ -26,6 +26,5 @@ deploy:
   file:
     - barito-flow-linux
     - barito-flow-darwin
-
-      
-      
+  on:
+    tags: true
