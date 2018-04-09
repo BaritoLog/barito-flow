@@ -28,3 +28,4 @@ deploy:
     - barito-flow-darwin
   on:
     tags: true
+    repo: BaritoLog/barito-flow
