@@ -2,10 +2,6 @@ language: go
 
 go:
   - 1.9
-  
-branches:
-  only:
-    - master
 
 notifications:
   email: false
@@ -27,6 +23,6 @@ deploy:
     - barito-flow-linux
     - barito-flow-darwin
   on:
-    tags: false
+    tags: true
     repo: BaritoLog/barito-flow
     all_branches: true
