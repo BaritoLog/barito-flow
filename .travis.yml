@@ -27,6 +27,6 @@ deploy:
     - barito-flow-linux
     - barito-flow-darwin
   on:
-    tags: true
+    tags: false
     repo: BaritoLog/barito-flow
     all_branches: true
