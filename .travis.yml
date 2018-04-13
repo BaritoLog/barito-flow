@@ -11,7 +11,7 @@ install:
 
 script:
   - go test ./...
-  - GOOS=linux GOARCH=arm go build -o barito-flow-linux
+  - GOOS=linux GOARCH=amd64 go build -o barito-flow-linux
   - GOOS=darwin GOARCH=amd64 go build -o barito-flow-darwin
   - ls # debug purpose
 
