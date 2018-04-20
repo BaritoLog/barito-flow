@@ -3,7 +3,7 @@ import:
 - package: github.com/BaritoLog/go-boilerplate
   subpackages:
   - errkit
-  - httpkit/heartbeat
+  - httpkit
 - package: github.com/Shopify/sarama
 - package: github.com/bsm/sarama-cluster
 - package: github.com/gorilla/mux
