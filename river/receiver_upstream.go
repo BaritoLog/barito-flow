@@ -4,8 +4,6 @@ import (
 	"net/http"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
-	"github.com/BaritoLog/go-boilerplate/httpkit/heartbeat"
-	"github.com/gorilla/mux"
 )
 
 type receiverUpstream struct {
@@ -38,7 +36,7 @@ func NewReceiverUpstream(v interface{}) (Upstream, error) {
 func (u *receiverUpstream) StartTransport() {
 	server := &http.Server{
 		Addr:    u.addr,
-		Handler: u.router(),
+		Handler: u,
 	}
 
 	u.errCh <- server.ListenAndServe()
@@ -56,28 +54,22 @@ func (u *receiverUpstream) ErrorChannel() chan error {
 	return u.errCh
 }
 
-func (u *receiverUpstream) router() (router *mux.Router) {
-	router = mux.NewRouter()
-	router.HandleFunc(
-		"/str/{stream_id}/st/{store_id}/fw/{forwarder_id}/cl/{client_id}/produce/{topic}",
-		u.produceHandler,
-	).Methods("POST")
-	router.HandleFunc("/check-health", heartbeat.Handler)
+func (u *receiverUpstream) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 
-	return
-}
+	// appSecret := req.Header.Get("Application-Secret")
+	//
+	// if appSecret != u.appSecret {
+	// 	http.Error(writer, "Application secret is not valid", http.StatusUnauthorized)
+	// 	return
+	// }
 
-func (u *receiverUpstream) produceHandler(writer http.ResponseWriter, req *http.Request) {
-
-	appSecret := req.Header.Get("Application-Secret")
-
-	if appSecret != u.appSecret {
-		http.Error(writer, "Application secret is not valid", http.StatusUnauthorized)
-		return
-	}
-
-	u.timberCh <- NewTimberFromRequest(req)
+	go u.SendTimber(req)
 
 	writer.WriteHeader(http.StatusOK)
+
+}
+
+func (u *receiverUpstream) SendTimber(req *http.Request) {
+	u.timberCh <- NewTimberFromRequest(req)
 
 }
