@@ -58,21 +58,21 @@ func NewTimberFromRequest(req *http.Request) Timber {
 	json.Unmarshal(body, &timber)
 
 	if timber.Message == "" {
-		timber.Message = string(body)
+		timber.SetMessage(string(body))
 		hints = append(hints, HintNoMessage)
 	}
 
 	if timber.Timestamp == "" {
-		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+		timber.SetTimestamp(time.Now().UTC().Format(time.RFC3339))
 		hints = append(hints, HintNoTimestamp)
 	}
 
-	timber.Location = httpkit.PathParameter(req.URL.Path, "produce")
-	timber.ReceiverTrail = ReceiverTrail{
+	timber.SetLocation(httpkit.PathParameter(req.URL.Path, "produce"))
+	timber.SetReceiverTrail(ReceiverTrail{
 		URLPath:    req.URL.Path,
 		ReceivedAt: time.Now().UTC().Format(time.RFC3339),
 		Hints:      hints,
-	}
+	})
 
 	return timber
 }
@@ -86,24 +86,24 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 	json.Unmarshal(message.Value, &timber)
 
 	if timber.Location == "" {
-		timber.Location = message.Topic
+		timber.SetLocation(message.Topic)
 		hints = append(hints, HintNoLocation)
 	}
 
 	if timber.Message == "" {
-		timber.Message = string(message.Value)
+		timber.SetMessage(string(message.Value))
 		hints = append(hints, HintNoMessage)
 	}
 
 	if timber.Timestamp == "" {
-		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+		timber.SetTimestamp(time.Now().UTC().Format(time.RFC3339))
 		hints = append(hints, HintNoTimestamp)
 	}
 
-	timber.ForwarderTrail = ForwarderTrail{
+	timber.SetForwarderTrail(ForwarderTrail{
 		ForwardedAt: time.Now().UTC().Format(time.RFC3339),
 		Hints:       hints,
-	}
+	})
 
 	return timber
 }
@@ -116,4 +116,29 @@ func ConvertToKafkaMessage(timber Timber) *sarama.ProducerMessage {
 		Topic: timber.Location,
 		Value: sarama.ByteEncoder(b),
 	}
+}
+
+func (t *Timber) SetLocation(location string) {
+	// TODO: `json:"location"`
+	t.Location = location
+}
+
+func (t *Timber) SetMessage(message string) {
+	// TODO: `json:"@message"`
+	t.Message = message
+}
+
+func (t *Timber) SetTimestamp(timestamp string) {
+	// TODO: `json:"@timestamp"`
+	t.Timestamp = timestamp
+}
+
+func (t *Timber) SetReceiverTrail(receiverTrail ReceiverTrail) {
+	// TODO: `json:"receiver_trail"`
+	t.ReceiverTrail = receiverTrail
+}
+
+func (t *Timber) SetForwarderTrail(forwarderTrail ForwarderTrail) {
+	// TODO: `json:"forwarder_trail"`
+	t.ForwarderTrail = forwarderTrail
 }
