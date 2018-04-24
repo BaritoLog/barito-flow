@@ -72,6 +72,6 @@ func (d *RtailDownstream) tailHandler(writer http.ResponseWriter, req *http.Requ
 }
 
 func (d *RtailDownstream) Store(timber Timber) (err error) {
-	d.logs <- []byte(timber.Message)
+	d.logs <- []byte(timber.Message())
 	return
 }

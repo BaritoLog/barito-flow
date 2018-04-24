@@ -50,7 +50,7 @@ func NewElasticsearchDownstream(v interface{}) (Downstream, error) {
 func (e *ElasticsearchDownstream) Store(timber Timber) (err error) {
 
 	indexName := fmt.Sprintf("%s-%s-%s",
-		INDEX_PREFIX, timber.Location, time.Now().Format("2006.01.02"))
+		INDEX_PREFIX, timber.Location(), time.Now().Format("2006.01.02"))
 
 	e.createIndexIfMissing(indexName)
 	err = e.send(indexName, MESSAGE_TYPE, timber)
@@ -108,7 +108,6 @@ func (e *ElasticsearchDownstream) createIndexIfMissing(indexName string) bool {
 }
 
 func (e *ElasticsearchDownstream) send(indexName, typ string, timber Timber) error {
-
 
 	_, err := e.client.Index().Index(indexName).Type(typ).BodyJson(timber).Do(e.ctx)
 

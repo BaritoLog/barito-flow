@@ -20,11 +20,11 @@ func TestNewTimberFromRequest(t *testing.T) {
 	FatalIfError(t, err)
 
 	timber := NewTimberFromRequest(req)
-	FatalIf(t, timber.Location != "kafka-dummy-topic", "Wrong timber location: %s", timber.Location)
-	FatalIf(t, timber.Message != "hello world", "Wrong timber message: %s", timber.Message)
-	FatalIf(t, timber.Timestamp != "2009-11-10T23:00:00Z", "Wrong timestamp: %v", timber.Timestamp)
+	FatalIf(t, timber.Location() != "kafka-dummy-topic", "Wrong timber location: %s", timber.Location)
+	FatalIf(t, timber.Message() != "hello world", "Wrong timber message: %s", timber.Message)
+	FatalIf(t, timber.Timestamp() != "2009-11-10T23:00:00Z", "Wrong timestamp: %v", timber.Timestamp)
 
-	trail := timber.ReceiverTrail
+	trail := timber.ReceiverTrail()
 	FatalIf(t, trail.URLPath != url, "Wrong trail URL Path: %s", trail.URLPath)
 	FatalIf(t, trail.ReceivedAt == "", "Trail received at must be generated")
 	FatalIf(t, len(trail.Hints) > 0, "Trail hints must be empty: %v", len(trail.Hints))
@@ -40,10 +40,10 @@ func TestNewTimberFromRequest_InvalidRequest(t *testing.T) {
 	FatalIfError(t, err)
 
 	timber := NewTimberFromRequest(req)
-	FatalIf(t, timber.Message != `invalid_request`,
-		"Wrong timber message: %s", timber.Message)
+	FatalIf(t, timber.Message() != `invalid_request`,
+		"Wrong timber message: %s", timber.Message())
 
-	trail := timber.ReceiverTrail
+	trail := timber.ReceiverTrail()
 	hints := []string{HintNoMessage, HintNoTimestamp}
 	for _, hint := range hints {
 		FatalIf(t, !strslice.Contain(trail.Hints, hint),
@@ -60,11 +60,11 @@ func TestNewTimberFromKafka(t *testing.T) {
 	}
 
 	timber := NewTimberFromKafkaMessage(message)
-	FatalIf(t, timber.Location != "some-location", "Wrong location: %s", timber.Location)
-	FatalIf(t, timber.Message != "some-message", "Wrong message: %s", timber.Message)
-	FatalIf(t, timber.Timestamp != "2009-11-10T23:00:00Z", "Wrong message: %v", timber.Timestamp)
+	FatalIf(t, timber.Location() != "some-location", "Wrong location: %s", timber.Location)
+	FatalIf(t, timber.Message() != "some-message", "Wrong message: %s", timber.Message)
+	FatalIf(t, timber.Timestamp() != "2009-11-10T23:00:00Z", "Wrong message: %v", timber.Timestamp)
 
-	trail := timber.ForwarderTrail
+	trail := timber.ForwarderTrail()
 	FatalIf(t, len(trail.Hints) > 0, "Trail hints must be empty: %v", len(trail.Hints))
 }
 
@@ -75,11 +75,11 @@ func TestNewTimberFromKafka_InvalidMessage(t *testing.T) {
 	}
 
 	timber := NewTimberFromKafkaMessage(message)
-	FatalIf(t, timber.Location != "some-topic", "Wrong location: %s", timber.Location)
-	FatalIf(t, timber.Message != "invalid_message", "Wrong message: %s", timber.Message)
-	FatalIf(t, timber.Timestamp == "", "Timber timestamp can't be emtpy")
+	FatalIf(t, timber.Location() != "some-topic", "Wrong location: %s", timber.Location)
+	FatalIf(t, timber.Message() != "invalid_message", "Wrong message: %s", timber.Message)
+	FatalIf(t, timber.Timestamp() == "", "Timber timestamp can't be emtpy")
 
-	trail := timber.ForwarderTrail
+	trail := timber.ForwarderTrail()
 	hints := []string{HintNoMessage, HintNoLocation, HintNoTimestamp}
 	for _, hint := range hints {
 		FatalIf(t, !strslice.Contain(trail.Hints, hint),
@@ -88,14 +88,13 @@ func TestNewTimberFromKafka_InvalidMessage(t *testing.T) {
 }
 
 func TestConvertToKafkaMessage(t *testing.T) {
-	timber := Timber{
-		Location:  "some-location",
-		Message:   "some-message",
-		Timestamp: "2018-03-10T23:00:00Z",
-	}
+	timber := Timber{}
+	timber.SetLocation("some-location")
+	timber.SetMessage("some-message")
+	timber.SetTimestamp("2018-03-10T23:00:00Z")
 
 	message := ConvertToKafkaMessage(timber)
-	FatalIf(t, message.Topic != timber.Location, "%s != %s", message.Topic, timber.Location)
+	FatalIf(t, message.Topic != timber.Location(), "%s != %s", message.Topic, timber.Location())
 
 	get, _ := message.Value.Encode()
 	expected, _ := json.Marshal(timber)

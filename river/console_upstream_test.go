@@ -16,8 +16,8 @@ func TestConsoleUpstream(t *testing.T) {
 	timekit.Sleep("1ms")
 
 	timber := <-upstream.TimberChannel()
-	loc := timber.Location
-	data := string(timber.Message)
+	loc := timber.Location()
+	data := string(timber.Message())
 
 	FatalIf(t, loc != "some location", "wrong location: %s", loc)
 	FatalIf(t, data != "some input", "wrong data: %s", data)

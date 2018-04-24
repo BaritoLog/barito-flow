@@ -33,9 +33,9 @@ func TestReceiverUpstream_ProduceHandler_Success(t *testing.T) {
 		errCh:    make(chan error),
 	}
 
-	timber := Timber{
-		Message: "some message",
-	}
+	timber := Timber{}
+	timber.SetMessage("some message")
+
 	b, _ := json.Marshal(timber)
 	req, _ := http.NewRequest("POST", "/topic", bytes.NewBuffer(b))
 	req.Header.Set("Content-Type", "application/json")
@@ -47,7 +47,7 @@ func TestReceiverUpstream_ProduceHandler_Success(t *testing.T) {
 	FatalIfWrongHttpCode(t, rr, 200)
 
 	got := <-upstream.TimberChannel()
-	FatalIf(t, got.Message != "some message", "Got wrong message: %s", got.Message)
+	FatalIf(t, got.Message() != "some message", "Got wrong message: %s", got.Message)
 }
 
 func TestReceiverUpstream_SetErrorChannel(t *testing.T) {

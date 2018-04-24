@@ -40,10 +40,11 @@ func (u *consoleUpstream) StartTransport() {
 			data = chunks[1]
 		}
 
-		u.timberCh <- Timber{
-			Location: location,
-			Message:  data,
-		}
+		timber := Timber{}
+		timber.SetLocation(location)
+		timber.SetMessage(data)
+
+		u.timberCh <- timber
 		time.Sleep(u.interval)
 	}
 }
