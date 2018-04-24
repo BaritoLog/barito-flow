@@ -74,7 +74,7 @@ func (e *ElasticsearchDownstream) createIndexIfMissing(indexName string) bool {
 		// mapping
 		index.Doc = es.NewMappings()
 		index.Doc.AddDynamicTemplate("message_field", es.MatchConditions{
-			PathMatch:        "message",
+			PathMatch:        "@message",
 			MatchMappingType: "string",
 			Mapping: es.MatchMapping{
 				Type:  "text",

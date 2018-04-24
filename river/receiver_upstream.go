@@ -63,7 +63,7 @@ func (u *receiverUpstream) ServeHTTP(writer http.ResponseWriter, req *http.Reque
 	// 	return
 	// }
 
-	go u.SendTimber(req)
+	u.SendTimber(req)
 
 	writer.WriteHeader(http.StatusOK)
 
