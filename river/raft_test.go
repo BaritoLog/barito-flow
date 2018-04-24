@@ -39,6 +39,6 @@ func TestRaft_Drifting_ErrorWhenStore(t *testing.T) {
 	time.Sleep(wait)
 
 	err := <-raft.ErrorChannel()
-	FatalIfWrongError(t, err, "some error")
+	FatalIfWrongError(t, err, "Error when store timber: some error")
 
 }

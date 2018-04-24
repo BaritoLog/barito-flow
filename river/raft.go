@@ -1,5 +1,11 @@
 package river
 
+import "github.com/BaritoLog/go-boilerplate/errkit"
+
+const (
+	StoreError = errkit.Error("Error when store timber")
+)
+
 // Raft
 type Raft interface {
 	Start()
@@ -36,7 +42,7 @@ func (r *raft) start() {
 		case timber := <-timberCh:
 			err := r.to.Store(timber)
 			if err != nil {
-				r.errCh <- err
+				r.errCh <- errkit.Concat(StoreError, err)
 			}
 		}
 	}
