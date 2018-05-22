@@ -88,13 +88,14 @@ func TestNewTimberFromKafka_InvalidMessage(t *testing.T) {
 }
 
 func TestConvertToKafkaMessage(t *testing.T) {
+	topic := "some-topic"
+
 	timber := Timber{}
-	timber.SetLocation("some-location")
 	timber.SetMessage("some-message")
 	timber.SetTimestamp("2018-03-10T23:00:00Z")
 
-	message := ConvertToKafkaMessage(timber)
-	FatalIf(t, message.Topic != timber.Location(), "%s != %s", message.Topic, timber.Location())
+	message := ConvertToKafkaMessage(timber, topic)
+	FatalIf(t, message.Topic != topic, "%s != %s", message.Topic, topic)
 
 	get, _ := message.Value.Encode()
 	expected, _ := json.Marshal(timber)

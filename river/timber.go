@@ -106,11 +106,11 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 }
 
 // ConvertToKafkaMessage will convert timber to sarama producer message for kafka
-func ConvertToKafkaMessage(timber Timber) *sarama.ProducerMessage {
+func ConvertToKafkaMessage(timber Timber, topic string) *sarama.ProducerMessage {
 	b, _ := json.Marshal(timber)
 
 	return &sarama.ProducerMessage{
-		Topic: timber.Location(),
+		Topic: topic,
 		Value: sarama.ByteEncoder(b),
 	}
 }

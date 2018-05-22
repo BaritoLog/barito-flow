@@ -32,18 +32,6 @@ func main() {
 				Usage:     "start Log Forwarder",
 				Action:    cmds.Forwarder,
 			},
-			{
-				Name:      "start",
-				ShortName: "s",
-				Usage:     "start barito flow",
-				Action:    cmds.Start,
-			},
-			{
-				Name:      "rtail",
-				ShortName: "rtail",
-				Usage:     "start barito rtail",
-				Action:    cmds.Rtail,
-			},
 		},
 	}
 
