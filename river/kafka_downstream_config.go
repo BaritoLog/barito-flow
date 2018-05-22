@@ -4,6 +4,7 @@ import "github.com/Shopify/sarama"
 
 type KafkaDownstreamConfig struct {
 	Brokers          []string
+	Topic            string
 	ProducerRetryMax int
 }
 

@@ -12,6 +12,7 @@ import (
 const (
 	EnvAddress                   = "BARITO_RECEIVER_ADDRESS"
 	EnvKafkaBrokers              = "BARITO_RECEIVER_KAFKA_BROKERS"
+	EnvKafkaTopic                = "BARITO_RECEIVER_KAFKA_TOPIC"
 	EnvProducerMaxRetry          = "BARITO_RECEIVER_PRODUCER_MAX_RETRY"
 	EnvReceiverApplicationSecret = "BARITO_RECEIVER_APPLICATION_SECRET"
 )
@@ -19,6 +20,7 @@ const (
 type ReceiverConfig struct {
 	Address           string
 	KafkaBrokers      string
+	KafkaTopic        string
 	ProducerMaxRetry  int
 	ApplicationSecret string
 }
@@ -46,10 +48,16 @@ func NewReceiverConfigByEnv() (*ReceiverConfig, error) {
 		appSecret = "secret"
 	}
 
+	kafkaTopic := os.Getenv(EnvKafkaTopic)
+	if kafkaTopic == "" {
+		kafkaTopic = "barito-log"
+	}
+
 	config := &ReceiverConfig{
 		Address:           address,
 		ApplicationSecret: appSecret,
 		KafkaBrokers:      kafkaBrokers,
+		KafkaTopic:        kafkaTopic,
 		ProducerMaxRetry:  producerMaxRetry,
 	}
 
@@ -69,12 +77,14 @@ func (c ReceiverConfig) KafkaDownstream() (river.Downstream, error) {
 	return river.NewKafkaDownstream(river.KafkaDownstreamConfig{
 		Brokers:          strings.Split(c.KafkaBrokers, ","),
 		ProducerRetryMax: c.ProducerMaxRetry,
+		Topic:            c.KafkaTopic,
 	})
 }
 
 func (c ReceiverConfig) Info(log *logrus.Logger) {
 	log.Infof("%s=%s", EnvAddress, c.Address)
 	log.Infof("%s=%s", EnvKafkaBrokers, c.KafkaBrokers)
+	log.Infof("%s=%s", EnvKafkaTopic, c.KafkaTopic)
 	log.Infof("%s=%d", EnvProducerMaxRetry, c.ProducerMaxRetry)
 	log.Infof("%s=%s", EnvReceiverApplicationSecret, c.ApplicationSecret)
 }

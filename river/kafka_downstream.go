@@ -7,6 +7,7 @@ import (
 
 type KafkaDownstream struct {
 	producer sarama.SyncProducer
+	topic    string
 }
 
 func NewKafkaDownstream(v interface{}) (Downstream, error) {
@@ -22,12 +23,14 @@ func NewKafkaDownstream(v interface{}) (Downstream, error) {
 
 	kafkaDs := &KafkaDownstream{
 		producer: producer,
+		topic:    conf.Topic,
 	}
 
 	return kafkaDs, nil
 }
 
 func (d *KafkaDownstream) Store(timber Timber) (err error) {
+	timber.Location = d.topic
 	message := ConvertToKafkaMessage(timber)
 	_, _, err = d.producer.SendMessage(message)
 	return
