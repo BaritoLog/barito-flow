@@ -25,10 +25,10 @@ func Receiver(c *cli.Context) (err error) {
 		return
 	}
 
-	raft := river.NewRaft(receiver, kafka)
-	raft.Start()
+	transporter := river.NewTransporter(receiver, kafka)
+	transporter.Start()
 
-	errCh := raft.ErrorChannel()
+	errCh := transporter.ErrorChannel()
 
 	for {
 		select {

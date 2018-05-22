@@ -15,7 +15,7 @@ func Rtail(c *cli.Context) (err error) {
 		},
 		DownstreamName: "rtail",
 		DownstreamConfig: river.RtailDownstreamConfig{
-			Addr:	":8081",
+			Addr: ":8081",
 		},
 	}
 
@@ -29,10 +29,10 @@ func Rtail(c *cli.Context) (err error) {
 		return
 	}
 
-	raft := river.NewRaft(upstream, downstream)
-	raft.Start()
+	transporter := river.NewTransporter(upstream, downstream)
+	transporter.Start()
 
-	errCh := raft.ErrorChannel()
+	errCh := transporter.ErrorChannel()
 
 	for {
 		select {

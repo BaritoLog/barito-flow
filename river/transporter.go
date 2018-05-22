@@ -7,19 +7,19 @@ const (
 )
 
 // Raft
-type Raft interface {
+type Transporter interface {
 	Start()
 	ErrorChannel() (errCh chan error)
 }
 
-type raft struct {
+type transporter struct {
 	from  Upstream
 	to    Downstream
 	errCh chan error
 }
 
-func NewRaft(from Upstream, to Downstream) Raft {
-	return &raft{
+func NewTransporter(from Upstream, to Downstream) Transporter {
+	return &transporter{
 		from:  from,
 		to:    to,
 		errCh: make(chan error),
@@ -27,7 +27,7 @@ func NewRaft(from Upstream, to Downstream) Raft {
 }
 
 // Drifting
-func (r *raft) Start() {
+func (r *transporter) Start() {
 	r.from.SetErrorChannel(r.errCh)
 
 	go r.from.StartTransport()
@@ -35,7 +35,7 @@ func (r *raft) Start() {
 
 }
 
-func (r *raft) start() {
+func (r *transporter) start() {
 	timberCh := r.from.TimberChannel()
 	for {
 		select {
@@ -48,6 +48,6 @@ func (r *raft) start() {
 	}
 }
 
-func (r *raft) ErrorChannel() (errCh chan error) {
+func (r *transporter) ErrorChannel() (errCh chan error) {
 	return r.errCh
 }

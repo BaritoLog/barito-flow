@@ -2,8 +2,8 @@ package cmds
 
 import (
 	"github.com/BaritoLog/barito-flow/river"
-	"github.com/urfave/cli"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 func Forwarder(c *cli.Context) (err error) {
@@ -22,10 +22,10 @@ func Forwarder(c *cli.Context) (err error) {
 	if err != nil {
 		return
 	}
-	raft := river.NewRaft(kafka, elasticsearch)
-	raft.Start()
+	transporter := river.NewTransporter(kafka, elasticsearch)
+	transporter.Start()
 
-	errCh := raft.ErrorChannel()
+	errCh := transporter.ErrorChannel()
 
 	for {
 		select {

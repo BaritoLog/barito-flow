@@ -25,10 +25,10 @@ func Start(c *cli.Context) (err error) {
 		return
 	}
 
-	raft := river.NewRaft(upstream, downstream)
-	raft.Start()
+	transporter := river.NewTransporter(upstream, downstream)
+	transporter.Start()
 
-	errCh := raft.ErrorChannel()
+	errCh := transporter.ErrorChannel()
 
 	for {
 		select {

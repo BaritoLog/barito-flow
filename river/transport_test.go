@@ -17,8 +17,8 @@ func TestRaft(t *testing.T) {
 	from := NewConsoleUpstream(strings.NewReader("some location||some input\n"))
 	to := NewConsoleDownstream(buff)
 
-	raft := NewRaft(from, to)
-	raft.Start()
+	transporter := NewTransporter(from, to)
+	transporter.Start()
 
 	timekit.Sleep("1ms")
 
@@ -32,13 +32,13 @@ func TestRaft_Drifting_ErrorWhenStore(t *testing.T) {
 		ErrStore: errkit.Error("some error"),
 	}
 
-	raft := NewRaft(from, to)
-	raft.Start()
+	transporter := NewTransporter(from, to)
+	transporter.Start()
 
 	wait, _ := time.ParseDuration("1ms")
 	time.Sleep(wait)
 
-	err := <-raft.ErrorChannel()
+	err := <-transporter.ErrorChannel()
 	FatalIfWrongError(t, err, "Error when store timber: some error")
 
 }
