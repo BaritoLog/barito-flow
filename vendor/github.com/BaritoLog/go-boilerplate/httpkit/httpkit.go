@@ -1,6 +1,10 @@
 package httpkit
 
-import "strings"
+import (
+	"net/url"
+	"strconv"
+	"strings"
+)
 
 // PathParameter
 func PathParameter(path, key string) string {
@@ -15,4 +19,19 @@ func PathParameter(path, key string) string {
 	} else {
 		return s[:j]
 	}
+}
+
+func Host(rawurl string) (host string, port int) {
+	u, _ := url.Parse(rawurl)
+
+	host = u.Host
+	i := strings.Index(host, ":")
+	if i >= 0 {
+		host = host[0:i]
+	}
+
+	port, _ = strconv.Atoi(u.Port())
+
+	return
+
 }
