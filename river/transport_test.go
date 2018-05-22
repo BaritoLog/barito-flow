@@ -11,7 +11,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/timekit"
 )
 
-func TestRaft(t *testing.T) {
+func TestTransport(t *testing.T) {
 	buff := &bytes.Buffer{}
 
 	from := NewConsoleUpstream(strings.NewReader("some location||some input\n"))
@@ -25,7 +25,7 @@ func TestRaft(t *testing.T) {
 	FatalIf(t, buff.String() != "some location||some input\n", "wrong input")
 }
 
-func TestRaft_Drifting_ErrorWhenStore(t *testing.T) {
+func TestTransport_ErrorWhenStore(t *testing.T) {
 
 	from := NewConsoleUpstream(strings.NewReader("some location||some input"))
 	to := &DummyDownstream{
