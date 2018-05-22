@@ -17,15 +17,7 @@ const (
 )
 
 // Timber
-type Timber struct {
-	Location       string         `json:"location"`
-	Tag            string         `json:"tag"`
-	Message        string         `json:"@message"`
-	Timestamp      string         `json:"@timestamp"`
-	ClientTrail    ClientTrail    `json:"client_trail"`
-	ReceiverTrail  ReceiverTrail  `json:"receiver_trail"`
-	ForwarderTrail ForwarderTrail `json:"forwarder_trail"`
-}
+type Timber map[string]interface{}
 
 // ClientTrail
 type ClientTrail struct {
@@ -47,6 +39,11 @@ type ForwarderTrail struct {
 	Hints       []string `json:"hints"`
 }
 
+func NewTimber() Timber {
+	timber := make(map[string]interface{})
+	return timber
+}
+
 // NewTimberFromRequest create timber instance from http request
 func NewTimberFromRequest(req *http.Request) Timber {
 
@@ -54,25 +51,25 @@ func NewTimberFromRequest(req *http.Request) Timber {
 
 	body, _ := ioutil.ReadAll(req.Body)
 
-	var timber Timber
+	timber := NewTimber()
 	json.Unmarshal(body, &timber)
 
-	if timber.Message == "" {
-		timber.Message = string(body)
+	if timber.Message() == "" {
+		timber.SetMessage(string(body))
 		hints = append(hints, HintNoMessage)
 	}
 
-	if timber.Timestamp == "" {
-		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	if timber.Timestamp() == "" {
+		timber.SetTimestamp(time.Now().UTC().Format(time.RFC3339))
 		hints = append(hints, HintNoTimestamp)
 	}
 
-	timber.Location = httpkit.PathParameter(req.URL.Path, "produce")
-	timber.ReceiverTrail = ReceiverTrail{
+	timber.SetLocation(httpkit.PathParameter(req.URL.Path, "produce"))
+	timber.SetReceiverTrail(&ReceiverTrail{
 		URLPath:    req.URL.Path,
 		ReceivedAt: time.Now().UTC().Format(time.RFC3339),
 		Hints:      hints,
-	}
+	})
 
 	return timber
 }
@@ -82,28 +79,28 @@ func NewTimberFromKafkaMessage(message *sarama.ConsumerMessage) Timber {
 
 	var hints []string
 
-	var timber Timber
+	timber := NewTimber()
 	json.Unmarshal(message.Value, &timber)
 
-	if timber.Location == "" {
-		timber.Location = message.Topic
+	if timber.Location() == "" {
+		timber.SetLocation(message.Topic)
 		hints = append(hints, HintNoLocation)
 	}
 
-	if timber.Message == "" {
-		timber.Message = string(message.Value)
+	if timber.Message() == "" {
+		timber.SetMessage(string(message.Value))
 		hints = append(hints, HintNoMessage)
 	}
 
-	if timber.Timestamp == "" {
-		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	if timber.Timestamp() == "" {
+		timber.SetTimestamp(time.Now().UTC().Format(time.RFC3339))
 		hints = append(hints, HintNoTimestamp)
 	}
 
-	timber.ForwarderTrail = ForwarderTrail{
+	timber.SetForwarderTrail(&ForwarderTrail{
 		ForwardedAt: time.Now().UTC().Format(time.RFC3339),
 		Hints:       hints,
-	}
+	})
 
 	return timber
 }
@@ -113,7 +110,70 @@ func ConvertToKafkaMessage(timber Timber) *sarama.ProducerMessage {
 	b, _ := json.Marshal(timber)
 
 	return &sarama.ProducerMessage{
-		Topic: timber.Location,
+		Topic: timber.Location(),
 		Value: sarama.ByteEncoder(b),
 	}
+}
+
+func (t Timber) SetLocation(location string) {
+	t["location"] = location
+}
+
+func (t Timber) Location() (s string) {
+	v := t["location"]
+	if v != nil {
+		s = v.(string)
+	}
+	return
+}
+
+func (t Timber) SetMessage(message string) {
+	t["@message"] = message
+}
+
+func (t Timber) Message() (s string) {
+	v := t["@message"]
+	if v != nil {
+		s = v.(string)
+	}
+
+	return
+}
+
+func (t Timber) SetTimestamp(timestamp string) {
+	t["@timestamp"] = timestamp
+}
+
+func (t Timber) Timestamp() (s string) {
+	v := t["@timestamp"]
+	if v != nil {
+		s = v.(string)
+	}
+
+	return
+}
+
+func (t Timber) SetReceiverTrail(receiverTrail *ReceiverTrail) {
+	t["receiver_trail"] = receiverTrail
+}
+
+func (t Timber) ReceiverTrail() (trail *ReceiverTrail) {
+	v := t["receiver_trail"]
+	if v != nil {
+		trail = v.(*ReceiverTrail)
+	}
+
+	return
+}
+
+func (t Timber) SetForwarderTrail(forwarderTrail *ForwarderTrail) {
+	t["forwarder_trail"] = forwarderTrail
+}
+
+func (t Timber) ForwarderTrail() (trail *ForwarderTrail) {
+	v := t["forwarder_trail"]
+	if v != nil {
+		trail = v.(*ForwarderTrail)
+	}
+	return
 }

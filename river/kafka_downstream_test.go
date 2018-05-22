@@ -14,10 +14,11 @@ func TestDownstreamKafka(t *testing.T) {
 	producer.ExpectSendMessageAndSucceed()
 
 	ds := KafkaDownstream{producer: producer}
-	err := ds.Store(Timber{
-		Location: "location",
-		Message:  "some data",
-	})
+	timber := Timber{}
+	timber.SetLocation("location")
+	timber.SetMessage("some data")
+
+	err := ds.Store(timber)
 
 	FatalIfError(t, err)
 }

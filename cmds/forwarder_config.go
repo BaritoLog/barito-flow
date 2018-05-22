@@ -1,7 +1,6 @@
 package cmds
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -36,14 +35,12 @@ func NewForwarderConfigByEnv() (*ForwarderConfig, error) {
 
 	kafkaConsumerGroupId := os.Getenv(EnvForwarderKafkaConsumerGroupId)
 	if kafkaConsumerGroupId == "" {
-		err := fmt.Errorf("%s %s", EnvForwarderKafkaConsumerGroupId, "is empty")
-		return nil, err
+		kafkaConsumerGroupId = "barito-group"
 	}
 
 	kafkaConsumerTopic := os.Getenv(EnvForwarderKafkaConsumerTopic)
 	if kafkaConsumerTopic == "" {
-		err := fmt.Errorf("%s %s", EnvForwarderKafkaConsumerTopic, "is empty")
-		return nil, err
+		kafkaConsumerTopic = "some-topic"
 	}
 
 	elasticsearchUrl := os.Getenv(EnvForwarderElasticsearchUrl)

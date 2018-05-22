@@ -55,21 +55,12 @@ func (u *receiverUpstream) ErrorChannel() chan error {
 }
 
 func (u *receiverUpstream) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
-
-	// appSecret := req.Header.Get("Application-Secret")
-	//
-	// if appSecret != u.appSecret {
-	// 	http.Error(writer, "Application secret is not valid", http.StatusUnauthorized)
-	// 	return
-	// }
-
-	u.SendTimber(req)
+	timber := NewTimberFromRequest(req)
+	go u.SendTimber(timber)
 
 	writer.WriteHeader(http.StatusOK)
-
 }
 
-func (u *receiverUpstream) SendTimber(req *http.Request) {
-	u.timberCh <- NewTimberFromRequest(req)
-
+func (u *receiverUpstream) SendTimber(timber Timber) {
+	u.timberCh <- timber
 }

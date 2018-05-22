@@ -9,10 +9,9 @@ import (
 
 func TestConsoleDownstream(t *testing.T) {
 
-	timber := Timber{
-		Location: "some location",
-		Message:  "some data",
-	}
+	timber := Timber{}
+	timber.SetLocation("some location")
+	timber.SetMessage("some data")
 
 	buff := bytes.Buffer{}
 	downstream := NewConsoleDownstream(&buff)
