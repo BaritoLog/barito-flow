@@ -13,7 +13,7 @@ func TestDownstreamKafka(t *testing.T) {
 	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
 	producer.ExpectSendMessageAndSucceed()
 
-	ds := KafkaDownstream{producer: producer}
+	ds := KafkaDownstream{producer: producer, topic: "location"}
 	timber := Timber{}
 	timber.SetLocation("location")
 	timber.SetMessage("some data")

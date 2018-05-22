@@ -30,7 +30,7 @@ func NewKafkaDownstream(v interface{}) (Downstream, error) {
 }
 
 func (d *KafkaDownstream) Store(timber Timber) (err error) {
-	timber.Location = d.topic
+	timber.SetLocation(d.topic)
 	message := ConvertToKafkaMessage(timber)
 	_, _, err = d.producer.SendMessage(message)
 	return
