@@ -26,7 +26,7 @@ import (
 
 const (
 	// Version is the current version of Elastic.
-	Version = "6.1.21"
+	Version = "6.1.22"
 
 	// DefaultURL is the default endpoint of Elasticsearch on the local machine.
 	// It is used e.g. when initializing a new Client without a specific URL.
@@ -1735,6 +1735,24 @@ func (c *Client) SnapshotGetRepository(repositories ...string) *SnapshotGetRepos
 // SnapshotVerifyRepository verifies a snapshot repository.
 func (c *Client) SnapshotVerifyRepository(repository string) *SnapshotVerifyRepositoryService {
 	return NewSnapshotVerifyRepositoryService(c).Repository(repository)
+}
+
+// -- Scripting APIs --
+
+// GetScript reads a stored script in Elasticsearch.
+// Use PutScript for storing a script.
+func (c *Client) GetScript() *GetScriptService {
+	return NewGetScriptService(c)
+}
+
+// PutScript allows saving a stored script in Elasticsearch.
+func (c *Client) PutScript() *PutScriptService {
+	return NewPutScriptService(c)
+}
+
+// DeleteScript allows removing a stored script from Elasticsearch.
+func (c *Client) DeleteScript() *DeleteScriptService {
+	return NewDeleteScriptService(c)
 }
 
 // -- Helpers and shortcuts --

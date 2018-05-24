@@ -6,7 +6,8 @@ import (
 
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/Shopify/sarama"
-	"github.com/containous/traefik/log"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/urfave/cli"
 )
 
