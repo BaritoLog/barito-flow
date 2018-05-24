@@ -17,7 +17,7 @@ func (a *KafkaAgent) Start() (err error) {
 	go a.loopErrors()
 	go a.loopNotification()
 
-	go a.loopMain()
+	a.loopMain()
 	return
 }
 
