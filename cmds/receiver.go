@@ -1,10 +1,8 @@
 package cmds
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/BaritoLog/barito-flow/flow"
+	"github.com/BaritoLog/go-boilerplate/envkit"
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 
@@ -21,25 +19,10 @@ const (
 
 func Receiver(c *cli.Context) (err error) {
 
-	address := os.Getenv(EnvAddress)
-	if address == "" {
-		address = ":8080"
-	}
-
-	kafkaBrokers := os.Getenv(EnvKafkaBrokers)
-	if kafkaBrokers == "" {
-		kafkaBrokers = "localhost:9092"
-	}
-
-	producerMaxRetry, _ := strconv.Atoi(os.Getenv(EnvProducerMaxRetry))
-	if producerMaxRetry <= 0 {
-		producerMaxRetry = 10
-	}
-
-	kafkaTopic := os.Getenv(EnvKafkaTopic)
-	if kafkaTopic == "" {
-		kafkaTopic = "barito-log"
-	}
+	address := envkit.GetString(EnvAddress, ":8080")
+	kafkaBrokers := envkit.GetSlice(EnvKafkaBrokers, ",", []string{"localhost:9092"})
+	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
+	kafkaTopic := envkit.GetString(EnvKafkaTopic, "barito-log")
 
 	log.Infof("Start Receiver")
 	log.Infof("%s=%s", EnvAddress, address)
@@ -54,13 +37,15 @@ func Receiver(c *cli.Context) (err error) {
 	config.Producer.Return.Successes = true
 
 	// kafka producer
-	producer, err := sarama.NewSyncProducer([]string{kafkaBrokers}, config)
+	producer, err := sarama.NewSyncProducer(kafkaBrokers, config)
 	if err != nil {
 		return
 	}
 
-	storeman := flow.NewKafkaStoreman(producer, kafkaTopic)
-	agent := flow.HttpAgent{Address: address, Store: storeman.Store}
+	agent := flow.HttpAgent{
+		Address: address,
+		Store:   flow.NewKafkaStoreman(producer, kafkaTopic).Store,
+	}
 
 	return agent.Start()
 }

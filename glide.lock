@@ -1,9 +1,10 @@
 hash: 5ba2eb8cfa2ee42da0491cd6cf3ba8e0780c118e11105a274943de768a9d0ef5
-updated: 2018-05-24T11:41:37.945121+08:00
+updated: 2018-05-24T15:59:26.564562+08:00
 imports:
 - name: github.com/BaritoLog/go-boilerplate
-  version: 87386a2e8135fbc6ac10a2a47daf6da1fb6c8fc0
+  version: c51b194839c092829d89755c41219cdee314aec8
   subpackages:
+  - envkit
   - errkit
   - httpkit
   - strslice
