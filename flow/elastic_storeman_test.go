@@ -5,13 +5,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/BaritoLog/barito-flow/river"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/olivere/elastic"
 )
 
 func TestElasticStoreman_store_CreateIndexError(t *testing.T) {
-	timber := river.NewTimber()
+	timber := NewTimber()
 
 	ts := ElasticTestServer(http.StatusNotFound, http.StatusInternalServerError, http.StatusOK)
 	defer ts.Close()
@@ -29,7 +28,7 @@ func TestElasticStoreman_store_CreateIndexError(t *testing.T) {
 }
 
 func TestElasticStoreman_store_CreateindexSuccess(t *testing.T) {
-	timber := river.NewTimber()
+	timber := NewTimber()
 
 	ts := ElasticTestServer(http.StatusNotFound, http.StatusOK, http.StatusOK)
 	defer ts.Close()
@@ -47,7 +46,7 @@ func TestElasticStoreman_store_CreateindexSuccess(t *testing.T) {
 }
 
 func TestElasticStoreman_store_SaveError(t *testing.T) {
-	timber := river.NewTimber()
+	timber := NewTimber()
 
 	ts := ElasticTestServer(http.StatusOK, http.StatusOK, http.StatusBadRequest)
 	defer ts.Close()

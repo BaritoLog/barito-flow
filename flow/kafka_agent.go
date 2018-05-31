@@ -1,15 +1,14 @@
 package flow
 
 import (
-	"github.com/BaritoLog/barito-flow/river"
 	cluster "github.com/bsm/sarama-cluster"
 )
 
 type KafkaAgent struct {
 	Consumer       KafkaConsumer
-	Store          func(river.Timber) error
+	Store          func(Timber) error
 	OnError        func(error)
-	OnSuccess      func(river.Timber)
+	OnSuccess      func(Timber)
 	OnNotification func(*cluster.Notification)
 }
 
@@ -26,7 +25,7 @@ func (a *KafkaAgent) loopMain() {
 		select {
 		case message, ok := <-a.Consumer.Messages():
 			if ok {
-				timber := river.NewTimberFromKafkaMessage(message)
+				timber := NewTimberFromKafkaMessage(message)
 				err := a.Store(timber)
 				if err != nil {
 					a.fireError(err)
@@ -51,7 +50,7 @@ func (a *KafkaAgent) loopErrors() {
 	}
 }
 
-func (a *KafkaAgent) fireSuccess(timber river.Timber) {
+func (a *KafkaAgent) fireSuccess(timber Timber) {
 	if a.OnSuccess != nil {
 		a.OnSuccess(timber)
 	}

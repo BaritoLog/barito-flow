@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/es"
-	"github.com/BaritoLog/barito-flow/river"
 	"github.com/olivere/elastic"
 )
 
@@ -27,7 +26,7 @@ func NewElasticStoreman(client *elastic.Client) *ElasticStoreman {
 	}
 }
 
-func (e *ElasticStoreman) Store(timber river.Timber) (err error) {
+func (e *ElasticStoreman) Store(timber Timber) (err error) {
 
 	indexName := fmt.Sprintf("%s-%s-%s",
 		INDEX_PREFIX, timber.Location(), time.Now().Format("2006.01.02"))

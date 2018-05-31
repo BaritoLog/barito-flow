@@ -7,13 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/BaritoLog/barito-flow/river"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 )
 
 func TestHttpAgent_ServeHTTP(t *testing.T) {
 	agent := &HttpAgent{
-		Store: func(timber river.Timber) error {
+		Store: func(timber Timber) error {
 			return nil
 		},
 	}
@@ -28,7 +27,7 @@ func TestHttpAgent_ServeHTTP(t *testing.T) {
 
 func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
 	agent := &HttpAgent{
-		Store: func(timber river.Timber) error {
+		Store: func(timber Timber) error {
 			return fmt.Errorf("some error")
 		},
 	}
@@ -45,7 +44,7 @@ func TestHttpAgent_Start(t *testing.T) {
 
 	agent := &HttpAgent{
 		Address: ":65500",
-		Store: func(timber river.Timber) error {
+		Store: func(timber Timber) error {
 			return nil
 		},
 	}

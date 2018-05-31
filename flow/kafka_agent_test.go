@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/BaritoLog/barito-flow/river"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
@@ -25,7 +24,7 @@ func TestKafkaAgent(t *testing.T) {
 	}()
 	timekit.Sleep("1ms")
 
-	var gotTimber river.Timber
+	var gotTimber Timber
 	var gotNotification *cluster.Notification
 
 	agent := KafkaAgent{
@@ -34,10 +33,10 @@ func TestKafkaAgent(t *testing.T) {
 			notifications: notifications,
 			errors:        make(chan error),
 		},
-		Store: func(timber river.Timber) error {
+		Store: func(timber Timber) error {
 			return nil
 		},
-		OnSuccess: func(timber river.Timber) {
+		OnSuccess: func(timber Timber) {
 			gotTimber = timber
 		},
 		OnNotification: func(notification *cluster.Notification) {
@@ -68,7 +67,7 @@ func TestKafkaAgent_StoreError(t *testing.T) {
 			notifications: make(chan *cluster.Notification),
 			errors:        make(chan error),
 		},
-		Store: func(timber river.Timber) error {
+		Store: func(timber Timber) error {
 			return fmt.Errorf("expected store error")
 		},
 		OnError: func(err error) {
@@ -97,7 +96,7 @@ func TestKafkaAgent_KafkaError(t *testing.T) {
 			notifications: make(chan *cluster.Notification),
 			errors:        errors,
 		},
-		Store: func(timber river.Timber) error {
+		Store: func(timber Timber) error {
 			return nil
 		},
 		OnError: func(err error) {

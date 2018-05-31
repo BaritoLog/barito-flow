@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/BaritoLog/barito-flow/river"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
@@ -28,7 +27,7 @@ func TestKafkaStoreman_Store(t *testing.T) {
 	producer.ExpectSendMessageAndSucceed()
 
 	storeman := NewKafkaStoreman(producer, "some-topic")
-	err := storeman.Store(river.NewTimber())
+	err := storeman.Store(NewTimber())
 
 	FatalIfError(t, err)
 }
@@ -38,7 +37,7 @@ func TestKafkaStoreman_Store_ReturnError(t *testing.T) {
 	producer.ExpectSendMessageAndFail(fmt.Errorf("some-error"))
 
 	storeman := NewKafkaStoreman(producer, "some-topic")
-	err := storeman.Store(river.NewTimber())
+	err := storeman.Store(NewTimber())
 
 	FatalIfWrongError(t, err, "some-error")
 }
