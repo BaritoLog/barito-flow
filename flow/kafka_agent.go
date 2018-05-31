@@ -33,6 +33,7 @@ func (a *KafkaAgent) loopMain() {
 				} else {
 					a.fireSuccess(timber)
 				}
+				a.Consumer.MarkOffset(message, "")
 			}
 		}
 	}

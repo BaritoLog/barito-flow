@@ -10,6 +10,7 @@ type KafkaConsumer interface {
 	Messages() <-chan *sarama.ConsumerMessage
 	Notifications() <-chan *cluster.Notification
 	Errors() <-chan error
+	MarkOffset(msg *sarama.ConsumerMessage, metadata string)
 }
 
 type dummyKafkaConsumer struct {
@@ -28,4 +29,7 @@ func (c *dummyKafkaConsumer) Errors() <-chan error {
 
 func (c *dummyKafkaConsumer) Notifications() <-chan *cluster.Notification {
 	return c.notifications
+}
+
+func (c *dummyKafkaConsumer) MarkOffset(msg *sarama.ConsumerMessage, metadata string) {
 }
