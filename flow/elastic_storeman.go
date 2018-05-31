@@ -57,8 +57,8 @@ func createIndex() *es.Index {
 		Template: fmt.Sprintf("%s-*", INDEX_PREFIX),
 		Version:  60001,
 		Settings: map[string]interface{}{
-			"index.refresh_interval":       "5s",
-			"index.read_only_allow_delete": "false",
+			"index.refresh_interval": "5s",
+			// "index.read_only_allow_delete": "false",
 		},
 		Doc: es.NewMappings().
 			AddDynamicTemplate("message_field", es.MatchConditions{
