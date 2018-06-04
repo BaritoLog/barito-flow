@@ -3,9 +3,11 @@ package flow
 import (
 	"context"
 	"fmt"
+
 	"time"
 
 	"github.com/BaritoLog/barito-flow/es"
+	"github.com/BaritoLog/instru"
 	"github.com/olivere/elastic"
 )
 
@@ -37,15 +39,22 @@ func (e *ElasticStoreman) Store(timber Timber) (err error) {
 		index := createIndex()
 		_, err = e.client.CreateIndex(indexName).BodyJson(index).Do(e.ctx)
 		if err != nil {
+			instru.Count("es_create_index").Event("fail")
 			return
 		}
+		instru.Count("es_create_index").Event("success")
 	}
-
 	_, err = e.client.Index().
 		Index(indexName).
 		Type(MESSAGE_TYPE).
 		BodyJson(timber).
 		Do(e.ctx)
+
+	if err != nil {
+		instru.Count("es_store").Event("fail")
+	} else {
+		instru.Count("es_store").Event("success")
+	}
 
 	return
 }
