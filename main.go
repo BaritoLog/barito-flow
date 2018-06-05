@@ -11,7 +11,7 @@ import (
 
 const (
 	Name    = "barito-agent"
-	Version = "0.2.0"
+	Version = "0.3.0"
 )
 
 func main() {
