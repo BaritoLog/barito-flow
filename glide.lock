@@ -1,8 +1,8 @@
 hash: 5ba2eb8cfa2ee42da0491cd6cf3ba8e0780c118e11105a274943de768a9d0ef5
-updated: 2018-05-24T15:59:26.564562+08:00
+updated: 2018-06-04T15:58:52.392489+07:00
 imports:
 - name: github.com/BaritoLog/go-boilerplate
-  version: c51b194839c092829d89755c41219cdee314aec8
+  version: b23606b421f4e0a97b96dce3de09c0d959463a2a
   subpackages:
   - envkit
   - errkit
@@ -10,6 +10,10 @@ imports:
   - strslice
   - testkit
   - timekit
+- name: github.com/BaritoLog/instru
+  version: 2b8229c5a28aa0155edf89e86e10a09e360f5c3d
+- name: github.com/bouk/monkey
+  version: 5df1f207ff77e025801505ae4d903133a0b4353f
 - name: github.com/bsm/sarama-cluster
   version: d98592677c0aa08d8aafb882d344fb461682b722
 - name: github.com/davecgh/go-spew
@@ -26,18 +30,16 @@ imports:
   version: 093482f3f8ce946c05bcba64badd2c82369e084d
 - name: github.com/golang/snappy
   version: 2e65f85255dbc3072edf28d6b5b8efc472979f5a
-- name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: c85619274f5d55a67491010f883a91f568b3a9b0
+  version: e0b5abaaae35242fa74372f26c24107711702a4e
 - name: github.com/mailru/easyjson
-  version: 8b799c424f57fa123fc63a99d6383bc6e4c02578
+  version: 9825584555aa620c53c265d4a09ace0df1346fd9
   subpackages:
   - buffer
   - jlexer
   - jwriter
 - name: github.com/olivere/elastic
-  version: 33ad30f61610dad54dc9a24b0e1fa875e89a2639
+  version: dabcc5de0a3fd6313870c223c3119e2b1e942ba3
   subpackages:
   - config
   - uritemplates
@@ -52,7 +54,7 @@ imports:
 - name: github.com/rcrowley/go-metrics
   version: e2704e165165ec55d062f5919b4b29494e9fa790
 - name: github.com/Shopify/sarama
-  version: 3c763ff04e6daa57d4a4614e5bcd908f2527c989
+  version: 35324cf48e33d8260e1c7c18854465a904ade249
   subpackages:
   - mocks
 - name: github.com/sirupsen/logrus
@@ -60,28 +62,18 @@ imports:
 - name: github.com/urfave/cli
   version: 8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff
 - name: golang.org/x/crypto
-  version: 75e913eb8a8e3d31a97b216de09de106a7b07681
+  version: df8d4716b3472e4a531c33cedbe537dae921a1a9
   subpackages:
   - ssh/terminal
 - name: golang.org/x/net
-  version: 9ef9f5bb98a1fdc41f8cf6c250a4404b4085e389
+  version: 1e491301e022f8f977054da4c2d852decd59571f
   subpackages:
-  - http/httpguts
   - http2
-  - http2/hpack
-  - idna
 - name: golang.org/x/sys
-  version: 77b0e4315053a57ed2962443614bdb28db152054
+  version: c11f84a56e43e20a78cee75a7c034031ecf57d1f
   subpackages:
   - unix
   - windows
-- name: golang.org/x/text
-  version: 5c1cf69b5978e5a34c5f9ba09a83e56acc4b7877
-  subpackages:
-  - secure/bidirule
-  - transform
-  - unicode/bidi
-  - unicode/norm
 - name: gopkg.in/olivere/elastic.v6
-  version: f6c25d4a1713cf170f84eff4d70485dd8108d2e7
+  version: dabcc5de0a3fd6313870c223c3119e2b1e942ba3
 testImports: []
