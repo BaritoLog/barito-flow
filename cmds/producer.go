@@ -14,7 +14,7 @@ func Producer(c *cli.Context) (err error) {
 	address := envkit.GetString(EnvProducerAddress, ":8080")
 	kafkaBrokers := envkit.GetSlice(EnvKafkaBrokers, ",", []string{"localhost:9092"})
 	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
-	kafkaTopic := envkit.GetString(EnvKafkaTopics, "barito-log")
+	kafkaTopic := envkit.GetString(EnvKafkaTopics, "topic01")
 
 	log.Infof("Start Producer")
 	log.Infof("%s=%s", EnvProducerAddress, address)
