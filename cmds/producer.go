@@ -10,21 +10,20 @@ import (
 )
 
 const (
-	EnvAddress                   = "BARITO_RECEIVER_ADDRESS"
-	EnvKafkaBrokers              = "BARITO_RECEIVER_KAFKA_BROKERS"
-	EnvKafkaTopic                = "BARITO_RECEIVER_KAFKA_TOPIC"
-	EnvProducerMaxRetry          = "BARITO_RECEIVER_PRODUCER_MAX_RETRY"
-	EnvReceiverApplicationSecret = "BARITO_RECEIVER_APPLICATION_SECRET"
+	EnvAddress          = "BARITO_PRODUCER_ADDRESS"
+	EnvKafkaBrokers     = "BARITO_KAFKA_BROKERS"
+	EnvKafkaTopic       = "BARITO_KAFKA_TOPIC"
+	EnvProducerMaxRetry = "BARITO_PRODUCER_MAX_RETRY"
 )
 
-func Receiver(c *cli.Context) (err error) {
+func Producer(c *cli.Context) (err error) {
 
 	address := envkit.GetString(EnvAddress, ":8080")
 	kafkaBrokers := envkit.GetSlice(EnvKafkaBrokers, ",", []string{"localhost:9092"})
 	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
 	kafkaTopic := envkit.GetString(EnvKafkaTopic, "barito-log")
 
-	log.Infof("Start Receiver")
+	log.Infof("Start Producer")
 	log.Infof("%s=%s", EnvAddress, address)
 	log.Infof("%s=%s", EnvKafkaBrokers, kafkaBrokers)
 	log.Infof("%s=%s", EnvKafkaTopic, kafkaTopic)

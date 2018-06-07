@@ -21,10 +21,10 @@ func main() {
 		Version: Version,
 		Commands: []cli.Command{
 			{
-				Name:      "receiver",
-				ShortName: "r",
-				Usage:     "start Log Receiver",
-				Action:    cmds.Receiver,
+				Name:      "producer",
+				ShortName: "p",
+				Usage:     "start barito-flow as producer",
+				Action:    cmds.Producer,
 			},
 			{
 				Name:      "forwarder",
