@@ -44,6 +44,7 @@ func TestHttpAgent_Start(t *testing.T) {
 	}, 100)
 
 	go agent.Start()
+	defer agent.Close()
 
 	buf := bytes.NewBufferString(`{}`)
 	resp, err := http.Post("http://localhost:65500", "application/json", buf)
@@ -56,10 +57,11 @@ func TestHttpAgent_Start(t *testing.T) {
 
 func TestHttpAgent_HitMaxTPS(t *testing.T) {
 	maxTps := 10
-	agent := NewHttpAgent(":65500", func(timber Timber) error {
+	agent := NewHttpAgent(":65501", func(timber Timber) error {
 		return nil
 	}, maxTps)
 	go agent.Start()
+	defer agent.Close()
 
 	for i := 0; i < maxTps; i++ {
 		http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
@@ -72,10 +74,11 @@ func TestHttpAgent_HitMaxTPS(t *testing.T) {
 
 func TestHttp_Agent_RefillBucket(t *testing.T) {
 	maxTps := 10
-	agent := NewHttpAgent(":65500", func(timber Timber) error {
+	agent := NewHttpAgent(":65502", func(timber Timber) error {
 		return nil
 	}, maxTps)
 	go agent.Start()
+	defer agent.Close()
 
 	for i := 0; i < maxTps; i++ {
 		http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
