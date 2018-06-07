@@ -13,56 +13,61 @@ cd barito-flow
 go build
 ```
 
-## Receiver
+## Producer
 
 Responsible to:
-- expose a produce URL to receive log message
-- forward/produce log message to respective kafka broker
-
-Receiver will retrieve its own configuration from `Barito Market`
+- expose a http end point
+- produce message to kafka broker
 
 Run
 ```sh
-./barito-agent receiver
+./barito-agent producer
 
 #or
-./barito-agent r
+./barito-agent p
 ```
 
+Environment Variables
 
-## Forwarder
+| Name| Description | Default Value  |
+| ---|---|----|
+| BARITO_PRODUCER_ADDRESS| Http Server Address | :8080 |
+| BARITO_KAFKA_BROKERS| Kafka broker addresses (CSV)| localhost:9092 |
+| BARITO_KAFKA_PRODUCER_TOPIC| kafka topic | topic01 |
+| BARITO_PRODUCER_MAX_RETRY| set kafka setting max retry | 10 |
+
+
+## Consumer
 
 Responsible to:
-- consume log message from kafka
-- forward log message to respective store (elasticsearch)
-
-
-Forwarder will retrieve its own configuration from `Barito Market`
+- consume message from kafka
+- commit message to elasticsearch
 
 Run
 ```sh
-./barito-agent forwarder
+./barito-agent Consumer
 
 # or
-./barito-agent f
+./barito-agent c
 ```
 
-## Kafka
 
-Make sure you have run zookeeper & kafka-server, and change `kafkaBrokers` in `receiver/configuration.go` with your brokers list. 
+INFO[0000] BARITO_KAFKA_BROKERS=[localhost:9092]
+INFO[0000] BARITO_KAFKA_GROUP_ID=barito-group
+INFO[0000] BARITO_KAFKA_CONSUMER_TOPICS=[topic01]
+INFO[0000] BARITO_ELASTICSEARCH_URL=http://localhost:9200
+INFO[0000] BARITO_PUSH_METRIC_URL=http://localhost:3000/api/increase_log_count
+INFO[0000] BARITO_PUSH_METRIC_TOKEN=
+INFO[0000] BARITO_PUSH_METRIC_INTERVAL=30s
 
-## Elasticsearch
+Environment Variables
 
-Make sure you have Elasticsearch 6.x installed and running, and change `elasticsearchUrls` & `elasticsearchIndexPrefix` in `forwarder/configuration.go` with your settings.
-
-## Kubernetes
-
-```sh
-$ docker build -t barito-flow:latest .
-$ kubectl apply -f barito-flow-kubernetes.yaml
-```
-
-Note: You can run `deploy.sh` to automate above steps. 
-Usage : 
-* `$ deploy.sh development` to build docker from local files
-* `$ deploy.sh` to build docker from docker hub
+| Name| Description | Default Value  |
+| ---|---|----|
+| BARITO_KAFKA_BROKERS| kafka broker address | localhost:9092 |
+| BARITO_KAFKA_GROUP_ID| kafka group id | barito-group |
+| BARITO_KAFKA_CONSUMER_TOPICS| kafka consumer topics (CSV) | topic01 |
+| BARITO_ELASTICSEARCH_URL| elastisearch url | http://localhost:9200 |
+| BARITO_PUSH_METRIC_URL| push metric api url | http://localhost:3000/api/increase_log_count |
+| BARITO_PUSH_METRIC_TOKEN| push metric api token |  |
+| BARITO_PUSH_METRIC_INTERVAL| push metric interval | 30s |
