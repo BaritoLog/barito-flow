@@ -54,7 +54,10 @@ func (a *httpAgent) Close() {
 		a.server.Close()
 	}
 
-	a.stop <- 1
+	go func() {
+		a.stop <- 1
+	}()
+
 }
 
 func (a *httpAgent) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

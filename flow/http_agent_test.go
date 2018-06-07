@@ -64,10 +64,10 @@ func TestHttpAgent_HitMaxTPS(t *testing.T) {
 	defer agent.Close()
 
 	for i := 0; i < maxTps; i++ {
-		http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+		http.Post("http://localhost:65501", "application/json", bytes.NewBufferString(`{}`))
 	}
 
-	resp, err := http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+	resp, err := http.Post("http://localhost:65501", "application/json", bytes.NewBufferString(`{}`))
 	FatalIfError(t, err)
 	FatalIf(t, resp.StatusCode != 509, "wrong status code")
 }
@@ -81,12 +81,12 @@ func TestHttp_Agent_RefillBucket(t *testing.T) {
 	defer agent.Close()
 
 	for i := 0; i < maxTps; i++ {
-		http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+		http.Post("http://localhost:65502", "application/json", bytes.NewBufferString(`{}`))
 	}
 
 	timekit.Sleep("1s")
 
-	resp, err := http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+	resp, err := http.Post("http://localhost:65502", "application/json", bytes.NewBufferString(`{}`))
 	FatalIfError(t, err)
 	FatalIf(t, resp.StatusCode != 200, "wrong status code")
 
