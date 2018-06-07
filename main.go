@@ -11,13 +11,13 @@ import (
 
 const (
 	Name    = "barito-agent"
-	Version = "0.3.0"
+	Version = "0.4.0"
 )
 
 func main() {
 	app := cli.App{
 		Name:    Name,
-		Usage:   "Provide kafka reciever or log forwarder for Barito project",
+		Usage:   "Provide kafka producer or consumer for Barito project",
 		Version: Version,
 		Commands: []cli.Command{
 			{
