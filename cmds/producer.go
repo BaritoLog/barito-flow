@@ -15,12 +15,14 @@ func Producer(c *cli.Context) (err error) {
 	kafkaBrokers := envkit.GetSlice(EnvKafkaBrokers, ",", []string{"localhost:9092"})
 	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
 	kafkaTopic := envkit.GetString(EnvKafkaProducerTopic, "topic01")
+	maxTps := envkit.GetInt(EnvProducerMaxTPS, 10)
 
 	log.Infof("Start Producer")
 	log.Infof("%s=%s", EnvProducerAddress, address)
 	log.Infof("%s=%s", EnvKafkaBrokers, kafkaBrokers)
 	log.Infof("%s=%s", EnvKafkaProducerTopic, kafkaTopic)
 	log.Infof("%s=%d", EnvProducerMaxRetry, producerMaxRetry)
+	log.Infof("%s=%d", EnvProducerMaxTPS, maxTps)
 
 	// kafka producer config
 	config := sarama.NewConfig()
@@ -34,10 +36,11 @@ func Producer(c *cli.Context) (err error) {
 		return
 	}
 
-	agent := flow.HttpAgent{
-		Address: address,
-		Store:   flow.NewKafkaStoreman(producer, kafkaTopic).Store,
-	}
+	agent := flow.NewHttpAgent(
+		address,
+		flow.NewKafkaStoreman(producer, kafkaTopic).Store,
+		maxTps,
+	)
 
 	return agent.Start()
 }

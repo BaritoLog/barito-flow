@@ -13,4 +13,6 @@ const (
 
 	EnvProducerAddress  = "BARITO_PRODUCER_ADDRESS"
 	EnvProducerMaxRetry = "BARITO_PRODUCER_MAX_RETRY"
+
+	EnvProducerMaxTPS = "BARITO_PRODUCER_MAX_TPS"
 )

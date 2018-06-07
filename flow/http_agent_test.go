@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
+	"github.com/BaritoLog/go-boilerplate/timekit"
 )
 
 func TestHttpAgent_ServeHTTP(t *testing.T) {
-	agent := &HttpAgent{
-		Store: func(timber Timber) error {
-			return nil
-		},
-	}
+
+	agent := NewHttpAgent("", func(timber Timber) error {
+		return nil
+	}, 100)
 
 	body := strings.NewReader(`body`)
 
@@ -26,11 +26,9 @@ func TestHttpAgent_ServeHTTP(t *testing.T) {
 }
 
 func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
-	agent := &HttpAgent{
-		Store: func(timber Timber) error {
-			return fmt.Errorf("some error")
-		},
-	}
+	agent := NewHttpAgent("", func(timber Timber) error {
+		return fmt.Errorf("some error")
+	}, 100)
 
 	body := strings.NewReader(`body`)
 
@@ -41,13 +39,9 @@ func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
 }
 
 func TestHttpAgent_Start(t *testing.T) {
-
-	agent := &HttpAgent{
-		Address: ":65500",
-		Store: func(timber Timber) error {
-			return nil
-		},
-	}
+	agent := NewHttpAgent(":65500", func(timber Timber) error {
+		return nil
+	}, 100)
 
 	go agent.Start()
 
@@ -55,7 +49,42 @@ func TestHttpAgent_Start(t *testing.T) {
 	resp, err := http.Post("http://localhost:65500", "application/json", buf)
 
 	FatalIfError(t, err)
-	FatalIf(t, resp.StatusCode != 200, "wrong ")
+	FatalIf(t, resp.StatusCode != 200, "wrong status code")
 
 	agent.Close()
+}
+
+func TestHttpAgent_HitMaxTPS(t *testing.T) {
+	maxTps := 10
+	agent := NewHttpAgent(":65500", func(timber Timber) error {
+		return nil
+	}, maxTps)
+	go agent.Start()
+
+	for i := 0; i < maxTps; i++ {
+		http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+	}
+
+	resp, err := http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+	FatalIfError(t, err)
+	FatalIf(t, resp.StatusCode != 509, "wrong status code")
+}
+
+func TestHttp_Agent_RefillBucket(t *testing.T) {
+	maxTps := 10
+	agent := NewHttpAgent(":65500", func(timber Timber) error {
+		return nil
+	}, maxTps)
+	go agent.Start()
+
+	for i := 0; i < maxTps; i++ {
+		http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+	}
+
+	timekit.Sleep("1s")
+
+	resp, err := http.Post("http://localhost:65500", "application/json", bytes.NewBufferString(`{}`))
+	FatalIfError(t, err)
+	FatalIf(t, resp.StatusCode != 200, "wrong status code")
+
 }
