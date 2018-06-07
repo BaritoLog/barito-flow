@@ -13,6 +13,13 @@ const (
 
 	EnvProducerAddress  = "BARITO_PRODUCER_ADDRESS"
 	EnvProducerMaxRetry = "BARITO_PRODUCER_MAX_RETRY"
+	EnvProducerMaxTPS   = "BARITO_PRODUCER_MAX_TPS"
 
-	EnvProducerMaxTPS = "BARITO_PRODUCER_MAX_TPS"
+	EnvConsulUrl       = "BARITO_CONSUL_URL"
+	EnvConsulKafkaName = "BARITO_CONSUL_KAFKA_NAME"
+)
+
+var (
+	DefaultConsulKafkaName = "kafka"
+	DefaultKafkaBrokers    = []string{"localhost:9092"}
 )

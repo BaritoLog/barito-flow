@@ -15,7 +15,7 @@ import (
 
 func Consumer(c *cli.Context) (err error) {
 
-	brokers := envkit.GetSlice(EnvKafkaBrokers, ",", []string{"localhost:9092"})
+	brokers := GetKafkaBrokers()
 	groupID := envkit.GetString(EnvKafkaGroupId, "barito-group")
 	topics := envkit.GetSlice(EnvKafkaProducerTopic, ",", []string{"topic01"})
 	esUrl := envkit.GetString(EnvElasticsearchUrl, "http://localhost:9200")
