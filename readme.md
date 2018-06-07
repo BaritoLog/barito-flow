@@ -35,6 +35,7 @@ Environment Variables
 | BARITO_KAFKA_BROKERS| Kafka broker addresses (CSV)| localhost:9092 |
 | BARITO_KAFKA_PRODUCER_TOPIC| kafka topic | topic01 |
 | BARITO_PRODUCER_MAX_RETRY| set kafka setting max retry | 10 |
+| BARITO_PRODUCER_MAX_TPS| producer rate limit trx per second | 10 |
 
 
 ## Consumer
@@ -62,3 +63,9 @@ Environment Variables
 | BARITO_PUSH_METRIC_URL| push metric api url | http://localhost:3000/api/increase_log_count |
 | BARITO_PUSH_METRIC_TOKEN| push metric api token |  |
 | BARITO_PUSH_METRIC_INTERVAL| push metric interval | 30s |
+
+
+## Changes Log
+
+#### 0.5.0 
+- Rate limit trx per second (by default 100)

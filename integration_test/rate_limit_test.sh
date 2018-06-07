@@ -1,7 +1,8 @@
 #!/bin/sh
 
+set -x 
 
-for i in $(seq 11);
+for i in $(seq 101);
 do
   curl -X POST \
   http://localhost:8080/ \
@@ -15,7 +16,7 @@ done
 echo "sleep 1s"
 sleep 1
 
-for i in $(seq 10);
+for i in $(seq 100);
 do
   curl -X POST \
   http://localhost:8080/ \
