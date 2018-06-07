@@ -9,24 +9,17 @@ import (
 	"github.com/urfave/cli"
 )
 
-const (
-	EnvAddress          = "BARITO_PRODUCER_ADDRESS"
-	EnvKafkaBrokers     = "BARITO_KAFKA_BROKERS"
-	EnvKafkaTopic       = "BARITO_KAFKA_TOPIC"
-	EnvProducerMaxRetry = "BARITO_PRODUCER_MAX_RETRY"
-)
-
 func Producer(c *cli.Context) (err error) {
 
-	address := envkit.GetString(EnvAddress, ":8080")
+	address := envkit.GetString(EnvProducerAddress, ":8080")
 	kafkaBrokers := envkit.GetSlice(EnvKafkaBrokers, ",", []string{"localhost:9092"})
 	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
-	kafkaTopic := envkit.GetString(EnvKafkaTopic, "barito-log")
+	kafkaTopic := envkit.GetString(EnvKafkaTopics, "barito-log")
 
 	log.Infof("Start Producer")
-	log.Infof("%s=%s", EnvAddress, address)
+	log.Infof("%s=%s", EnvProducerAddress, address)
 	log.Infof("%s=%s", EnvKafkaBrokers, kafkaBrokers)
-	log.Infof("%s=%s", EnvKafkaTopic, kafkaTopic)
+	log.Infof("%s=%s", EnvKafkaTopics, kafkaTopic)
 	log.Infof("%s=%d", EnvProducerMaxRetry, producerMaxRetry)
 
 	// kafka producer config

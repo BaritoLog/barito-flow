@@ -27,10 +27,10 @@ func main() {
 				Action:    cmds.Producer,
 			},
 			{
-				Name:      "forwarder",
-				ShortName: "f",
-				Usage:     "start Log Forwarder",
-				Action:    cmds.Forwarder,
+				Name:      "consumer",
+				ShortName: "c",
+				Usage:     "start barito-flow as consumer",
+				Action:    cmds.Consumer,
 			},
 		},
 	}
