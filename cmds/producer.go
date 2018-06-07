@@ -14,12 +14,12 @@ func Producer(c *cli.Context) (err error) {
 	address := envkit.GetString(EnvProducerAddress, ":8080")
 	kafkaBrokers := envkit.GetSlice(EnvKafkaBrokers, ",", []string{"localhost:9092"})
 	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
-	kafkaTopic := envkit.GetString(EnvKafkaTopics, "topic01")
+	kafkaTopic := envkit.GetString(EnvKafkaProducerTopic, "topic01")
 
 	log.Infof("Start Producer")
 	log.Infof("%s=%s", EnvProducerAddress, address)
 	log.Infof("%s=%s", EnvKafkaBrokers, kafkaBrokers)
-	log.Infof("%s=%s", EnvKafkaTopics, kafkaTopic)
+	log.Infof("%s=%s", EnvKafkaProducerTopic, kafkaTopic)
 	log.Infof("%s=%d", EnvProducerMaxRetry, producerMaxRetry)
 
 	// kafka producer config

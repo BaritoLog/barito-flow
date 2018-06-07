@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	Name    = "barito-agent"
-	Version = "0.4.0"
+	Name    = "barito-flow"
+	Version = "0.4.1"
 )
 
 func main() {

@@ -1,10 +1,11 @@
 package cmds
 
 const (
-	EnvKafkaBrokers     = "BARITO_KAFKA_BROKERS"
-	EnvKafkaGroupId     = "BARITO_KAFKA_GROUP_ID"
-	EnvKafkaTopics      = "BARITO_KAFKA_TOPICS"
-	EnvElasticsearchUrl = "BARITO_ELASTICSEARCH_URL"
+	EnvKafkaBrokers        = "BARITO_KAFKA_BROKERS"
+	EnvKafkaGroupId        = "BARITO_KAFKA_GROUP_ID"
+	EnvKafkaConsumerTopics = "BARITO_KAFKA_CONSUMER_TOPICS"
+	EnvKafkaProducerTopic  = "BARITO_KAFKA_PRODUCER_TOPIC"
+	EnvElasticsearchUrl    = "BARITO_ELASTICSEARCH_URL"
 
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
 	EnvPushMetricToken    = "BARITO_PUSH_METRIC_TOKEN"
