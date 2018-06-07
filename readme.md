@@ -51,15 +51,6 @@ Run
 ./barito-agent c
 ```
 
-
-INFO[0000] BARITO_KAFKA_BROKERS=[localhost:9092]
-INFO[0000] BARITO_KAFKA_GROUP_ID=barito-group
-INFO[0000] BARITO_KAFKA_CONSUMER_TOPICS=[topic01]
-INFO[0000] BARITO_ELASTICSEARCH_URL=http://localhost:9200
-INFO[0000] BARITO_PUSH_METRIC_URL=http://localhost:3000/api/increase_log_count
-INFO[0000] BARITO_PUSH_METRIC_TOKEN=
-INFO[0000] BARITO_PUSH_METRIC_INTERVAL=30s
-
 Environment Variables
 
 | Name| Description | Default Value  |
