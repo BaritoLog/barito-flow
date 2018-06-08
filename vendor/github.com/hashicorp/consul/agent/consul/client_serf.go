@@ -135,8 +135,6 @@ func (c *Client) localEvent(event serf.UserEvent) {
 			c.config.UserEventHandler(event)
 		}
 	default:
-		if !c.handleEnterpriseUserEvents(event) {
-			c.logger.Printf("[WARN] consul: Unhandled local event: %v", event)
-		}
+		c.logger.Printf("[WARN] consul: Unhandled local event: %v", event)
 	}
 }

@@ -671,196 +671,6 @@ func TestDNS_ReverseLookup_IPV6(t *testing.T) {
 	}
 }
 
-func TestDNS_ServiceReverseLookup(t *testing.T) {
-	t.Parallel()
-	a := NewTestAgent(t.Name(), "")
-	defer a.Shutdown()
-
-	// Register a node with a service.
-	{
-		args := &structs.RegisterRequest{
-			Datacenter: "dc1",
-			Node:       "foo",
-			Address:    "127.0.0.1",
-			Service: &structs.NodeService{
-				Service: "db",
-				Tags:    []string{"master"},
-				Port:    12345,
-				Address: "127.0.0.2",
-			},
-		}
-
-		var out struct{}
-		if err := a.RPC("Catalog.Register", args, &out); err != nil {
-			t.Fatalf("err: %v", err)
-		}
-	}
-
-	m := new(dns.Msg)
-	m.SetQuestion("2.0.0.127.in-addr.arpa.", dns.TypeANY)
-
-	c := new(dns.Client)
-	in, _, err := c.Exchange(m, a.DNSAddr())
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-
-	if len(in.Answer) != 1 {
-		t.Fatalf("Bad: %#v", in)
-	}
-
-	ptrRec, ok := in.Answer[0].(*dns.PTR)
-	if !ok {
-		t.Fatalf("Bad: %#v", in.Answer[0])
-	}
-	if ptrRec.Ptr != "db.service.consul." {
-		t.Fatalf("Bad: %#v", ptrRec)
-	}
-}
-
-func TestDNS_ServiceReverseLookup_IPV6(t *testing.T) {
-	t.Parallel()
-	a := NewTestAgent(t.Name(), "")
-	defer a.Shutdown()
-
-	// Register a node with a service.
-	{
-		args := &structs.RegisterRequest{
-			Datacenter: "dc1",
-			Node:       "foo",
-			Address:    "2001:db8::1",
-			Service: &structs.NodeService{
-				Service: "db",
-				Tags:    []string{"master"},
-				Port:    12345,
-				Address: "2001:db8::ff00:42:8329",
-			},
-		}
-
-		var out struct{}
-		if err := a.RPC("Catalog.Register", args, &out); err != nil {
-			t.Fatalf("err: %v", err)
-		}
-	}
-
-	m := new(dns.Msg)
-	m.SetQuestion("9.2.3.8.2.4.0.0.0.0.f.f.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.", dns.TypeANY)
-
-	c := new(dns.Client)
-	in, _, err := c.Exchange(m, a.DNSAddr())
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-
-	if len(in.Answer) != 1 {
-		t.Fatalf("Bad: %#v", in)
-	}
-
-	ptrRec, ok := in.Answer[0].(*dns.PTR)
-	if !ok {
-		t.Fatalf("Bad: %#v", in.Answer[0])
-	}
-	if ptrRec.Ptr != "db.service.consul." {
-		t.Fatalf("Bad: %#v", ptrRec)
-	}
-}
-
-func TestDNS_ServiceReverseLookup_CustomDomain(t *testing.T) {
-	t.Parallel()
-	a := NewTestAgent(t.Name(), `
-		domain = "custom"
-	`)
-	defer a.Shutdown()
-
-	// Register a node with a service.
-	{
-		args := &structs.RegisterRequest{
-			Datacenter: "dc1",
-			Node:       "foo",
-			Address:    "127.0.0.1",
-			Service: &structs.NodeService{
-				Service: "db",
-				Tags:    []string{"master"},
-				Port:    12345,
-				Address: "127.0.0.2",
-			},
-		}
-
-		var out struct{}
-		if err := a.RPC("Catalog.Register", args, &out); err != nil {
-			t.Fatalf("err: %v", err)
-		}
-	}
-
-	m := new(dns.Msg)
-	m.SetQuestion("2.0.0.127.in-addr.arpa.", dns.TypeANY)
-
-	c := new(dns.Client)
-	in, _, err := c.Exchange(m, a.DNSAddr())
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-
-	if len(in.Answer) != 1 {
-		t.Fatalf("Bad: %#v", in)
-	}
-
-	ptrRec, ok := in.Answer[0].(*dns.PTR)
-	if !ok {
-		t.Fatalf("Bad: %#v", in.Answer[0])
-	}
-	if ptrRec.Ptr != "db.service.custom." {
-		t.Fatalf("Bad: %#v", ptrRec)
-	}
-}
-
-func TestDNS_ServiceReverseLookupNodeAddress(t *testing.T) {
-	t.Parallel()
-	a := NewTestAgent(t.Name(), "")
-	defer a.Shutdown()
-
-	// Register a node with a service.
-	{
-		args := &structs.RegisterRequest{
-			Datacenter: "dc1",
-			Node:       "foo",
-			Address:    "127.0.0.1",
-			Service: &structs.NodeService{
-				Service: "db",
-				Tags:    []string{"master"},
-				Port:    12345,
-				Address: "127.0.0.1",
-			},
-		}
-
-		var out struct{}
-		if err := a.RPC("Catalog.Register", args, &out); err != nil {
-			t.Fatalf("err: %v", err)
-		}
-	}
-
-	m := new(dns.Msg)
-	m.SetQuestion("1.0.0.127.in-addr.arpa.", dns.TypeANY)
-
-	c := new(dns.Client)
-	in, _, err := c.Exchange(m, a.DNSAddr())
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-
-	if len(in.Answer) != 1 {
-		t.Fatalf("Bad: %#v", in)
-	}
-
-	ptrRec, ok := in.Answer[0].(*dns.PTR)
-	if !ok {
-		t.Fatalf("Bad: %#v", in.Answer[0])
-	}
-	if ptrRec.Ptr != "foo.node.dc1.consul." {
-		t.Fatalf("Bad: %#v", ptrRec)
-	}
-}
-
 func TestDNS_ServiceLookup(t *testing.T) {
 	t.Parallel()
 	a := NewTestAgent(t.Name(), "")
@@ -3229,7 +3039,7 @@ func TestDNS_TCP_and_UDP_Truncate(t *testing.T) {
 			args := &structs.RegisterRequest{
 				Datacenter: "dc1",
 				Node:       fmt.Sprintf("%s-%d.acme.com", service, i),
-				Address:    fmt.Sprintf("127.%d.%d.%d", 0, (i / 255), i%255),
+				Address:    fmt.Sprintf("127.%d.%d.%d", index, (i / 255), i%255),
 				Service: &structs.NodeService{
 					Service: service,
 					Port:    8000,
@@ -3270,39 +3080,32 @@ func TestDNS_TCP_and_UDP_Truncate(t *testing.T) {
 			"tcp",
 			"udp",
 		}
-		for _, maxSize := range []uint16{8192, 65535} {
-			for _, qType := range []uint16{dns.TypeANY, dns.TypeA, dns.TypeSRV} {
-				for _, question := range questions {
-					for _, protocol := range protocols {
-						for _, compress := range []bool{true, false} {
-							t.Run(fmt.Sprintf("lookup %s %s (qType:=%d) compressed=%v", question, protocol, qType, compress), func(t *testing.T) {
-								m := new(dns.Msg)
-								m.SetQuestion(question, dns.TypeANY)
-								maxSz := maxSize
-								if protocol == "udp" {
-									maxSz = 8192
-								}
-								m.SetEdns0(uint16(maxSz), true)
-								c := new(dns.Client)
-								c.Net = protocol
-								m.Compress = compress
-								in, _, err := c.Exchange(m, a.DNSAddr())
-								if err != nil && err != dns.ErrTruncated {
-									t.Fatalf("err: %v", err)
-								}
+		for _, qType := range []uint16{dns.TypeANY, dns.TypeA, dns.TypeSRV} {
+			for _, question := range questions {
+				for _, protocol := range protocols {
+					for _, compress := range []bool{true, false} {
+						t.Run(fmt.Sprintf("lookup %s %s (qType:=%d) compressed=%v", question, protocol, qType, compress), func(t *testing.T) {
+							m := new(dns.Msg)
+							m.SetQuestion(question, dns.TypeANY)
+							if protocol == "udp" {
+								m.SetEdns0(8192, true)
+							}
+							c := new(dns.Client)
+							c.Net = protocol
+							m.Compress = compress
+							in, out, err := c.Exchange(m, a.DNSAddr())
+							if err != nil && err != dns.ErrTruncated {
+								t.Fatalf("err: %v", err)
+							}
+							// Check for the truncate bit
+							shouldBeTruncated := numServices > 5000
 
-								// Check for the truncate bit
-								buf, err := m.Pack()
+							if shouldBeTruncated != in.Truncated || len(in.Answer) > 2000 || len(in.Answer) < 1 || in.Len() > 65535 {
 								info := fmt.Sprintf("service %s question:=%s (%s) (%d total records) sz:= %d in %v",
-									service, question, protocol, numServices, len(in.Answer), in)
-								if err != nil {
-									t.Fatalf("Error while packing: %v ; info:=%s", err, info)
-								}
-								if len(buf) > int(maxSz) {
-									t.Fatalf("len(buf) := %d > maxSz=%d for %v", len(buf), maxSz, info)
-								}
-							})
-						}
+									service, question, protocol, numServices, len(in.Answer), out)
+								t.Fatalf("Should have truncated:=%v for %s", shouldBeTruncated, info)
+							}
+						})
 					}
 				}
 			}

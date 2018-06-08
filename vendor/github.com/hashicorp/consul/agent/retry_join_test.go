@@ -8,10 +8,7 @@ import (
 )
 
 func TestGoDiscoverRegistration(t *testing.T) {
-	d, err := discover.New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	d := discover.Discover{}
 	got := d.Names()
 	want := []string{"aliyun", "aws", "azure", "digitalocean", "gce", "os", "scaleway", "softlayer", "triton"}
 	if !reflect.DeepEqual(got, want) {

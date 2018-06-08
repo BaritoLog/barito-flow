@@ -61,6 +61,7 @@ type cmd struct {
 	versionPrerelease string
 	versionHuman      string
 	shutdownCh        <-chan struct{}
+	args              []string
 	flagArgs          config.Flags
 	logFilter         *logutils.LevelFilter
 	logOutput         io.Writer
@@ -84,6 +85,14 @@ func (c *cmd) Run(args []string) int {
 // readConfig is responsible for setup of our configuration using
 // the command line and any file configs
 func (c *cmd) readConfig() *config.RuntimeConfig {
+	if err := c.flags.Parse(c.args); err != nil {
+		if !strings.Contains(err.Error(), "help requested") {
+			c.UI.Error(fmt.Sprintf("error parsing flags: %v", err))
+		}
+		return nil
+	}
+	c.flagArgs.Args = c.flags.Args()
+
 	b, err := config.NewBuilder(c.flagArgs)
 	if err != nil {
 		c.UI.Error(err.Error())
@@ -306,13 +315,7 @@ func startupTelemetry(conf *config.RuntimeConfig) (*metrics.InmemSink, error) {
 
 func (c *cmd) run(args []string) int {
 	// Parse our configs
-	if err := c.flags.Parse(args); err != nil {
-		if !strings.Contains(err.Error(), "help requested") {
-			c.UI.Error(fmt.Sprintf("error parsing flags: %v", err))
-		}
-		return 1
-	}
-	c.flagArgs.Args = c.flags.Args()
+	c.args = args
 	config := c.readConfig()
 	if config == nil {
 		return 1
@@ -503,7 +506,7 @@ func (c *cmd) handleReload(agent *agent.Agent, cfg *config.RuntimeConfig) (*conf
 			"Failed to reload configs: %v", err))
 	}
 
-	return newCfg, errs
+	return cfg, errs
 }
 
 func (c *cmd) Synopsis() string {

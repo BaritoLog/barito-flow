@@ -115,10 +115,9 @@ func (s *Server) handleConn(conn net.Conn, isTLS bool) {
 		s.handleSnapshotConn(conn)
 
 	default:
-		if !s.handleEnterpriseRPCConn(typ, conn, isTLS) {
-			s.logger.Printf("[ERR] consul.rpc: unrecognized RPC byte: %v %s", typ, logConn(conn))
-			conn.Close()
-		}
+		s.logger.Printf("[ERR] consul.rpc: unrecognized RPC byte: %v %s", typ, logConn(conn))
+		conn.Close()
+		return
 	}
 }
 

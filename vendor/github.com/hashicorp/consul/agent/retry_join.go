@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/consul/lib"
 	discover "github.com/hashicorp/go-discover"
 )
 
@@ -68,11 +67,7 @@ func (r *retryJoiner) retryJoin() error {
 		return nil
 	}
 
-	disco, err := discover.New(discover.WithUserAgent(lib.UserAgent()))
-	if err != nil {
-		return err
-	}
-
+	disco := discover.Discover{}
 	r.logger.Printf("[INFO] agent: Retry join %s is supported for: %s", r.cluster, strings.Join(disco.Names(), " "))
 	r.logger.Printf("[INFO] agent: Joining %s cluster...", r.cluster)
 	attempt := 0

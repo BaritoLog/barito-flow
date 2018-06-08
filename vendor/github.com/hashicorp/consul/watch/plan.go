@@ -19,17 +19,11 @@ const (
 	maxBackoffTime = 180 * time.Second
 )
 
-func (p *Plan) Run(address string) error {
-	return p.RunWithConfig(address, nil)
-}
-
 // Run is used to run a watch plan
-func (p *Plan) RunWithConfig(address string, conf *consulapi.Config) error {
+func (p *Plan) Run(address string) error {
 	// Setup the client
 	p.address = address
-	if conf == nil {
-		conf = consulapi.DefaultConfig()
-	}
+	conf := consulapi.DefaultConfig()
 	conf.Address = address
 	conf.Datacenter = p.Datacenter
 	conf.Token = p.Token

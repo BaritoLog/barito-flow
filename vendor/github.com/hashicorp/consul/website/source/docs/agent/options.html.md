@@ -364,15 +364,14 @@ will exit with an error at startup.
   rarely need to be changed. Very busy clusters experiencing excessive disk IO may increase this value to reduce disk IO, and minimize
   the chances of all servers taking snapshots at the same time. Increasing this trades off disk IO for disk space since the log will
   grow much larger and the space in the raft.db file can't be reclaimed till the next snapshot. Servers may take longer to recover from
-  crashes or failover if this is increased significantly as more logs will need to be replayed. In Consul 1.1.0 and later this
-  defaults to 16384, and in prior versions it was set to 8192.
+  crashes or failover if this is increased significantly as more logs will need to be replayed.
 
 * <a name="_raft_snapshot_interval"></a><a href="#_raft_snapshot_interval">`-raft-snapshot-interval`</a> - This controls how often servers
   check if they need to save a snapshot to disk. his is a low-level parameter that should rarely need to be changed. Very busy clusters
   experiencing excessive disk IO may increase this value to reduce disk IO, and minimize the chances of all servers taking snapshots at the same time.
   Increasing this trades off disk IO for disk space since the log will grow much larger and the space in the raft.db file can't be reclaimed
   till the next snapshot. Servers may take longer to recover from crashes or failover if this is increased significantly as more logs
-  will need to be replayed. In Consul 1.1.0 and later this defaults to `30s`, and in prior versions it was set to `5s`.
+  will need to be replayed.
 
 * <a name="_recursor"></a><a href="#_recursor">`-recursor`</a> - Specifies the address of an upstream DNS
   server. This option may be provided multiple times, and is functionally
@@ -696,16 +695,6 @@ Consul will not enable TLS for the HTTP API unless the `https` port has been ass
   to the Consul raft log in environments where health checks have volatile output like
   timestamps, process ids, ...
 
-  * <a name="discovery_max_stale"></a><a href="#discovery_max_stale">`discovery_max_stale`</a> - Enables
-  stale requests for all service discovery HTTP endpoints. This is equivalent to the
-  [`max_stale`](#max_stale) configuration for DNS requests. If this value is zero (default), all service
-  discovery HTTP endpoints are forwarded to the leader. If this value is greater than zero, any Consul server
-  can handle the service discovery request.  If a Consul server is behind the leader by more than `discovery_max_stale`,
-  the query will be re-evaluated on the leader to get more up-to-date results. Consul agents also add a new
-  `X-Consul-Effective-Consistency` response header which indicates if the agent did a stale read. `discover-max-stale`
-  was introduced in Consul 1.0.7 as a way for Consul operators to force stale requests from clients at the agent level,
-  and defaults to zero which matches default consistency behavior in earlier Consul versions.
-
 *   <a name="dns_config"></a><a href="#dns_config">`dns_config`</a> This object allows a number
     of sub-keys to be set which can tune how DNS queries are serviced. See this guide on
     [DNS caching](/docs/guides/dns-cache.html) for more detail.
@@ -727,6 +716,17 @@ Consul will not enable TLS for the HTTP API unless the `https` port has been ass
       by any server, no matter how stale. In practice, servers are usually only milliseconds behind the
       leader, so this lets Consul continue serving requests in long outage scenarios where no leader can
       be elected.
+
+    * <a name="discovery_max_stale"></a><a href="#discovery_max_stale">`discovery_max_stale`</a> - Enables
+      stale requests for all service discovery HTTP endpoints. This is equivalent to the
+      [`max_stale`](#max_stale) configuration for DNS requests. If this value is zero (default), all service
+      discovery HTTP endpoints are forwarded to the leader. If this value is greater than zero, any Consul server
+      can handle the service discovery request.  If a Consul server is behind the leader by more than `discovery_max_stale`,
+      the query will be re-evaluated on the leader to get more up-to-date results. Consul agents also add a new
+      `X-Consul-Effective-Consistency` response header which indicates if the agent did a stale read. `discover-max-stale`
+      was introduced in Consul 1.0.7 as a way for Consul operators to force stale requests from clients at the agent level,
+      and defaults to zero which matches default consistency behavior in earlier Consul versions.
+
 
     * <a name="node_ttl"></a><a href="#node_ttl">`node_ttl`</a> - By default, this is "0s", so all
       node lookups are served with a 0 TTL value. DNS caching for node lookups can be enabled by
@@ -768,7 +768,7 @@ Consul will not enable TLS for the HTTP API unless the `https` port has been ass
       When answering a question, Consul will use the complete list of
       matching hosts, shuffle the list randomly, and then limit the number of
       answers to `a_record_limit` (default: no limit). This limit does not apply to SRV records.
-
+      
       In environments where [RFC 3484 Section 6](https://tools.ietf.org/html/rfc3484#section-6) Rule 9
       is implemented and enforced (i.e. DNS answers are always sorted and
       therefore never random), clients may need to set this value to `1` to
@@ -1135,7 +1135,7 @@ Consul will not enable TLS for the HTTP API unless the `https` port has been ass
       is overlap between two rules, the more specific rule will take precedence. Blocking will take priority if the same
       prefix is listed multiple times.
 
-    * <a name="telemetry-prometheus_retention_time"></a><a href="#telemetry-prometheus_retention_time">prometheus_retention_time</a>
+    * <a name="telemetry-prometheus_retention_time"></a><a href="telemetry-prometheus_retention_time">prometheus_retention_time</a>
       If the value is greater than `0s` (the default), this enables [Prometheus](https://prometheus.io/) export of metrics.
       The duration can be expressed using the duration semantics and will aggregates all counters for the duration specified
       (it might have an impact on Consul's memory usage). A good value for this parameter is at least 2 times the interval of scrape

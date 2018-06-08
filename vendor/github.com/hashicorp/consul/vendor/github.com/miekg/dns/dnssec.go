@@ -73,7 +73,6 @@ var StringToAlgorithm = reverseInt8(AlgorithmToString)
 // AlgorithmToHash is a map of algorithm crypto hash IDs to crypto.Hash's.
 var AlgorithmToHash = map[uint8]crypto.Hash{
 	RSAMD5:           crypto.MD5, // Deprecated in RFC 6725
-	DSA:              crypto.SHA1,
 	RSASHA1:          crypto.SHA1,
 	RSASHA1NSEC3SHA1: crypto.SHA1,
 	RSASHA256:        crypto.SHA256,
@@ -240,7 +239,7 @@ func (k *DNSKEY) ToDS(h uint8) *DS {
 // ToCDNSKEY converts a DNSKEY record to a CDNSKEY record.
 func (k *DNSKEY) ToCDNSKEY() *CDNSKEY {
 	c := &CDNSKEY{DNSKEY: *k}
-	c.Hdr = k.Hdr
+	c.Hdr = *k.Hdr.copyHeader()
 	c.Hdr.Rrtype = TypeCDNSKEY
 	return c
 }
@@ -248,7 +247,7 @@ func (k *DNSKEY) ToCDNSKEY() *CDNSKEY {
 // ToCDS converts a DS record to a CDS record.
 func (d *DS) ToCDS() *CDS {
 	c := &CDS{DS: *d}
-	c.Hdr = d.Hdr
+	c.Hdr = *d.Hdr.copyHeader()
 	c.Hdr.Rrtype = TypeCDS
 	return c
 }
