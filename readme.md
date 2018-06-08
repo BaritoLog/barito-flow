@@ -76,5 +76,13 @@ Environment Variables
 
 ## Changes Log
 
+#### 0.6.0 
+- Using consul to get kafka brokers, if consul not available then using environment variable
+- Using consul to get elasticsearch url, if url not available then using environment variable
+
 #### 0.5.0 
 - Rate limit trx per second (by default 100)
+
+#### 0.4.0 
+- Rename receiver to producer
+- Rename forwarder to consumer
