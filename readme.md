@@ -35,10 +35,10 @@ log.Infof("ProducerMaxTps: %d", producerMaxTps)
 
 
 | Name| Description | ENV | Default Value  |
-| ---|---|----|
+| ---|---|---|---|
 | KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul| BARITO_KAFKA_BROKERS| localhost:9092 |
-| | | BARITO_CONSUL_URL | |
-| | | BARITO_CONSUL_KAFKA_NAME | kafka |
+|   |   | BARITO_CONSUL_URL | |
+|   |   | BARITO_CONSUL_KAFKA_NAME | kafka |
 | ProducerAddress | Http Server Address | BARITO_PRODUCER_ADDRESS| :8080 |
 |KafkaProducerTopic| kafka topic| BARITO_KAFKA_PRODUCER_TOPIC | producer-topic |
 |ProducerMaxRetry| set kafka setting max retry| BARITO_PRODUCER_MAX_RETRY | 10 |
@@ -62,10 +62,10 @@ Run
 Environment Variables
 
 | Name| Description | ENV | Default Value  |
-| ---|---|----|
+| ---|---|----|----|
 | KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul| BARITO_KAFKA_BROKERS| localhost:9092 |
-| | | BARITO_CONSUL_URL | |
-| | | BARITO_CONSUL_KAFKA_NAME | kafka |
+|   |   | BARITO_CONSUL_URL | |
+|   |   | BARITO_CONSUL_KAFKA_NAME | kafka |
 | KafkaGroupID | kafka group id | BARITO_KAFKA_GROUP_ID | barito-group |
 | KafkaConsumerTopics | kafka consumer topics (CSV) | BARITO_KAFKA_CONSUMER_TOPICS| consumer-topic |
 | ElasticsearchUrl | elastisearch url | BARITO_ELASTICSEARCH_URL| http://localhost:9200 |
