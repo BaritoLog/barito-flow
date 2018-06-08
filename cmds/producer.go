@@ -12,7 +12,7 @@ import (
 func Producer(c *cli.Context) (err error) {
 
 	address := envkit.GetString(EnvProducerAddress, ":8080")
-	kafkaBrokers := GetKafkaBrokers()
+	kafkaBrokers := getKafkaBrokers()
 	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
 	kafkaTopic := envkit.GetString(EnvKafkaProducerTopic, "topic01")
 	maxTps := envkit.GetInt(EnvProducerMaxTPS, 100)
