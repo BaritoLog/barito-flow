@@ -18,7 +18,7 @@ func Consumer(c *cli.Context) (err error) {
 	brokers := getKafkaBrokers()
 	groupID := envkit.GetString(EnvKafkaGroupId, "barito-group")
 	topics := envkit.GetSlice(EnvKafkaProducerTopic, ",", []string{"topic01"})
-	esUrl := envkit.GetString(EnvElasticsearchUrl, "http://localhost:9200")
+	esUrl := getElasticsearchUrl()
 
 	pushMetricUrl := envkit.GetString(EnvPushMetricUrl, "http://localhost:3000/api/increase_log_count")
 	pushMetricToken := envkit.GetString(EnvPushMetricToken, "")
