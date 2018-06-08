@@ -33,9 +33,9 @@ Environment Variables
 | ---|---|----|
 | BARITO_PRODUCER_ADDRESS| Http Server Address | :8080 |
 | BARITO_KAFKA_BROKERS| Kafka broker addresses (CSV)| localhost:9092 |
-| BARITO_KAFKA_PRODUCER_TOPIC| kafka topic | topic01 |
+| BARITO_KAFKA_PRODUCER_TOPIC| kafka topic | producer-topic |
 | BARITO_PRODUCER_MAX_RETRY| set kafka setting max retry | 10 |
-| BARITO_PRODUCER_MAX_TPS| producer rate limit trx per second | 10 |
+| BARITO_PRODUCER_MAX_TPS| producer rate limit trx per second | 100 |
 
 
 ## Consumer
@@ -58,7 +58,7 @@ Environment Variables
 | ---|---|----|
 | BARITO_KAFKA_BROKERS| kafka broker address | localhost:9092 |
 | BARITO_KAFKA_GROUP_ID| kafka group id | barito-group |
-| BARITO_KAFKA_CONSUMER_TOPICS| kafka consumer topics (CSV) | topic01 |
+| BARITO_KAFKA_CONSUMER_TOPICS| kafka consumer topics (CSV) | consumer-topic |
 | BARITO_ELASTICSEARCH_URL| elastisearch url | http://localhost:9200 |
 | BARITO_PUSH_METRIC_URL| push metric api url | http://localhost:3000/api/increase_log_count |
 | BARITO_PUSH_METRIC_TOKEN| push metric api token |  |
