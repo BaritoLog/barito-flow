@@ -72,3 +72,36 @@ func TestGetPushMetricInterval(t *testing.T) {
 	defer os.Clearenv()
 	FatalIf(t, getPushMetricInterval() != "22s", "should get from env variable")
 }
+
+func TestGetProducerAddress(t *testing.T) {
+	FatalIf(t, getProducerAddress() != DefaultProducerAddress, "should return default ")
+
+	os.Setenv(EnvProducerAddress, ":12345")
+	defer os.Clearenv()
+	FatalIf(t, getProducerAddress() != ":12345", "should get from env variable")
+}
+
+func TestGetProducerMaxRetry(t *testing.T) {
+	FatalIf(t, getProducerMaxRetry() != DefaultProducerMaxRetry, "should return default ")
+
+	os.Setenv(EnvProducerMaxRetry, "989")
+	defer os.Clearenv()
+	FatalIf(t, getProducerMaxRetry() != 989, "should get from env variable")
+}
+
+func TestGetProducerMaxTPS(t *testing.T) {
+	FatalIf(t, getProducerMaxTPS() != DefaultProducerMaxTPS, "should return default ")
+
+	os.Setenv(EnvProducerMaxTPS, "222")
+	defer os.Clearenv()
+	FatalIf(t, getProducerMaxTPS() != 222, "should get from env variable")
+}
+
+func TestGetKafkaProducerTopic(t *testing.T) {
+	FatalIf(t, getKafkaProducerTopic() != DefaultKafkaProducerTopic, "should return default ")
+
+	os.Setenv(EnvKafkaProducerTopic, "some-topic")
+	defer os.Clearenv()
+	FatalIf(t, getKafkaProducerTopic() != "some-topic", "should get from env variable")
+
+}

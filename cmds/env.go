@@ -30,11 +30,15 @@ var (
 	DefaultKafkaBrokers      = []string{"localhost:9092"}
 
 	DefaultElasticsearchUrl    = "http://localhost:9200"
-	DefaultKafkaConsumerTopics = []string{"topic01"}
+	DefaultKafkaConsumerTopics = []string{"consumer-topic"}
 	DefaultKafkaGroupID        = "barito-group"
 	DefaultPushMetricUrl       = "http://localhost:3000/api/increase_log_count"
 	DefaultPushMetricToken     = ""
 	DefaultPushMetricInterval  = "30s"
+	DefaultProducerAddress     = ":8080"
+	DefaultProducerMaxRetry    = 10
+	DefaultKafkaProducerTopic  = "producer-topic"
+	DefaultProducerMaxTPS      = 100
 )
 
 func getKafkaBrokers() (brokers []string) {
@@ -75,4 +79,20 @@ func getPushMetricToken() string {
 
 func getPushMetricInterval() string {
 	return envkit.GetString(EnvPushMetricInterval, DefaultPushMetricInterval)
+}
+
+func getProducerAddress() string {
+	return envkit.GetString(EnvProducerAddress, DefaultProducerAddress)
+}
+
+func getProducerMaxRetry() int {
+	return envkit.GetInt(EnvProducerMaxRetry, DefaultProducerMaxRetry)
+}
+
+func getKafkaProducerTopic() string {
+	return envkit.GetString(EnvKafkaProducerTopic, DefaultKafkaProducerTopic)
+}
+
+func getProducerMaxTPS() int {
+	return envkit.GetInt(EnvProducerMaxTPS, DefaultProducerMaxTPS)
 }

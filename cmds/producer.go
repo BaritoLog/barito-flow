@@ -2,7 +2,6 @@ package cmds
 
 import (
 	"github.com/BaritoLog/barito-flow/flow"
-	"github.com/BaritoLog/go-boilerplate/envkit"
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 
@@ -11,11 +10,11 @@ import (
 
 func Producer(c *cli.Context) (err error) {
 
-	address := envkit.GetString(EnvProducerAddress, ":8080")
+	address := getProducerAddress()
 	kafkaBrokers := getKafkaBrokers()
-	producerMaxRetry := envkit.GetInt(EnvProducerMaxRetry, 10)
-	kafkaTopic := envkit.GetString(EnvKafkaProducerTopic, "topic01")
-	maxTps := envkit.GetInt(EnvProducerMaxTPS, 100)
+	producerMaxRetry := getProducerMaxRetry()
+	kafkaTopic := getKafkaProducerTopic()
+	maxTps := getProducerMaxTPS()
 
 	log.Infof("Start Producer")
 	log.Infof("%s=%s", EnvProducerAddress, address)
