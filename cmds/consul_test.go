@@ -61,7 +61,7 @@ func TestConsulElastisearch_ConsulError(t *testing.T) {
 	defer os.Clearenv()
 
 	_, err := consulElasticsearchUrl()
-	FatalIfWrongError(t, err, "Get http://wrong-consul/v1/catalog/service/elasticsearch: dial tcp: lookup wrong-consul: no such host")
+	FatalIfWrongError(t, err, "no such host")
 }
 
 func TestGetKafkaBorkersFromConsul_NoEnv(t *testing.T) {
@@ -74,7 +74,7 @@ func TestConsulKafkaBorkers_WrongConsulAddress(t *testing.T) {
 	defer os.Clearenv()
 
 	_, err := consulKafkaBroker()
-	FatalIfWrongError(t, err, "Get http://wrong-consul/v1/catalog/service/kafka: dial tcp: lookup wrong-consul: no such host")
+	FatalIfWrongError(t, err, "no such host")
 }
 
 func TestConsulKafkaBorkers(t *testing.T) {
