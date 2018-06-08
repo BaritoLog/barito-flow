@@ -4,26 +4,17 @@ import (
 	"os"
 	"testing"
 
+	"github.com/BaritoLog/go-boilerplate/strslice"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 )
 
-func TestGetKafkaBrokers_NoConsulAndNoEnv(t *testing.T) {
-	brokers := getKafkaBrokers()
+func TestGetKafkaBrokers(t *testing.T) {
+	FatalIf(t, !strslice.Equal(getKafkaBrokers(), DefaultKafkaBrokers), "should return default ")
 
-	FatalIf(t, len(brokers) != len(DefaultKafkaBrokers), "wrong brokers")
-	for i, _ := range brokers {
-		FatalIf(t, brokers[i] != DefaultKafkaBrokers[i], "wrong broker item")
-	}
-}
-
-func TestGetKafkaBrokers_FromEnv(t *testing.T) {
 	os.Setenv(EnvKafkaBrokers, "kafka-broker-1:1278,kafka-broker-2:1288")
 	defer os.Clearenv()
 
-	brokers := getKafkaBrokers()
-	FatalIf(t, len(brokers) != 2, "wrong brokers")
-	FatalIf(t, brokers[0] != "kafka-broker-1:1278", "wrong brokers[0]")
-	FatalIf(t, brokers[1] != "kafka-broker-2:1288", "wrong brokers[1]")
+	FatalIf(t, !strslice.Equal(getKafkaBrokers(), []string{"kafka-broker-1:1278", "kafka-broker-2:1288"}), "should return default ")
 }
 
 func TestGetConsulElastisearchName(t *testing.T) {
@@ -31,17 +22,53 @@ func TestGetConsulElastisearchName(t *testing.T) {
 
 	os.Setenv(EnvConsulElasticsearchName, "elastic11")
 	defer os.Clearenv()
-
 	FatalIf(t, getConsulElasticsearchName() != "elastic11", "should get from env variable")
 }
 
 func TestGetElasticsearchUrl(t *testing.T) {
-
 	FatalIf(t, getElasticsearchUrl() != DefaultElasticsearchUrl, "should return default ")
 
 	os.Setenv(EnvElasticsearchUrl, "http://some-elasticsearch")
 	defer os.Clearenv()
-
 	FatalIf(t, getElasticsearchUrl() != "http://some-elasticsearch", "should get from env variable")
+}
 
+func TestGetKafkaConsumerTopics(t *testing.T) {
+	FatalIf(t, !strslice.Equal(getKafkaConsumerTopics(), DefaultKafkaConsumerTopics), "should return default ")
+
+	os.Setenv(EnvKafkaConsumerTopics, "some-topic-01,some-topic-02")
+	defer os.Clearenv()
+	FatalIf(t, !strslice.Equal(getKafkaConsumerTopics(), []string{"some-topic-01", "some-topic-02"}), "should get from env variable")
+}
+
+func TestGetKafkaGroupID(t *testing.T) {
+	FatalIf(t, getKafkaGroupId() != DefaultKafkaGroupID, "should return default ")
+
+	os.Setenv(EnvKafkaGroupID, "some-group-id")
+	defer os.Clearenv()
+	FatalIf(t, getKafkaGroupId() != "some-group-id", "should get from env variable")
+}
+
+func TestGetPushMetricUrl(t *testing.T) {
+	FatalIf(t, getPushMetricUrl() != DefaultPushMetricUrl, "should return default ")
+
+	os.Setenv(EnvPushMetricUrl, "http://some-push-metric")
+	defer os.Clearenv()
+	FatalIf(t, getPushMetricUrl() != "http://some-push-metric", "should get from env variable")
+}
+
+func TestGetPushMetricToken(t *testing.T) {
+	FatalIf(t, getPushMetricToken() != DefaultPushMetricToken, "should return default ")
+
+	os.Setenv(EnvPushMetricToken, "some-token")
+	defer os.Clearenv()
+	FatalIf(t, getPushMetricToken() != "some-token", "should get from env variable")
+}
+
+func TestGetPushMetricInterval(t *testing.T) {
+	FatalIf(t, getPushMetricInterval() != DefaultPushMetricInterval, "should return default ")
+
+	os.Setenv(EnvPushMetricInterval, "22s")
+	defer os.Clearenv()
+	FatalIf(t, getPushMetricInterval() != "22s", "should get from env variable")
 }

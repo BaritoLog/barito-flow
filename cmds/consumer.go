@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/BaritoLog/barito-flow/flow"
-	"github.com/BaritoLog/go-boilerplate/envkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/BaritoLog/instru"
 	cluster "github.com/bsm/sarama-cluster"
@@ -16,17 +15,17 @@ import (
 func Consumer(c *cli.Context) (err error) {
 
 	brokers := getKafkaBrokers()
-	groupID := envkit.GetString(EnvKafkaGroupId, "barito-group")
-	topics := envkit.GetSlice(EnvKafkaProducerTopic, ",", []string{"topic01"})
+	groupID := getKafkaGroupId()
+	topics := getKafkaConsumerTopics()
 	esUrl := getElasticsearchUrl()
 
-	pushMetricUrl := envkit.GetString(EnvPushMetricUrl, "http://localhost:3000/api/increase_log_count")
-	pushMetricToken := envkit.GetString(EnvPushMetricToken, "")
-	pushMetricInterval := envkit.GetString(EnvPushMetricInterval, "30s")
+	pushMetricUrl := getPushMetricUrl()
+	pushMetricToken := getPushMetricToken()
+	pushMetricInterval := getPushMetricInterval()
 
 	log.Infof("Start Consumer")
 	log.Infof("%s=%v", EnvKafkaBrokers, brokers)
-	log.Infof("%s=%s", EnvKafkaGroupId, groupID)
+	log.Infof("%s=%s", EnvKafkaGroupID, groupID)
 	log.Infof("%s=%v", EnvKafkaConsumerTopics, topics)
 	log.Infof("%s=%v", EnvElasticsearchUrl, esUrl)
 	log.Infof("%s=%v", EnvPushMetricUrl, pushMetricUrl)
