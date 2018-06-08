@@ -69,6 +69,8 @@ Environment Variables
 | KafkaGroupID | kafka group id | BARITO_KAFKA_GROUP_ID | barito-group |
 | KafkaConsumerTopics | kafka consumer topics (CSV) | BARITO_KAFKA_CONSUMER_TOPICS| consumer-topic |
 | ElasticsearchUrl | elastisearch url | BARITO_ELASTICSEARCH_URL| http://localhost:9200 |
+|   |   | BARITO_CONSUL_URL | |
+|   |   | BARITO_CONSUL_ELASTICSEARCH_NAME | elasticsearch |
 | PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL| http://localhost:3000/api/increase_log_count |
 | PushMetricToken | push metric api token| BARITO_PUSH_METRIC_TOKEN |  |
 | PushMetricInterval | push metric interval| BARITO_PUSH_METRIC_INTERVAL | 30s |
