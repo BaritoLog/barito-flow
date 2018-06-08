@@ -23,14 +23,14 @@ func Consumer(c *cli.Context) (err error) {
 	pushMetricToken := getPushMetricToken()
 	pushMetricInterval := getPushMetricInterval()
 
-	log.Infof("Start Consumer")
-	log.Infof("%s=%v", EnvKafkaBrokers, brokers)
-	log.Infof("%s=%s", EnvKafkaGroupID, groupID)
-	log.Infof("%s=%v", EnvKafkaConsumerTopics, topics)
-	log.Infof("%s=%v", EnvElasticsearchUrl, esUrl)
-	log.Infof("%s=%v", EnvPushMetricUrl, pushMetricUrl)
-	log.Infof("%s=%v", EnvPushMetricToken, pushMetricToken)
-	log.Infof("%s=%v", EnvPushMetricInterval, pushMetricInterval)
+	log.Infof("[Start Consumer]")
+	log.Infof("KafkaBrokers: %v", EnvKafkaBrokers, brokers)
+	log.Infof("KafkaGroupID: %s", EnvKafkaGroupID, groupID)
+	log.Infof("KafkaConsumerTopics:%v", EnvKafkaConsumerTopics, topics)
+	log.Infof("ElasticsearchUrl:%v", EnvElasticsearchUrl, esUrl)
+	log.Infof("PushMetricUrl: %v", EnvPushMetricUrl, pushMetricUrl)
+	log.Infof("PushMetricToken: %v", EnvPushMetricToken, pushMetricToken)
+	log.Infof("PushMetricInterval: %v", EnvPushMetricInterval, pushMetricInterval)
 
 	if pushMetricToken != "" && pushMetricUrl != "" {
 		log.Infof("Set callback to instrumentation")

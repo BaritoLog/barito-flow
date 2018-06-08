@@ -10,18 +10,18 @@ import (
 
 func Producer(c *cli.Context) (err error) {
 
-	address := getProducerAddress()
+	producerAddress := getProducerAddress()
 	kafkaBrokers := getKafkaBrokers()
 	producerMaxRetry := getProducerMaxRetry()
-	kafkaTopic := getKafkaProducerTopic()
-	maxTps := getProducerMaxTPS()
+	kafkaProducerTopic := getKafkaProducerTopic()
+	producerMaxTps := getProducerMaxTPS()
 
-	log.Infof("Start Producer")
-	log.Infof("%s=%s", EnvProducerAddress, address)
-	log.Infof("%s=%s", EnvKafkaBrokers, kafkaBrokers)
-	log.Infof("%s=%s", EnvKafkaProducerTopic, kafkaTopic)
-	log.Infof("%s=%d", EnvProducerMaxRetry, producerMaxRetry)
-	log.Infof("%s=%d", EnvProducerMaxTPS, maxTps)
+	log.Infof("[Start Producer]")
+	log.Infof("ProducerAddress: %s", producerAddress)
+	log.Infof("KafkaBrokers: %s", kafkaBrokers)
+	log.Infof("KafkaProducerTopic: %s", kafkaProducerTopic)
+	log.Infof("ProducerMaxRetry: %d", producerMaxRetry)
+	log.Infof("ProducerMaxTps: %d", producerMaxTps)
 
 	// kafka producer config
 	config := sarama.NewConfig()
@@ -36,9 +36,9 @@ func Producer(c *cli.Context) (err error) {
 	}
 
 	agent := flow.NewHttpAgent(
-		address,
-		flow.NewKafkaStoreman(producer, kafkaTopic).Store,
-		maxTps,
+		producerAddress,
+		flow.NewKafkaStoreman(producer, kafkaProducerTopic).Store,
+		producerMaxTps,
 	)
 
 	return agent.Start()

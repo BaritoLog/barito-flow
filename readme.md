@@ -29,13 +29,20 @@ Run
 
 Environment Variables
 
-| Name| Description | Default Value  |
+
+
+log.Infof("ProducerMaxTps: %d", producerMaxTps)
+
+
+| Name| Description | ENV | Default Value  |
 | ---|---|----|
-| BARITO_PRODUCER_ADDRESS| Http Server Address | :8080 |
-| BARITO_KAFKA_BROKERS| Kafka broker addresses (CSV)| localhost:9092 |
-| BARITO_KAFKA_PRODUCER_TOPIC| kafka topic | producer-topic |
-| BARITO_PRODUCER_MAX_RETRY| set kafka setting max retry | 10 |
-| BARITO_PRODUCER_MAX_TPS| producer rate limit trx per second | 100 |
+| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul| BARITO_KAFKA_BROKERS| localhost:9092 |
+| | | BARITO_CONSUL_URL | |
+| | | BARITO_CONSUL_KAFKA_NAME | kafka |
+| ProducerAddress | Http Server Address | BARITO_PRODUCER_ADDRESS| :8080 |
+|KafkaProducerTopic| kafka topic| BARITO_KAFKA_PRODUCER_TOPIC | producer-topic |
+|ProducerMaxRetry| set kafka setting max retry| BARITO_PRODUCER_MAX_RETRY | 10 |
+|ProducerMaxTps| producer rate limit trx per second| BARITO_PRODUCER_MAX_TPS | 100 |
 
 
 ## Consumer
@@ -54,15 +61,17 @@ Run
 
 Environment Variables
 
-| Name| Description | Default Value  |
+| Name| Description | ENV | Default Value  |
 | ---|---|----|
-| BARITO_KAFKA_BROKERS| kafka broker address | localhost:9092 |
-| BARITO_KAFKA_GROUP_ID| kafka group id | barito-group |
-| BARITO_KAFKA_CONSUMER_TOPICS| kafka consumer topics (CSV) | consumer-topic |
-| BARITO_ELASTICSEARCH_URL| elastisearch url | http://localhost:9200 |
-| BARITO_PUSH_METRIC_URL| push metric api url | http://localhost:3000/api/increase_log_count |
-| BARITO_PUSH_METRIC_TOKEN| push metric api token |  |
-| BARITO_PUSH_METRIC_INTERVAL| push metric interval | 30s |
+| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul| BARITO_KAFKA_BROKERS| localhost:9092 |
+| | | BARITO_CONSUL_URL | |
+| | | BARITO_CONSUL_KAFKA_NAME | kafka |
+| KafkaGroupID | kafka group id | BARITO_KAFKA_GROUP_ID | barito-group |
+| KafkaConsumerTopics | kafka consumer topics (CSV) | BARITO_KAFKA_CONSUMER_TOPICS| consumer-topic |
+| ElasticsearchUrl | elastisearch url | BARITO_ELASTICSEARCH_URL| http://localhost:9200 |
+| PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL| http://localhost:3000/api/increase_log_count |
+| PushMetricToken | push metric api token| BARITO_PUSH_METRIC_TOKEN |  |
+| PushMetricInterval | push metric interval| BARITO_PUSH_METRIC_INTERVAL | 30s |
 
 
 ## Changes Log
