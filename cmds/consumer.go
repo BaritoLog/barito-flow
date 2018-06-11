@@ -19,28 +19,13 @@ func Consumer(c *cli.Context) (err error) {
 	topics := getKafkaConsumerTopics()
 	esUrl := getElasticsearchUrl()
 
-	pushMetricUrl := getPushMetricUrl()
-	pushMetricToken := getPushMetricToken()
-	pushMetricInterval := getPushMetricInterval()
-
 	log.Infof("[Start Consumer]")
 	log.Infof("KafkaBrokers: %v", EnvKafkaBrokers, brokers)
 	log.Infof("KafkaGroupID: %s", EnvKafkaGroupID, groupID)
 	log.Infof("KafkaConsumerTopics:%v", EnvKafkaConsumerTopics, topics)
 	log.Infof("ElasticsearchUrl:%v", EnvElasticsearchUrl, esUrl)
-	log.Infof("PushMetricUrl: %v", EnvPushMetricUrl, pushMetricUrl)
-	log.Infof("PushMetricToken: %v", EnvPushMetricToken, pushMetricToken)
-	log.Infof("PushMetricInterval: %v", EnvPushMetricInterval, pushMetricInterval)
 
-	if pushMetricToken != "" && pushMetricUrl != "" {
-		log.Infof("Set callback to instrumentation")
-		instru.SetCallback(
-			timekit.Duration(pushMetricInterval),
-			flow.NewMetricMarketCallback(pushMetricUrl, pushMetricToken),
-		)
-	} else {
-		log.Infof("No callback for instrumentation")
-	}
+	callbackInstrumentation()
 
 	// elastic client
 	client, err := elastic.NewClient(
@@ -71,5 +56,26 @@ func Consumer(c *cli.Context) (err error) {
 	}
 
 	return agent.Start()
+
+}
+
+func callbackInstrumentation() bool {
+	pushMetricUrl := getPushMetricUrl()
+	pushMetricToken := getPushMetricToken()
+	pushMetricInterval := getPushMetricInterval()
+
+	if pushMetricToken == "" || pushMetricUrl == "" {
+		log.Infof("No callback for instrumentation")
+		return false
+	}
+
+	log.Infof("PushMetricUrl: %v", EnvPushMetricUrl, pushMetricUrl)
+	log.Infof("PushMetricToken: %v", EnvPushMetricToken, pushMetricToken)
+	log.Infof("PushMetricInterval: %v", EnvPushMetricInterval, pushMetricInterval)
+	instru.SetCallback(
+		timekit.Duration(pushMetricInterval),
+		flow.NewMetricMarketCallback(pushMetricUrl, pushMetricToken),
+	)
+	return true
 
 }
