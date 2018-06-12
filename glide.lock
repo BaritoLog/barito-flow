@@ -4,13 +4,14 @@ imports:
 - name: github.com/armon/go-metrics
   version: 783273d703149aaeb9897cf58613d5af48861c25
 - name: github.com/BaritoLog/go-boilerplate
-  version: d4d31f934ebb5517573edcd2284cb592e8a91f3b
+  version: 6bcef5981312c02e2f3a5c85eedede927eea971b
   subpackages:
   - envkit
   - httpkit
   - strslice
   - testkit
   - timekit
+  - srvkit
 - name: github.com/BaritoLog/instru
   version: 2b8229c5a28aa0155edf89e86e10a09e360f5c3d
 - name: github.com/bouk/monkey
