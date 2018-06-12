@@ -20,6 +20,12 @@ func (a *KafkaAgent) Start() (err error) {
 	return
 }
 
+func (a *KafkaAgent) Close() {
+	if a.Consumer != nil {
+		a.Consumer.Close()
+	}
+}
+
 func (a *KafkaAgent) loopMain() {
 	for {
 		select {

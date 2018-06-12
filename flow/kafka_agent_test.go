@@ -43,6 +43,7 @@ func TestKafkaAgent(t *testing.T) {
 			gotNotification = notification
 		},
 	}
+	defer agent.Close()
 
 	go agent.Start()
 	timekit.Sleep("1ms")
@@ -74,6 +75,7 @@ func TestKafkaAgent_StoreError(t *testing.T) {
 			err0 = err
 		},
 	}
+	defer agent.Close()
 
 	go agent.Start()
 	timekit.Sleep("1ms")
@@ -103,6 +105,7 @@ func TestKafkaAgent_KafkaError(t *testing.T) {
 			err0 = err
 		},
 	}
+	defer agent.Close()
 
 	go agent.Start()
 	timekit.Sleep("1ms")

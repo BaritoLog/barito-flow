@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"github.com/BaritoLog/barito-flow/flow"
+	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 
@@ -40,6 +41,8 @@ func Producer(c *cli.Context) (err error) {
 		flow.NewKafkaStoreman(producer, kafkaProducerTopic).Store,
 		producerMaxTps,
 	)
+
+	srvkit.AsyncGracefulShutdown(agent.Close)
 
 	return agent.Start()
 }

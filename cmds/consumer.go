@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/BaritoLog/barito-flow/flow"
+	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/BaritoLog/instru"
 	cluster "github.com/bsm/sarama-cluster"
@@ -54,6 +55,8 @@ func Consumer(c *cli.Context) (err error) {
 			fmt.Println(err.Error())
 		},
 	}
+
+	srvkit.AsyncGracefulShutdown(agent.Close)
 
 	return agent.Start()
 
