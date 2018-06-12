@@ -78,6 +78,9 @@ Environment Variables
 
 ## Changes Log
 
+#### 0.7.0 
+- Graceful Shutdown
+
 #### 0.6.0 
 - Using consul to get kafka brokers, if consul not available then using environment variable
 - Using consul to get elasticsearch url, if url not available then using environment variable
