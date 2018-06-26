@@ -14,7 +14,7 @@ func TestConsumer(t *testing.T) {
 	os.Setenv(EnvKafkaBrokers, "wronghost:2349")
 	defer os.Clearenv()
 
-	err := Consumer(nil)
+	err := ConsumerAction(nil)
 
 	FatalIfWrongError(t, err, "kafka: client has run out of available brokers to talk to (Is your cluster reachable?)")
 }
