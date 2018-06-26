@@ -1,8 +1,8 @@
-package strslice
+package slicekit
 
 import "testing"
 
-func TestContain(t *testing.T) {
+func TestStringSliceContain(t *testing.T) {
 	testcases := []struct {
 		slice    []string
 		s        string
@@ -15,14 +15,14 @@ func TestContain(t *testing.T) {
 	}
 
 	for _, tt := range testcases {
-		get := Contain(tt.slice, tt.s)
+		get := StringSliceContain(tt.slice, tt.s)
 		if get != tt.expected {
 			t.Fatalf("Slice=%v\tString=%s\tGet '%t' while expect '%t'", tt.slice, tt.s, get, tt.expected)
 		}
 	}
 }
 
-func TestEqual(t *testing.T) {
+func TestStringSliceEqual(t *testing.T) {
 	tts := []struct {
 		slice1 []string
 		slice2 []string
@@ -36,7 +36,7 @@ func TestEqual(t *testing.T) {
 	}
 
 	for _, tt := range tts {
-		get := Equal(tt.slice1, tt.slice2)
+		get := StringSliceEqual(tt.slice1, tt.slice2)
 		if get != tt.result {
 			t.Fatalf("Slice1=%v\tSlice2=%v\tGet '%t' while expect '%t'", tt.slice1, tt.slice2, get, tt.result)
 		}

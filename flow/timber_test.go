@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/BaritoLog/go-boilerplate/strslice"
+	"github.com/BaritoLog/go-boilerplate/slicekit"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/Shopify/sarama"
 )
@@ -46,7 +46,7 @@ func TestNewTimberFromRequest_InvalidRequest(t *testing.T) {
 	trail := timber.ReceiverTrail()
 	hints := []string{HintNoMessage, HintNoTimestamp}
 	for _, hint := range hints {
-		FatalIf(t, !strslice.Contain(trail.Hints, hint),
+		FatalIf(t, !slicekit.StringSliceContain(trail.Hints, hint),
 			"Trails warning must contain '%s': %v", hint, trail.Hints)
 	}
 
@@ -82,7 +82,7 @@ func TestNewTimberFromKafka_InvalidMessage(t *testing.T) {
 	trail := timber.ForwarderTrail()
 	hints := []string{HintNoMessage, HintNoLocation, HintNoTimestamp}
 	for _, hint := range hints {
-		FatalIf(t, !strslice.Contain(trail.Hints, hint),
+		FatalIf(t, !slicekit.StringSliceContain(trail.Hints, hint),
 			"Trail hints must contain '%s': %v", hint, trail.Hints)
 	}
 }

@@ -64,7 +64,7 @@ func NewTimberFromRequest(req *http.Request) Timber {
 		hints = append(hints, HintNoTimestamp)
 	}
 
-	timber.SetLocation(httpkit.PathParameter(req.URL.Path, "produce"))
+	timber.SetLocation(httpkit.PathParameterOfRawURL(req.URL.Path, "produce"))
 	timber.SetReceiverTrail(&ReceiverTrail{
 		URLPath:    req.URL.Path,
 		ReceivedAt: time.Now().UTC().Format(time.RFC3339),

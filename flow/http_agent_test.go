@@ -20,9 +20,9 @@ func TestHttpAgent_ServeHTTP(t *testing.T) {
 	body := strings.NewReader(`body`)
 
 	req, _ := http.NewRequest("POST", "/", body)
-	rr := HttpRecord(agent.ServeHTTP, req)
+	resp := RecordResponse(agent.ServeHTTP, req)
 
-	FatalIfWrongHttpCode(t, rr, http.StatusOK)
+	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
 }
 
 func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
@@ -33,9 +33,9 @@ func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
 	body := strings.NewReader(`body`)
 
 	req, _ := http.NewRequest("POST", "/", body)
-	rr := HttpRecord(agent.ServeHTTP, req)
+	resp := RecordResponse(agent.ServeHTTP, req)
 
-	FatalIfWrongHttpCode(t, rr, http.StatusBadGateway)
+	FatalIfWrongResponseStatus(t, resp, http.StatusBadGateway)
 }
 
 func TestHttpAgent_Start(t *testing.T) {

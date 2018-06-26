@@ -9,7 +9,7 @@ import (
 )
 
 func TestConsulElasticsearch(t *testing.T) {
-	ts := NewHttpTestServer(http.StatusOK, []byte(`[
+	ts := NewTestServer(http.StatusOK, []byte(`[
 	{
 		"ServiceAddress": "172.17.0.3",
 		"ServicePort": 5000,
@@ -29,7 +29,7 @@ func TestConsulElasticsearch(t *testing.T) {
 }
 
 func TestConsulElasticsearch_NoHttpSchema(t *testing.T) {
-	ts := NewHttpTestServer(http.StatusOK, []byte(`[
+	ts := NewTestServer(http.StatusOK, []byte(`[
 	{
 		"ServiceAddress": "172.17.0.3",
 		"ServicePort": 5000
@@ -46,7 +46,7 @@ func TestConsulElasticsearch_NoHttpSchema(t *testing.T) {
 }
 
 func TestConsulElasticsearch_NoService(t *testing.T) {
-	ts := NewHttpTestServer(http.StatusOK, []byte(`[]`))
+	ts := NewTestServer(http.StatusOK, []byte(`[]`))
 	defer ts.Close()
 
 	os.Setenv(EnvConsulUrl, ts.URL)
@@ -78,7 +78,7 @@ func TestConsulKafkaBorkers_WrongConsulAddress(t *testing.T) {
 }
 
 func TestConsulKafkaBorkers(t *testing.T) {
-	ts := NewHttpTestServer(http.StatusOK, []byte(`[
+	ts := NewTestServer(http.StatusOK, []byte(`[
   {
     "ServiceAddress": "172.17.0.3",
     "ServicePort": 5000

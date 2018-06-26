@@ -1,0 +1,12 @@
+package saramatestkit
+
+import (
+	"github.com/Shopify/sarama"
+	"github.com/bouk/monkey"
+)
+
+func PatchNewClient(client sarama.Client, err error) *monkey.PatchGuard {
+	return monkey.Patch(sarama.NewClient, func(addrs []string, conf *sarama.Config) (sarama.Client, error) {
+		return client, err
+	})
+}

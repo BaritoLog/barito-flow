@@ -1,7 +1,7 @@
 /* Collection of helper for slice of string */
-package strslice
+package slicekit
 
-func Contain(slice []string, s string) bool {
+func StringSliceContain(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
 			return true
@@ -11,7 +11,7 @@ func Contain(slice []string, s string) bool {
 	return false
 }
 
-func Equal(slice1, slice2 []string) bool {
+func StringSliceEqual(slice1, slice2 []string) bool {
 	if len(slice1) != len(slice2) {
 		return false
 	}

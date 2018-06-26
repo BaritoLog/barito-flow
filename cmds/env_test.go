@@ -4,17 +4,17 @@ import (
 	"os"
 	"testing"
 
-	"github.com/BaritoLog/go-boilerplate/strslice"
+	"github.com/BaritoLog/go-boilerplate/slicekit"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 )
 
 func TestGetKafkaBrokers(t *testing.T) {
-	FatalIf(t, !strslice.Equal(getKafkaBrokers(), DefaultKafkaBrokers), "should return default ")
+	FatalIf(t, !slicekit.StringSliceEqual(getKafkaBrokers(), DefaultKafkaBrokers), "should return default ")
 
 	os.Setenv(EnvKafkaBrokers, "kafka-broker-1:1278,kafka-broker-2:1288")
 	defer os.Clearenv()
 
-	FatalIf(t, !strslice.Equal(getKafkaBrokers(), []string{"kafka-broker-1:1278", "kafka-broker-2:1288"}), "should return default ")
+	FatalIf(t, !slicekit.StringSliceEqual(getKafkaBrokers(), []string{"kafka-broker-1:1278", "kafka-broker-2:1288"}), "should return default ")
 }
 
 func TestGetConsulElastisearchName(t *testing.T) {
@@ -34,11 +34,11 @@ func TestGetElasticsearchUrl(t *testing.T) {
 }
 
 func TestGetKafkaConsumerTopics(t *testing.T) {
-	FatalIf(t, !strslice.Equal(getKafkaConsumerTopics(), DefaultKafkaConsumerTopics), "should return default ")
+	FatalIf(t, !slicekit.StringSliceEqual(getKafkaConsumerTopics(), DefaultKafkaConsumerTopics), "should return default ")
 
 	os.Setenv(EnvKafkaConsumerTopics, "some-topic-01,some-topic-02")
 	defer os.Clearenv()
-	FatalIf(t, !strslice.Equal(getKafkaConsumerTopics(), []string{"some-topic-01", "some-topic-02"}), "should get from env variable")
+	FatalIf(t, !slicekit.StringSliceEqual(getKafkaConsumerTopics(), []string{"some-topic-01", "some-topic-02"}), "should get from env variable")
 }
 
 func TestGetKafkaGroupID(t *testing.T) {
