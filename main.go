@@ -30,7 +30,7 @@ func main() {
 				Name:      "consumer",
 				ShortName: "c",
 				Usage:     "start barito-flow as consumer",
-				Action:    cmds.Consumer,
+				Action:    cmds.ConsumerAction,
 			},
 		},
 	}

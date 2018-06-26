@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-func Consumer(c *cli.Context) (err error) {
+func ConsumerAction(c *cli.Context) (err error) {
 
 	brokers := getKafkaBrokers()
 	groupID := getKafkaGroupId()
