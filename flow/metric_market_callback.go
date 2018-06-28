@@ -9,6 +9,7 @@ import (
 	"github.com/BaritoLog/instru"
 )
 
+// TODO: move to market package
 type MetricMarketCallback interface {
 	OnCallback(instr instru.Instrumentation) error
 }
