@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/es"
-	"github.com/BaritoLog/instru"
 	"github.com/olivere/elastic"
 )
 
 const (
+	// TODO: change to camel case as golang convention
 	MESSAGE_TYPE = "fluentd"
 	INDEX_PREFIX = "baritolog"
 )
@@ -21,6 +21,7 @@ type ElasticStoreman struct {
 	ctx    context.Context
 }
 
+// TODO: return interface
 func NewElasticStoreman(client *elastic.Client) *ElasticStoreman {
 	return &ElasticStoreman{
 		client: client,
@@ -39,24 +40,14 @@ func (e *ElasticStoreman) Store(timber Timber) (err error) {
 	if !exists {
 		index := createIndex()
 		_, err = e.client.CreateIndex(indexName).BodyJson(index).Do(e.ctx)
+		instruESCreateIndex(err)
 		if err != nil {
-			instru.Count("es_create_index").Event("fail")
 			return
 		}
-		instru.Count("es_create_index").Event("success")
 	}
 
-	_, err = e.client.Index().
-		Index(indexName).
-		Type(MESSAGE_TYPE).
-		BodyJson(timber).
-		Do(e.ctx)
-
-	if err != nil {
-		instru.Count("es_store").Event("fail")
-	} else {
-		instru.Count("es_store").Event("success")
-	}
+	_, err = e.client.Index().Index(indexName).Type(MESSAGE_TYPE).BodyJson(timber).Do(e.ctx)
+	instruESStore(err)
 
 	return
 }
