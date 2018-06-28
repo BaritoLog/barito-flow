@@ -17,7 +17,7 @@ func TestHttpAgent_ServeHTTP(t *testing.T) {
 		return nil
 	}, 100)
 
-	body := strings.NewReader(`body`)
+	body := strings.NewReader(`{}`)
 
 	req, _ := http.NewRequest("POST", "/", body)
 	resp := RecordResponse(agent.ServeHTTP, req)
@@ -30,7 +30,7 @@ func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
 		return fmt.Errorf("some error")
 	}, 100)
 
-	body := strings.NewReader(`body`)
+	body := strings.NewReader(`{}`)
 
 	req, _ := http.NewRequest("POST", "/", body)
 	resp := RecordResponse(agent.ServeHTTP, req)
@@ -72,7 +72,7 @@ func TestHttpAgent_HitMaxTPS(t *testing.T) {
 	FatalIf(t, resp.StatusCode != 509, "wrong status code")
 }
 
-func TestHttp_Agent_RefillBucket(t *testing.T) {
+func TestHttpAgent_RefillBucket(t *testing.T) {
 	maxTps := 10
 	agent := NewHttpAgent(":65502", func(timber Timber) error {
 		return nil
@@ -89,5 +89,16 @@ func TestHttp_Agent_RefillBucket(t *testing.T) {
 	resp, err := http.Post("http://localhost:65502", "application/json", bytes.NewBufferString(`{}`))
 	FatalIfError(t, err)
 	FatalIf(t, resp.StatusCode != 200, "wrong status code")
+}
+
+func TestHttpAgent_OnBadRequest(t *testing.T) {
+	agent := NewHttpAgent("", func(timber Timber) error {
+		return nil
+	}, 100)
+
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(`invalid-body`))
+	resp := RecordResponse(agent.ServeHTTP, req)
+
+	FatalIfWrongResponseStatus(t, resp, http.StatusBadRequest)
 
 }

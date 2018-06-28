@@ -62,22 +62,24 @@ func (a *httpAgent) Close() {
 
 func (a *httpAgent) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if !a.leakBucket() {
-		rw.WriteHeader(509)
-		rw.Write([]byte("Bandwith Limit Exceeded"))
+		onLimitExceeded(rw)
 		return
 	}
-	timber := NewTimberFromRequest(req)
+	timber, err := NewTimberFromRequest(req)
+	if err != nil {
+		onBadRequest(rw, err)
+		return
+	}
+
 	if a.Store != nil {
-		err := a.Store(timber)
+		err = a.Store(timber)
 		if err != nil {
-			rw.WriteHeader(http.StatusBadGateway)
-			rw.Write([]byte(err.Error()))
+			onStoreError(rw, err)
 			return
 		}
 	}
 
-	rw.WriteHeader(http.StatusOK)
-	rw.Write([]byte("OK"))
+	onSuccess(rw)
 }
 
 func (a *httpAgent) loopRefillBucket() {

@@ -18,7 +18,7 @@ func TestKafkaAgent(t *testing.T) {
 
 	go func() {
 		messages <- &sarama.ConsumerMessage{
-			Value: []byte("expected message"),
+			Value: []byte(`{"hello": "world"}`),
 		}
 		notifications <- expectedNotification
 	}()
@@ -48,14 +48,14 @@ func TestKafkaAgent(t *testing.T) {
 	go agent.Start()
 	timekit.Sleep("1ms")
 
-	FatalIf(t, gotTimber.Message() != "expected message", "wrong timber message")
+	FatalIf(t, gotTimber["hello"] != "world", "wrong gotTimber[hello]")
 }
 
 func TestKafkaAgent_StoreError(t *testing.T) {
 	messages := make(chan *sarama.ConsumerMessage)
 	go func() {
 		messages <- &sarama.ConsumerMessage{
-			Value: []byte("some message"),
+			Value: []byte(`{"hello": "world"}`),
 		}
 	}()
 	timekit.Sleep("1ms")
@@ -80,7 +80,7 @@ func TestKafkaAgent_StoreError(t *testing.T) {
 	go agent.Start()
 	timekit.Sleep("1ms")
 
-	FatalIfWrongError(t, err0, "expected store error")
+	FatalIfWrongError(t, err0, "Store Failed: expected store error")
 }
 
 func TestKafkaAgent_KafkaError(t *testing.T) {
@@ -111,4 +111,37 @@ func TestKafkaAgent_KafkaError(t *testing.T) {
 	timekit.Sleep("1ms")
 
 	FatalIfWrongError(t, err0, "expected kafka error")
+}
+
+func TestKafkaAgent_BadKafkaMessage(t *testing.T) {
+	messages := make(chan *sarama.ConsumerMessage)
+
+	go func() {
+		messages <- &sarama.ConsumerMessage{
+			Value: []byte(`invalid message`),
+		}
+	}()
+	timekit.Sleep("1ms")
+
+	var err0 error
+
+	agent := KafkaAgent{
+		Consumer: &dummyKafkaConsumer{
+			messages:      messages,
+			notifications: make(chan *cluster.Notification),
+			errors:        make(chan error),
+		},
+		Store: func(timber Timber) error {
+			return nil
+		},
+		OnError: func(err error) {
+			err0 = err
+		},
+	}
+	defer agent.Close()
+
+	go agent.Start()
+	timekit.Sleep("1ms")
+
+	FatalIfWrongError(t, err0, string(BadKafkaMessageError))
 }

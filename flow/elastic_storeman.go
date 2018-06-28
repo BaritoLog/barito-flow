@@ -30,8 +30,9 @@ func NewElasticStoreman(client *elastic.Client) *ElasticStoreman {
 
 func (e *ElasticStoreman) Store(timber Timber) (err error) {
 
+	// TODO: get index predix from timber contenxt
 	indexName := fmt.Sprintf("%s-%s-%s",
-		INDEX_PREFIX, timber.Location(), time.Now().Format("2006.01.02"))
+		INDEX_PREFIX, "location", time.Now().Format("2006.01.02"))
 
 	exists, _ := e.client.IndexExists(indexName).Do(e.ctx)
 
@@ -44,6 +45,7 @@ func (e *ElasticStoreman) Store(timber Timber) (err error) {
 		}
 		instru.Count("es_create_index").Event("success")
 	}
+
 	_, err = e.client.Index().
 		Index(indexName).
 		Type(MESSAGE_TYPE).

@@ -1,7 +1,14 @@
 package flow
 
 import (
+	"github.com/BaritoLog/go-boilerplate/errkit"
 	cluster "github.com/bsm/sarama-cluster"
+)
+
+const (
+	BadKafkaMessageError = errkit.Error("Bad Kafka Message")
+	StoreFailedError     = errkit.Error("Store Failed")
+	GeneralKafkaError    = errkit.Error("Got Kafka error")
 )
 
 type KafkaAgent struct {
@@ -31,14 +38,21 @@ func (a *KafkaAgent) loopMain() {
 		select {
 		case message, ok := <-a.Consumer.Messages():
 			if ok {
-				timber := NewTimberFromKafkaMessage(message)
-				err := a.Store(timber)
+				timber, err := NewTimberFromKafkaMessage(message)
+
 				if err != nil {
-					a.fireError(err)
+					a.fireError(BadKafkaMessageError, err)
 				} else {
-					a.fireSuccess(timber)
+					err = a.Store(timber)
+					if err != nil {
+						a.fireError(StoreFailedError, err)
+					} else {
+						a.fireSuccess(timber)
+					}
 				}
+
 				a.Consumer.MarkOffset(message, "")
+
 			}
 		}
 	}
@@ -52,7 +66,7 @@ func (a *KafkaAgent) loopNotification() {
 
 func (a *KafkaAgent) loopErrors() {
 	for err := range a.Consumer.Errors() {
-		a.fireError(err)
+		a.fireError(GeneralKafkaError, err)
 	}
 }
 
@@ -62,9 +76,9 @@ func (a *KafkaAgent) fireSuccess(timber Timber) {
 	}
 }
 
-func (a *KafkaAgent) fireError(err error) {
+func (a *KafkaAgent) fireError(prefix, err error) {
 	if a.OnError != nil {
-		a.OnError(err)
+		a.OnError(errkit.Concat(prefix, err))
 	}
 }
 
