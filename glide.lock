@@ -4,7 +4,7 @@ imports:
 - name: github.com/armon/go-metrics
   version: 783273d703149aaeb9897cf58613d5af48861c25
 - name: github.com/BaritoLog/go-boilerplate
-  version: 2bbe81c18f70a587f540042816bbf6e6607775ec
+  version: eb07b098094ed5f3ee7ddc752a1e34d0f7cdc5a1
   subpackages:
   - envkit
   - httpkit

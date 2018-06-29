@@ -10,3 +10,9 @@ func PatchNewClient(client sarama.Client, err error) *monkey.PatchGuard {
 		return client, err
 	})
 }
+
+func PatchNewSyncProducer(producer sarama.SyncProducer, err error) *monkey.PatchGuard {
+	return monkey.Patch(sarama.NewSyncProducer, func(addrs []string, config *sarama.Config) (sarama.SyncProducer, error) {
+		return producer, err
+	})
+}

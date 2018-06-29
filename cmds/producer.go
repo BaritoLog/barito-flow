@@ -11,38 +11,35 @@ import (
 
 func Producer(c *cli.Context) (err error) {
 
-	producerAddress := getProducerAddress()
+	log.Infof("Start Barito-Producer")
+
+	address := getProducerAddress()
 	kafkaBrokers := getKafkaBrokers()
-	producerMaxRetry := getProducerMaxRetry()
+	maxRetry := getProducerMaxRetry()
 	kafkaProducerTopic := getKafkaProducerTopic()
 	producerMaxTps := getProducerMaxTPS()
 
-	log.Infof("[Start Producer]")
-	log.Infof("ProducerAddress: %s", producerAddress)
+	// TODO: move info to config source file
+	log.Infof("ProducerAddress: %s", address)
 	log.Infof("KafkaBrokers: %s", kafkaBrokers)
 	log.Infof("KafkaProducerTopic: %s", kafkaProducerTopic)
-	log.Infof("ProducerMaxRetry: %d", producerMaxRetry)
+	log.Infof("ProducerMaxRetry: %d", maxRetry)
 	log.Infof("ProducerMaxTps: %d", producerMaxTps)
 
 	// kafka producer config
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = producerMaxRetry
+	config.Producer.Retry.Max = maxRetry
 	config.Producer.Return.Successes = true
 
 	// kafka producer
-	producer, err := sarama.NewSyncProducer(kafkaBrokers, config)
+	kafkaProducer, err := sarama.NewSyncProducer(kafkaBrokers, config)
 	if err != nil {
 		return
 	}
 
-	agent := flow.NewHttpAgent(
-		producerAddress,
-		flow.NewKafkaStoreman(producer, kafkaProducerTopic).Store,
-		producerMaxTps,
-	)
+	srv := flow.NewBaritoProducerService(address, kafkaProducer, producerMaxTps)
+	srvkit.AsyncGracefulShutdown(srv.Close)
 
-	srvkit.AsyncGracefulShutdown(agent.Close)
-
-	return agent.Start()
+	return srv.Start()
 }
