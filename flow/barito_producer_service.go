@@ -75,10 +75,9 @@ func (a *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	// TODO: get from timber context
-	topic := "some-topic"
+	timberCtx := timber.Context()
 
-	err = kafkaStore(a.Producer, topic, timber)
+	err = kafkaStore(a.Producer, timberCtx.KafkaTopic, timber)
 	if err != nil {
 		onStoreError(rw, err)
 		return

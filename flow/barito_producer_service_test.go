@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/BaritoLog/go-boilerplate/saramatestkit"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
@@ -14,16 +15,26 @@ import (
 
 func TestHttpAgent_ServeHTTP(t *testing.T) {
 
-	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
-	producer.ExpectSendMessageAndSucceed()
+	var topic string
 
-	agent := NewBaritoProducerService("", producer, 100)
+	dummy := saramatestkit.NewSyncProducer()
+	dummy.SendMessageFunc = func(msg *sarama.ProducerMessage) (partition int32, offset int64, err error) {
+		topic = msg.Topic
+		return
+	}
+
+	agent := NewBaritoProducerService("", dummy, 100)
 	defer agent.Close()
 
-	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{}`))
+	req, _ := http.NewRequest("POST", "/",
+		strings.NewReader(`{
+			"_ctx": {
+				"kafka_topic": "some_topic"
+				}}`))
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
+	FatalIf(t, topic != "some_topic", "produce to wrong kafka topic")
 }
 
 func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
@@ -33,7 +44,7 @@ func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
 	agent := NewBaritoProducerService("", producer, 100)
 	defer agent.Close()
 
-	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{}`))
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusBadGateway)
@@ -48,7 +59,7 @@ func TestHttpAgent_Start(t *testing.T) {
 	go agent.Start()
 	defer agent.Close()
 
-	resp, err := http.Post("http://localhost:65500", "application/json", strings.NewReader(`{}`))
+	resp, err := http.Post("http://localhost:65500", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
 
 	FatalIfError(t, err)
 	FatalIfWrongResponseStatus(t, resp, 200)
@@ -66,10 +77,10 @@ func TestHttpAgent_HitMaxTPS(t *testing.T) {
 
 	for i := 0; i < maxTps; i++ {
 		producer.ExpectSendMessageAndSucceed()
-		http.Post("http://localhost:65501", "application/json", strings.NewReader(`{}`))
+		http.Post("http://localhost:65501", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
 	}
 
-	resp, err := http.Post("http://localhost:65501", "application/json", strings.NewReader(`{}`))
+	resp, err := http.Post("http://localhost:65501", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
 	FatalIfError(t, err)
 	FatalIfWrongResponseStatus(t, resp, 509)
 }
@@ -84,13 +95,13 @@ func TestHttpAgent_RefillBucket(t *testing.T) {
 
 	for i := 0; i < maxTps; i++ {
 		producer.ExpectSendMessageAndSucceed()
-		http.Post("http://localhost:65502", "application/json", strings.NewReader(`{}`))
+		http.Post("http://localhost:65502", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
 	}
 
 	timekit.Sleep("1s")
 
 	producer.ExpectSendMessageAndSucceed()
-	resp, err := http.Post("http://localhost:65502", "application/json", strings.NewReader(`{}`))
+	resp, err := http.Post("http://localhost:65502", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
 	FatalIfError(t, err)
 	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
 }

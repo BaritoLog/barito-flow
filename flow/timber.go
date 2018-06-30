@@ -16,3 +16,8 @@ func (t Timber) Timestamp() (s string) {
 	s, _ = t["@timestamp"].(string)
 	return
 }
+
+func (t Timber) Context() (ctx *TimberContext) {
+	ctx, _ = t["_ctx"].(*TimberContext)
+	return
+}
