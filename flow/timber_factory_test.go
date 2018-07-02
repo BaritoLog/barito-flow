@@ -15,7 +15,7 @@ func TestNewTimberFromBytes_GenerateTimestamp(t *testing.T) {
 	timekit.FreezeUTC("2018-06-06T12:12:12Z")
 	defer timekit.Unfreeze()
 
-	timber, err := NewTimberFromBytes([]byte(`{"hello":"world", "_ctx": {"kafka_topic": "some_topic"}}`))
+	timber, err := NewTimberFromBytes([]byte(`{"hello":"world", "_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
 	FatalIfError(t, err)
 	FatalIf(t, timber.Timestamp() != "2018-06-06T12:12:12Z", "wrong timber.Timestamp()")
 }
@@ -41,9 +41,7 @@ func TestNewTimberFromRequest(t *testing.T) {
     "message":"hello world", 
     "id": "0012", 
     "@timestamp":"2009-11-10T23:00:00Z",
-		"_ctx": {
-			"kafka_topic": "some_topic"
-		}
+		"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}
   }`)
 
 	req, err := http.NewRequest("POST", "/", body)
@@ -65,9 +63,7 @@ func TestNewTimberFromKafka(t *testing.T) {
       "location": "some-location", 
       "message":"some-message", 
       "@timestamp":"2009-11-10T23:00:00Z",
-			"_ctx": {
-				"kafka_topic": "some_topic"
-			}
+			"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}
     }`),
 	}
 

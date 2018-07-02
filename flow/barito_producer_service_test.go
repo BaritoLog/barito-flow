@@ -27,10 +27,7 @@ func TestHttpAgent_ServeHTTP(t *testing.T) {
 	defer agent.Close()
 
 	req, _ := http.NewRequest("POST", "/",
-		strings.NewReader(`{
-			"_ctx": {
-				"kafka_topic": "some_topic"
-				}}`))
+		strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
@@ -44,7 +41,7 @@ func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
 	agent := NewBaritoProducerService("", producer, 100)
 	defer agent.Close()
 
-	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusBadGateway)
@@ -59,7 +56,7 @@ func TestHttpAgent_Start(t *testing.T) {
 	go agent.Start()
 	defer agent.Close()
 
-	resp, err := http.Post("http://localhost:65500", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
+	resp, err := http.Post("http://localhost:65500", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
 
 	FatalIfError(t, err)
 	FatalIfWrongResponseStatus(t, resp, 200)
@@ -77,10 +74,10 @@ func TestHttpAgent_HitMaxTPS(t *testing.T) {
 
 	for i := 0; i < maxTps; i++ {
 		producer.ExpectSendMessageAndSucceed()
-		http.Post("http://localhost:65501", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
+		http.Post("http://localhost:65501", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
 	}
 
-	resp, err := http.Post("http://localhost:65501", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
+	resp, err := http.Post("http://localhost:65501", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}}`))
 	FatalIfError(t, err)
 	FatalIfWrongResponseStatus(t, resp, 509)
 }
@@ -95,13 +92,13 @@ func TestHttpAgent_RefillBucket(t *testing.T) {
 
 	for i := 0; i < maxTps; i++ {
 		producer.ExpectSendMessageAndSucceed()
-		http.Post("http://localhost:65502", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
+		http.Post("http://localhost:65502", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
 	}
 
 	timekit.Sleep("1s")
 
 	producer.ExpectSendMessageAndSucceed()
-	resp, err := http.Post("http://localhost:65502", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic"}}`))
+	resp, err := http.Post("http://localhost:65502", "application/json", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
 	FatalIfError(t, err)
 	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
 }

@@ -20,7 +20,7 @@ func TestKafkaAgent(t *testing.T) {
 
 	go func() {
 		messages <- &sarama.ConsumerMessage{
-			Value: []byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic"}}`),
+			Value: []byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`),
 		}
 		notifications <- expectedNotification
 	}()
@@ -60,7 +60,7 @@ func TestKafkaAgent_StoreError(t *testing.T) {
 	messages := make(chan *sarama.ConsumerMessage)
 	go func() {
 		messages <- &sarama.ConsumerMessage{
-			Value: []byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic"}}`),
+			Value: []byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`),
 		}
 	}()
 	timekit.Sleep("1ms")
