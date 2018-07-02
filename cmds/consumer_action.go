@@ -1,8 +1,6 @@
 package cmds
 
 import (
-	"fmt"
-
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
@@ -15,12 +13,15 @@ import (
 
 func ConsumerAction(c *cli.Context) (err error) {
 
+	log.Infof("[Start Consumer]")
+
 	brokers := getKafkaBrokers()
 	groupID := getKafkaGroupId()
 	topics := getKafkaConsumerTopics()
 	esUrl := getElasticsearchUrl()
 
-	log.Infof("[Start Consumer]")
+	//
+
 	log.Infof("KafkaBrokers: %v", EnvKafkaBrokers, brokers)
 	log.Infof("KafkaGroupID: %s", EnvKafkaGroupID, groupID)
 	log.Infof("KafkaConsumerTopics:%v", EnvKafkaConsumerTopics, topics)
@@ -35,8 +36,6 @@ func ConsumerAction(c *cli.Context) (err error) {
 		elastic.SetHealthcheck(false),
 	)
 
-	storeman := flow.NewElasticStoreman(client)
-
 	// consumer config
 	config := cluster.NewConfig()
 	config.Consumer.Return.Errors = true
@@ -48,17 +47,14 @@ func ConsumerAction(c *cli.Context) (err error) {
 		return
 	}
 
-	agent := flow.KafkaAgent{
-		Consumer: consumer,
-		Store:    storeman.Store,
-		OnError: func(err error) {
-			fmt.Println(err.Error())
-		},
-	}
+	worker := flow.NewConsumerWorker(consumer, client)
+	worker.OnError(func(err error) {
+		log.Warn(err.Error())
+	})
 
-	srvkit.AsyncGracefulShutdown(agent.Close)
+	srvkit.AsyncGracefulShutdown(worker.Close)
 
-	return agent.Start()
+	return worker.Start()
 
 }
 
@@ -77,7 +73,7 @@ func callbackInstrumentation() bool {
 	log.Infof("PushMetricInterval: %v", EnvPushMetricInterval, pushMetricInterval)
 	instru.SetCallback(
 		timekit.Duration(pushMetricInterval),
-		flow.NewMetricMarketCallback(pushMetricUrl, pushMetricToken),
+		NewMetricMarketCallback(pushMetricUrl, pushMetricToken),
 	)
 	return true
 

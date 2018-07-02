@@ -43,6 +43,7 @@ func consulElasticsearchUrl() (url string, err error) {
 	return
 }
 
+// TODO: make consulClient as function parameter
 func catalogServices(name string) (services []*api.CatalogService, err error) {
 	consulAddr, ok := os.LookupEnv(EnvConsulUrl)
 	if !ok {

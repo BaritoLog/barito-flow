@@ -1,5 +1,6 @@
 package cmds
 
+//
 import (
 	"net/http"
 	"os"
@@ -56,25 +57,9 @@ func TestConsulElasticsearch_NoService(t *testing.T) {
 	FatalIfWrongError(t, err, "No Service")
 }
 
-func TestConsulElastisearch_ConsulError(t *testing.T) {
-	os.Setenv(EnvConsulUrl, "http://wrong-consul")
-	defer os.Clearenv()
-
-	_, err := consulElasticsearchUrl()
-	FatalIfWrongError(t, err, "no such host")
-}
-
 func TestGetKafkaBorkersFromConsul_NoEnv(t *testing.T) {
 	_, err := consulKafkaBroker()
 	FatalIfWrongError(t, err, "no ENV BARITO_CONSUL_URL")
-}
-
-func TestConsulKafkaBorkers_WrongConsulAddress(t *testing.T) {
-	os.Setenv(EnvConsulUrl, "http://wrong-consul")
-	defer os.Clearenv()
-
-	_, err := consulKafkaBroker()
-	FatalIfWrongError(t, err, "no such host")
 }
 
 func TestConsulKafkaBorkers(t *testing.T) {
