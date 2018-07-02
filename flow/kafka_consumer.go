@@ -5,6 +5,7 @@ import (
 	cluster "github.com/bsm/sarama-cluster"
 )
 
+// TODO: using monkey patching from saramatestkit
 // Interfacing cluser.Consumer for testing purpose
 type KafkaConsumer interface {
 	Messages() <-chan *sarama.ConsumerMessage

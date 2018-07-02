@@ -16,43 +16,30 @@ const (
 	INDEX_PREFIX = "baritolog"
 )
 
-type ElasticStoreman struct {
-	client *elastic.Client
-	ctx    context.Context
-}
-
-// TODO: return interface
-func NewElasticStoreman(client *elastic.Client) *ElasticStoreman {
-	return &ElasticStoreman{
-		client: client,
-		ctx:    context.Background(),
-	}
-}
-
-func (e *ElasticStoreman) Store(timber Timber) (err error) {
+func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (err error) {
 
 	// TODO: get index predix from timber contenxt
 	indexName := fmt.Sprintf("%s-%s-%s",
 		INDEX_PREFIX, "location", time.Now().Format("2006.01.02"))
 
-	exists, _ := e.client.IndexExists(indexName).Do(e.ctx)
+	exists, _ := client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
-		index := createIndex()
-		_, err = e.client.CreateIndex(indexName).BodyJson(index).Do(e.ctx)
+		index := elasticCreateIndex()
+		_, err = client.CreateIndex(indexName).BodyJson(index).Do(ctx)
 		instruESCreateIndex(err)
 		if err != nil {
 			return
 		}
 	}
 
-	_, err = e.client.Index().Index(indexName).Type(MESSAGE_TYPE).BodyJson(timber).Do(e.ctx)
+	_, err = client.Index().Index(indexName).Type(MESSAGE_TYPE).BodyJson(timber).Do(ctx)
 	instruESStore(err)
 
 	return
 }
 
-func createIndex() *es.Index {
+func elasticCreateIndex() *es.Index {
 
 	return &es.Index{
 		Template: fmt.Sprintf("%s-*", INDEX_PREFIX),
@@ -86,5 +73,13 @@ func createIndex() *es.Index {
 			}).
 			AddPropertyWithType("@timestamp", "date"),
 	}
+}
+
+func elasticNewClient(urls ...string) (*elastic.Client, error) {
+	return elastic.NewClient(
+		elastic.SetURL(urls...),
+		elastic.SetSniff(false),
+		elastic.SetHealthcheck(false),
+	)
 
 }
