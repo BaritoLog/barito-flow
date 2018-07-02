@@ -10,45 +10,50 @@ import (
 	"github.com/olivere/elastic"
 )
 
-const (
-	// TODO: change to camel case as golang convention
-	MESSAGE_TYPE = "fluentd"
-	INDEX_PREFIX = "baritolog"
-)
+func elasticNewClient(urls ...string) (*elastic.Client, error) {
+	return elastic.NewClient(
+		elastic.SetURL(urls...),
+		elastic.SetSniff(false),
+		elastic.SetHealthcheck(false),
+	)
+}
 
 func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (err error) {
 
-	// TODO: get index predix from timber contenxt
-	indexName := fmt.Sprintf("%s-%s-%s",
-		INDEX_PREFIX, "location", time.Now().Format("2006.01.02"))
+	indexPrefix := timber.Context().ESIndexPrefix
+	documentType := timber.Context().ESDocumentType
+	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 
 	exists, _ := client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
-		index := elasticCreateIndex()
-		_, err = client.CreateIndex(indexName).BodyJson(index).Do(ctx)
+		index := elasticCreateIndex(indexPrefix)
+		_, err = client.CreateIndex(indexName).
+			BodyJson(index).Do(ctx)
 		instruESCreateIndex(err)
 		if err != nil {
 			return
 		}
 	}
 
-	_, err = client.Index().Index(indexName).Type(MESSAGE_TYPE).BodyJson(timber).Do(ctx)
+	_, err = client.Index().Index(indexName).Type(documentType).
+		BodyJson(timber).Do(ctx)
 	instruESStore(err)
 
 	return
 }
 
-func elasticCreateIndex() *es.Index {
+func elasticCreateIndex(indexPrefix string) *es.Index {
 
 	return &es.Index{
-		Template: fmt.Sprintf("%s-*", INDEX_PREFIX),
+		Template: fmt.Sprintf("%s-*", indexPrefix),
 		Version:  60001,
 		Settings: map[string]interface{}{
 			"index.refresh_interval": "5s",
 			// "index.read_only_allow_delete": "false",
 		},
 		Doc: es.NewMappings().
+			// TODO: revisit this. @message not longer required
 			AddDynamicTemplate("message_field", es.MatchConditions{
 				PathMatch:        "@message",
 				MatchMappingType: "string",
@@ -73,13 +78,4 @@ func elasticCreateIndex() *es.Index {
 			}).
 			AddPropertyWithType("@timestamp", "date"),
 	}
-}
-
-func elasticNewClient(urls ...string) (*elastic.Client, error) {
-	return elastic.NewClient(
-		elastic.SetURL(urls...),
-		elastic.SetSniff(false),
-		elastic.SetHealthcheck(false),
-	)
-
 }

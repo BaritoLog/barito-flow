@@ -13,7 +13,8 @@ import (
 func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer instru.Flush()
 
-	timber := NewTimber()
+	timber, err := NewTimberFromBytes([]byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
+	FatalIfError(t, err)
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusNotFound,
@@ -33,7 +34,8 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	defer instru.Flush()
 
-	timber := NewTimber()
+	timber, err := NewTimberFromBytes([]byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
+	FatalIfError(t, err)
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusNotFound,
@@ -54,7 +56,8 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 func TestElasticStoreman_store_SaveError(t *testing.T) {
 	defer instru.Flush()
 
-	timber := NewTimber()
+	timber, err := NewTimberFromBytes([]byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
+	FatalIfError(t, err)
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusOK,
