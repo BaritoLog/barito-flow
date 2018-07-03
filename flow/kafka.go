@@ -5,7 +5,7 @@ import (
 )
 
 func kafkaStore(producer sarama.SyncProducer, topic string, timber Timber) (err error) {
-	message := ConvertToKafkaMessage(timber, topic)
+	message := ConvertTimberToKafkaMessage(timber, topic)
 	_, _, err = producer.SendMessage(message)
 	return
 }

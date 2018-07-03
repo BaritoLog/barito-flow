@@ -68,7 +68,7 @@ func (a *consumerWorker) loopMain() {
 		select {
 		case message, ok := <-a.Consumer.Messages():
 			if ok {
-				timber, err := NewTimberFromKafkaMessage(message)
+				timber, err := ConvertKafkaMessageToTimber(message)
 
 				if err != nil {
 					a.fireError(BadKafkaMessageError, err)

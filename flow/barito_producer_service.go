@@ -69,7 +69,7 @@ func (a *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		onLimitExceeded(rw)
 		return
 	}
-	timber, err := NewTimberFromRequest(req)
+	timber, err := ConvertRequestToTimber(req)
 	if err != nil {
 		onBadRequest(rw, err)
 		return

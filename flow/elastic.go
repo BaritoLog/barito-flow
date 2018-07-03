@@ -36,8 +36,10 @@ func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (e
 		}
 	}
 
+	document := ConvertTimberToElasticDocument(timber)
+
 	_, err = client.Index().Index(indexName).Type(documentType).
-		BodyJson(timber).Do(ctx)
+		BodyJson(document).Do(ctx)
 	instruESStore(err)
 
 	return
