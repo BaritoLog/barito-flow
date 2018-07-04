@@ -2,6 +2,7 @@ package flow
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/BaritoLog/go-boilerplate/timekit"
@@ -24,6 +25,7 @@ type baritoProducerService struct {
 	server      *http.Server
 	tick        <-chan time.Time
 	stop        chan int
+	mux         sync.Mutex
 }
 
 func NewBaritoProducerService(addr string, producer sarama.SyncProducer, maxTps int, topicSuffix string) BaritoProducerService {
@@ -101,9 +103,11 @@ func (a *baritoProducerService) refillBucket() {
 	a.tps = a.MaxTps
 }
 
-// TODO: implement sync.Mutex
 func (a *baritoProducerService) leakBucket() bool {
-	if a.tps <= 0 {
+	a.mux.Lock()
+	defer a.mux.Unlock()
+
+	if a.tps <= 1 {
 		return false
 	}
 
