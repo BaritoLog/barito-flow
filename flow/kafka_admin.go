@@ -10,6 +10,7 @@ type KafkaAdmin interface {
 	RefreshTopics() error
 	Topics() []string
 	TopicsWithSuffix(suffix string) []string
+	Exist(topic string) bool
 	CreateTopic(topic string, numPartitions int32, replicationFactor int16) error
 	Close()
 }
@@ -56,6 +57,16 @@ func (a *kafkaAdmin) Topics() []string {
 	}
 
 	return a.topics
+}
+
+func (a *kafkaAdmin) Exist(topic string) bool {
+	for _, topic0 := range a.Topics() {
+		if topic0 == topic {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (a *kafkaAdmin) TopicsWithSuffix(suffix string) (topics []string) {
