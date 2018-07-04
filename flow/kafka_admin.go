@@ -8,10 +8,12 @@ import (
 
 type KafkaAdmin interface {
 	RefreshTopics() error
+	SetTopics([]string)
 	Topics() []string
 	TopicsWithSuffix(suffix string) []string
 	Exist(topic string) bool
 	CreateTopic(topic string, numPartitions int32, replicationFactor int16) error
+	CreateTopicIfNotExist(topic string, numPartitions int32, replicationFactor int16) (bool, error)
 	Close()
 }
 
@@ -34,11 +36,19 @@ func NewKafkaAdmin(brokers []string, config *sarama.Config) (KafkaAdmin, error) 
 	}, nil
 }
 
-func (a *kafkaAdmin) CreateTopicIfNotExist(topic string) {
-	// TODO: fetch cache topics list
-	// TODO: check if topic exist
-	// TODO: refresh cache if topic not exist and check again
-	// TODO: create topic
+func (a *kafkaAdmin) CreateTopicIfNotExist(topic string, numPartitions int32, replicationFactor int16) (creatingTopic bool, err error) {
+	if a.Exist(topic) {
+		return
+	}
+
+	err = a.CreateTopic(topic, numPartitions, replicationFactor)
+	if err != nil {
+		return
+	}
+
+	a.topics = append(a.topics, topic)
+	creatingTopic = true
+	return
 }
 
 func (a *kafkaAdmin) RefreshTopics() (err error) {
@@ -51,6 +61,10 @@ func (a *kafkaAdmin) RefreshTopics() (err error) {
 	return
 }
 
+func (a *kafkaAdmin) SetTopics(topics []string) {
+	a.topics = topics
+}
+
 func (a *kafkaAdmin) Topics() []string {
 	if len(a.topics) <= 0 {
 		a.RefreshTopics()
@@ -60,6 +74,15 @@ func (a *kafkaAdmin) Topics() []string {
 }
 
 func (a *kafkaAdmin) Exist(topic string) bool {
+	for _, topic0 := range a.Topics() {
+		if topic0 == topic {
+			return true
+		}
+	}
+
+	// topics only fetch if empty, so there's possiblity its unfresh
+	a.RefreshTopics()
+
 	for _, topic0 := range a.Topics() {
 		if topic0 == topic {
 			return true
