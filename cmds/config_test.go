@@ -22,7 +22,7 @@ func init() {
 // }
 
 func TestGetConsulElastisearchName(t *testing.T) {
-	FatalIf(t, configConsulElasticsearchName() != DefaultElasticsearchName, "should return default ")
+	FatalIf(t, configConsulElasticsearchName() != DefaultConsulElasticsearchName, "should return default ")
 
 	os.Setenv(EnvConsulElasticsearchName, "elastic11")
 	defer os.Clearenv()
@@ -100,5 +100,13 @@ func TestConfigConsulKafkaName(t *testing.T) {
 	defer os.Clearenv()
 
 	FatalIf(t, configConsulKafkaName() != "some-kafka-name", "should get from env variable")
+}
 
+func TestConfigKafkaTopicSuffix(t *testing.T) {
+	FatalIf(t, configKafkaTopicSuffix() != DefaultKafkaTopicSuffix, "should return default ")
+
+	os.Setenv(EnvKafkaTopicSuffix, "some-topic-suffix")
+	defer os.Clearenv()
+
+	FatalIf(t, configKafkaTopicSuffix() != "some-topic-suffix", "should get from env variable")
 }

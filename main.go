@@ -24,13 +24,13 @@ func main() {
 				Name:      "producer",
 				ShortName: "p",
 				Usage:     "start barito-flow as producer",
-				Action:    cmds.Producer,
+				Action:    cmds.ActionBaritoProducerService,
 			},
 			{
 				Name:      "consumer",
 				ShortName: "c",
 				Usage:     "start barito-flow as consumer",
-				Action:    cmds.ConsumerAction,
+				Action:    cmds.ActionBaritoConsumerService,
 			},
 		},
 	}

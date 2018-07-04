@@ -12,17 +12,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func init() {
+	log.SetLevel(log.ErrorLevel)
+}
+
 func TestProducer(t *testing.T) {
 	kafkaProducer := mocks.NewSyncProducer(nil, sarama.NewConfig())
 
 	patch := saramatestkit.PatchNewSyncProducer(kafkaProducer, nil)
 	defer patch.Unpatch()
 
-	log.SetLevel(log.ErrorLevel)
 	os.Setenv(EnvProducerAddress, "asdf")
 	defer os.Clearenv()
 
-	err := Producer(nil)
+	err := ActionBaritoProducerService(nil)
 	FatalIfWrongError(t, err, "listen tcp: address asdf: missing port in address")
 
 }
@@ -31,10 +34,9 @@ func TestProducer_KafkaError(t *testing.T) {
 	patch := saramatestkit.PatchNewSyncProducer(nil, fmt.Errorf("some-error"))
 	defer patch.Unpatch()
 
-	log.SetLevel(log.ErrorLevel)
 	os.Setenv(EnvKafkaBrokers, "wronghost:2349")
 	defer os.Clearenv()
 
-	err := Producer(nil)
+	err := ActionBaritoProducerService(nil)
 	FatalIfWrongError(t, err, "some-error")
 }

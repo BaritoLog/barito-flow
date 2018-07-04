@@ -11,6 +11,7 @@ import (
 const (
 	EnvKafkaBrokers     = "BARITO_KAFKA_BROKERS"
 	EnvKafkaGroupID     = "BARITO_KAFKA_GROUP_ID"
+	EnvKafkaTopicSuffix = "BARITO_KAFKA_TOPIC_SUFFIX"
 	EnvElasticsearchUrl = "BARITO_ELASTICSEARCH_URL"
 
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
@@ -27,12 +28,15 @@ const (
 )
 
 var (
-	DefaultConsulKafkaName   = "kafka"
-	DefaultElasticsearchName = "elasticsearch"
-	DefaultKafkaBrokers      = []string{"localhost:9092"}
+	DefaultConsulKafkaName         = "kafka"
+	DefaultConsulElasticsearchName = "elasticsearch"
 
-	DefaultElasticsearchUrl   = "http://localhost:9200"
-	DefaultKafkaGroupID       = "barito-group"
+	DefaultKafkaBrokers     = []string{"localhost:9092"}
+	DefaultKafkaTopicSuffix = "_logs"
+	DefaultKafkaGroupID     = "barito-group"
+
+	DefaultElasticsearchUrl = "http://localhost:9200"
+
 	DefaultPushMetricUrl      = "http://localhost:3000/api/increase_log_count"
 	DefaultPushMetricToken    = ""
 	DefaultPushMetricInterval = "30s"
@@ -69,7 +73,7 @@ func configElasticsearchUrl() (url string) {
 }
 
 func configConsulElasticsearchName() (s string) {
-	return stringEnvOrDefault(EnvConsulElasticsearchName, DefaultElasticsearchName)
+	return stringEnvOrDefault(EnvConsulElasticsearchName, DefaultConsulElasticsearchName)
 }
 
 func configKafkaGroupId() (s string) {
@@ -106,6 +110,10 @@ func configConsulKafkaName() (s string) {
 
 func configConsulUrl() (s string) {
 	return os.Getenv(EnvConsulUrl)
+}
+
+func configKafkaTopicSuffix() string {
+	return stringEnvOrDefault(EnvKafkaTopicSuffix, DefaultKafkaTopicSuffix)
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {
