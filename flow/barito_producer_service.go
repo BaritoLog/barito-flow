@@ -16,21 +16,23 @@ type BaritoProducerService interface {
 
 // TODO: separate leaky bucket
 type baritoProducerService struct {
-	Address  string
-	MaxTps   int
-	Producer sarama.SyncProducer
-	tps      int
-	server   *http.Server
-	tick     <-chan time.Time
-	stop     chan int
+	Address     string
+	MaxTps      int
+	Producer    sarama.SyncProducer
+	TopicSuffix string
+	tps         int
+	server      *http.Server
+	tick        <-chan time.Time
+	stop        chan int
 }
 
-func NewBaritoProducerService(addr string, producer sarama.SyncProducer, maxTps int) BaritoProducerService {
+func NewBaritoProducerService(addr string, producer sarama.SyncProducer, maxTps int, topicSuffix string) BaritoProducerService {
 	return &baritoProducerService{
-		Address:  addr,
-		MaxTps:   maxTps,
-		Producer: producer,
-		tps:      maxTps,
+		Address:     addr,
+		MaxTps:      maxTps,
+		Producer:    producer,
+		tps:         maxTps,
+		TopicSuffix: topicSuffix,
 	}
 }
 
@@ -64,8 +66,8 @@ func (a *baritoProducerService) Close() {
 
 }
 
-func (a *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if !a.leakBucket() {
+func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if !s.leakBucket() {
 		onLimitExceeded(rw)
 		return
 	}
@@ -75,9 +77,7 @@ func (a *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	timberCtx := timber.Context()
-
-	err = kafkaStore(a.Producer, timberCtx.KafkaTopic, timber)
+	err = kafkaStore(s.Producer, timber, s.TopicSuffix)
 	if err != nil {
 		onStoreError(rw, err)
 		return

@@ -23,7 +23,7 @@ func TestHttpAgent_ServeHTTP(t *testing.T) {
 		return
 	}
 
-	agent := NewBaritoProducerService("", dummy, 100)
+	agent := NewBaritoProducerService("", dummy, 100, "_logs")
 	defer agent.Close()
 
 	req, _ := http.NewRequest("POST", "/",
@@ -31,14 +31,14 @@ func TestHttpAgent_ServeHTTP(t *testing.T) {
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
-	FatalIf(t, topic != "some_topic", "produce to wrong kafka topic")
+	FatalIf(t, topic != "some_topic_logs", "produce to wrong kafka topic")
 }
 
 func TestHttpAgent_ServeHTTP_StoreError(t *testing.T) {
 	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
 	producer.ExpectSendMessageAndFail(fmt.Errorf("some error"))
 
-	agent := NewBaritoProducerService("", producer, 100)
+	agent := NewBaritoProducerService("", producer, 100, "_logs")
 	defer agent.Close()
 
 	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
@@ -51,7 +51,7 @@ func TestHttpAgent_Start(t *testing.T) {
 	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
 	producer.ExpectSendMessageAndSucceed()
 
-	agent := NewBaritoProducerService(":65500", producer, 100)
+	agent := NewBaritoProducerService(":65500", producer, 100, "_logs")
 
 	go agent.Start()
 	defer agent.Close()
@@ -68,7 +68,7 @@ func TestHttpAgent_HitMaxTPS(t *testing.T) {
 	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
 
 	maxTps := 10
-	agent := NewBaritoProducerService(":65501", producer, maxTps)
+	agent := NewBaritoProducerService(":65501", producer, maxTps, "_logs")
 	go agent.Start()
 	defer agent.Close()
 
@@ -86,7 +86,7 @@ func TestHttpAgent_RefillBucket(t *testing.T) {
 	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
 
 	maxTps := 10
-	agent := NewBaritoProducerService(":65502", producer, maxTps)
+	agent := NewBaritoProducerService(":65502", producer, maxTps, "_logs")
 	go agent.Start()
 	defer agent.Close()
 
@@ -106,7 +106,7 @@ func TestHttpAgent_RefillBucket(t *testing.T) {
 func TestHttpAgent_OnBadRequest(t *testing.T) {
 	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
 
-	agent := NewBaritoProducerService("", producer, 100)
+	agent := NewBaritoProducerService("", producer, 100, "_logs")
 	defer agent.Close()
 
 	req, _ := http.NewRequest("POST", "/", strings.NewReader(`invalid-body`))

@@ -5,8 +5,6 @@ import (
 	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/BaritoLog/instru"
-	cluster "github.com/bsm/sarama-cluster"
-	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -17,44 +15,45 @@ func ConsumerAction(c *cli.Context) (err error) {
 
 	brokers := getKafkaBrokers()
 	groupID := getKafkaGroupId()
-	topics := getKafkaConsumerTopics()
+	// topics := []string{"test"}
 	esUrl := getElasticsearchUrl()
 
+	log.Infof("KafkaBrokers: %v", brokers)
+	log.Infof("KafkaGroupID: %s", groupID)
+	log.Infof("ElasticsearchUrl:%v", esUrl)
+
+	// callbackInstrumentation()
 	//
+	// // elastic client
+	// client, err := elastic.NewClient(
+	// 	elastic.SetURL(esUrl),
+	// 	elastic.SetSniff(false),
+	// 	elastic.SetHealthcheck(false),
+	// )
+	//
+	// // consumer config
+	// config := cluster.NewConfig()
+	// config.Consumer.Return.Errors = true
+	// config.Group.Return.Notifications = true
+	//
+	// // kafka consumer
+	// consumer, err := cluster.NewConsumer(brokers, groupID, topics, config)
+	// if err != nil {
+	// 	return
+	// }
+	//
+	// worker := flow.NewConsumerWorker(consumer, client)
+	// worker.OnError(func(err error) {
+	// 	log.Warn(err.Error())
+	// })
 
-	log.Infof("KafkaBrokers: %v", EnvKafkaBrokers, brokers)
-	log.Infof("KafkaGroupID: %s", EnvKafkaGroupID, groupID)
-	log.Infof("KafkaConsumerTopics:%v", EnvKafkaConsumerTopics, topics)
-	log.Infof("ElasticsearchUrl:%v", EnvElasticsearchUrl, esUrl)
+	// TODO: get topicSuffix
+	service := flow.NewBaritoConsumerService(brokers, groupID, esUrl, "_logs")
 
-	callbackInstrumentation()
+	service.Start()
+	srvkit.GracefullShutdown(service.Close)
 
-	// elastic client
-	client, err := elastic.NewClient(
-		elastic.SetURL(esUrl),
-		elastic.SetSniff(false),
-		elastic.SetHealthcheck(false),
-	)
-
-	// consumer config
-	config := cluster.NewConfig()
-	config.Consumer.Return.Errors = true
-	config.Group.Return.Notifications = true
-
-	// kafka consumer
-	consumer, err := cluster.NewConsumer(brokers, groupID, topics, config)
-	if err != nil {
-		return
-	}
-
-	worker := flow.NewConsumerWorker(consumer, client)
-	worker.OnError(func(err error) {
-		log.Warn(err.Error())
-	})
-
-	srvkit.AsyncGracefulShutdown(worker.Close)
-
-	return worker.Start()
+	return
 
 }
 

@@ -38,7 +38,8 @@ func Producer(c *cli.Context) (err error) {
 		return
 	}
 
-	srv := flow.NewBaritoProducerService(address, kafkaProducer, producerMaxTps)
+	// TODO: get topicSuffix
+	srv := flow.NewBaritoProducerService(address, kafkaProducer, producerMaxTps, "_logs")
 	srvkit.AsyncGracefulShutdown(srv.Close)
 
 	return srv.Start()

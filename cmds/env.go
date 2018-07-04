@@ -4,6 +4,10 @@ import (
 	"github.com/BaritoLog/go-boilerplate/envkit"
 )
 
+// TODO: rename env.go to config.go
+// TODO: rename function name using config prefix
+// TODO: using log.info() get config value and config source
+
 const (
 	EnvKafkaBrokers        = "BARITO_KAFKA_BROKERS"
 	EnvKafkaGroupID        = "BARITO_KAFKA_GROUP_ID"
