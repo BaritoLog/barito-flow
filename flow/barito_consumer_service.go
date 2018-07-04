@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,22 +17,29 @@ type baritoConsumerService struct {
 	ElasticUrl   string
 	TopicSuffix  string
 	workers      map[string]ConsumerWorker
+	config       *sarama.Config
 }
 
 func NewBaritoConsumerService(kafkaBrokers []string, kafkaGroupID, elasticURL, topicSuffix string) BaritoConsumerService {
+
+	// TODO:
+	config := sarama.NewConfig()
+	config.Version = sarama.V0_10_2_0
+
 	return &baritoConsumerService{
 		KafkaBrokers: kafkaBrokers,
 		KafkaGroupID: kafkaGroupID,
 		ElasticUrl:   elasticURL,
 		TopicSuffix:  topicSuffix,
 		workers:      make(map[string]ConsumerWorker),
+		config:       config,
 	}
 }
 
 func (s baritoConsumerService) Start() (err error) {
 
 	log.Infof("Start Barito Consumer Service")
-	admin, err := NewKafkaAdmin(s.KafkaBrokers)
+	admin, err := NewKafkaAdmin(s.KafkaBrokers, s.config)
 	if err != nil {
 		return
 	}
@@ -47,7 +55,7 @@ func (s baritoConsumerService) Start() (err error) {
 			return
 		}
 
-		// TODO: worker instrumentation
+		// TODO: worker's instrumentation
 
 		s.workers[topic] = worker
 		go worker.Start()
@@ -68,6 +76,7 @@ func (s baritoConsumerService) spawnNewWorker(topic string) (worker ConsumerWork
 
 	// consumer config
 	config := cluster.NewConfig()
+	config.Config = *s.config
 	config.Consumer.Return.Errors = true
 	config.Group.Return.Notifications = true
 

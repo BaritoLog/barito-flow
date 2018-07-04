@@ -7,13 +7,14 @@ import (
 	"github.com/BaritoLog/go-boilerplate/saramatestkit"
 	"github.com/BaritoLog/go-boilerplate/slicekit"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
+	"github.com/Shopify/sarama"
 )
 
 func TestKafkaAdmin_New_CreateClientError(t *testing.T) {
 	patch := saramatestkit.PatchNewClient(nil, fmt.Errorf("some-error"))
 	defer patch.Unpatch()
 
-	_, err := NewKafkaAdmin([]string{})
+	_, err := NewKafkaAdmin([]string{}, sarama.NewConfig())
 	FatalIfWrongError(t, err, "some-error")
 }
 
@@ -26,7 +27,7 @@ func TestKafkaAdmin_RefreshTopics_ReturnError(t *testing.T) {
 	patch := saramatestkit.PatchNewClient(client, nil)
 	defer patch.Unpatch()
 
-	admin, err := NewKafkaAdmin([]string{})
+	admin, err := NewKafkaAdmin([]string{}, sarama.NewConfig())
 	FatalIfError(t, err)
 	defer admin.Close()
 
@@ -45,7 +46,7 @@ func TestKafkaAdmin_Topics(t *testing.T) {
 	patch := saramatestkit.PatchNewClient(client, nil)
 	defer patch.Unpatch()
 
-	admin, err := NewKafkaAdmin([]string{})
+	admin, err := NewKafkaAdmin([]string{}, sarama.NewConfig())
 	FatalIfError(t, err)
 	defer admin.Close()
 
