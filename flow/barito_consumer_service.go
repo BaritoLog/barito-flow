@@ -31,11 +31,13 @@ func NewBaritoConsumerService(kafkaBrokers []string, kafkaGroupID, elasticURL, t
 func (s baritoConsumerService) Start() (err error) {
 
 	log.Infof("Start Barito Consumer Service")
-	// TODO: suffix from struct variable
-	topics, err := kafkaTopics(s.KafkaBrokers, s.TopicSuffix)
+	admin, err := NewKafkaAdmin(s.KafkaBrokers)
 	if err != nil {
 		return
 	}
+
+	topics := admin.TopicsWithSuffix(s.TopicSuffix)
+	admin.Close()
 
 	for _, topic := range topics {
 		log.Infof("Spawn new worker for topic '%s'", topic)
