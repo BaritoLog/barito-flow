@@ -4,27 +4,16 @@ import (
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/Shopify/sarama"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli"
 )
 
 func Producer(c *cli.Context) (err error) {
 
-	log.Infof("Start Barito-Producer")
-
-	address := getProducerAddress()
-	kafkaBrokers := getKafkaBrokers()
-	maxRetry := getProducerMaxRetry()
-	kafkaProducerTopic := getKafkaProducerTopic()
-	producerMaxTps := getProducerMaxTPS()
-
-	// TODO: move info to config source file
-	log.Infof("ProducerAddress: %s", address)
-	log.Infof("KafkaBrokers: %s", kafkaBrokers)
-	log.Infof("KafkaProducerTopic: %s", kafkaProducerTopic)
-	log.Infof("ProducerMaxRetry: %d", maxRetry)
-	log.Infof("ProducerMaxTps: %d", producerMaxTps)
+	address := configProducerAddress()
+	kafkaBrokers := configKafkaBrokers()
+	maxRetry := configProducerMaxRetry()
+	producerMaxTps := configProducerMaxTPS()
 
 	// kafka producer config
 	config := sarama.NewConfig()

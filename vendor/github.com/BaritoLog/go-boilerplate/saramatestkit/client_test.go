@@ -8,7 +8,9 @@ import (
 )
 
 func TestClient(t *testing.T) {
-	var client sarama.Client = NewClient()
+	var c interface{} = NewClient()
+	client, ok := c.(sarama.Client)
+	FatalIf(t, !ok, "client must implement the sarama.Client")
 
 	conf := client.Config()
 	FatalIf(t, conf != nil, "wrong client.Config()")

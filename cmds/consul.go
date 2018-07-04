@@ -2,15 +2,16 @@ package cmds
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/BaritoLog/go-boilerplate/envkit"
 	"github.com/hashicorp/consul/api"
 )
 
-func consulKafkaBroker() (brokers []string, err error) {
-	name := envkit.GetString(EnvConsulKafkaName, DefaultConsulKafkaName)
-	services, err := catalogServices(name)
+func consulKafkaBroker(address, name string) (brokers []string, err error) {
+	client, err := consulClient(address)
+	if err != nil {
+		return
+	}
+	services, _, err := client.Catalog().Service(name, "", nil)
 	if err != nil {
 		return
 	}
@@ -21,9 +22,13 @@ func consulKafkaBroker() (brokers []string, err error) {
 	return
 }
 
-func consulElasticsearchUrl() (url string, err error) {
-	name := getConsulElasticsearchName()
-	services, err := catalogServices(name)
+func consulElasticsearchUrl(address, name string) (url string, err error) {
+	client, err := consulClient(address)
+	if err != nil {
+		return
+	}
+
+	services, _, err := client.Catalog().Service(name, "", nil)
 	if err != nil {
 		return
 	}
@@ -32,25 +37,25 @@ func consulElasticsearchUrl() (url string, err error) {
 		return
 	}
 
-	address := services[0].ServiceAddress
-	port := services[0].ServicePort
-	schema, ok := services[0].ServiceMeta["http_schema"]
+	srvAddress := services[0].ServiceAddress
+	srvPort := services[0].ServicePort
+	srvSchema, ok := services[0].ServiceMeta["http_schema"]
 	if !ok {
-		schema = "http"
+		srvSchema = "http"
 	}
 
-	url = fmt.Sprintf("%s://%s:%d", schema, address, port)
+	url = fmt.Sprintf("%s://%s:%d", srvSchema, srvAddress, srvPort)
 	return
 }
 
-// TODO: make consulClient as function parameter
-func catalogServices(name string) (services []*api.CatalogService, err error) {
-	consulAddr, ok := os.LookupEnv(EnvConsulUrl)
-	if !ok {
-		err = fmt.Errorf("no ENV %s", EnvConsulUrl)
+func consulClient(address string) (client *api.Client, err error) {
+	if len(address) <= 0 {
+		err = fmt.Errorf("No consul address")
 		return
 	}
-	consulClient, _ := api.NewClient(&api.Config{Address: consulAddr})
-	services, _, err = consulClient.Catalog().Service(name, "", nil)
+
+	client, err = api.NewClient(&api.Config{
+		Address: address,
+	})
 	return
 }

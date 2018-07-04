@@ -3,7 +3,6 @@ package cmds
 //
 import (
 	"net/http"
-	"os"
 	"testing"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
@@ -21,10 +20,7 @@ func TestConsulElasticsearch(t *testing.T) {
 ]`))
 	defer ts.Close()
 
-	os.Setenv(EnvConsulUrl, ts.URL)
-	defer os.Clearenv()
-
-	url, err := consulElasticsearchUrl()
+	url, err := consulElasticsearchUrl(ts.URL, "name")
 	FatalIfError(t, err)
 	FatalIf(t, url != "https://172.17.0.3:5000", "wrong url")
 }
@@ -38,10 +34,7 @@ func TestConsulElasticsearch_NoHttpSchema(t *testing.T) {
 ]`))
 	defer ts.Close()
 
-	os.Setenv(EnvConsulUrl, ts.URL)
-	defer os.Clearenv()
-
-	url, err := consulElasticsearchUrl()
+	url, err := consulElasticsearchUrl(ts.URL, "name")
 	FatalIfError(t, err)
 	FatalIf(t, url != "http://172.17.0.3:5000", "wrong url")
 }
@@ -50,16 +43,8 @@ func TestConsulElasticsearch_NoService(t *testing.T) {
 	ts := NewTestServer(http.StatusOK, []byte(`[]`))
 	defer ts.Close()
 
-	os.Setenv(EnvConsulUrl, ts.URL)
-	defer os.Clearenv()
-
-	_, err := consulElasticsearchUrl()
+	_, err := consulElasticsearchUrl(ts.URL, "name")
 	FatalIfWrongError(t, err, "No Service")
-}
-
-func TestGetKafkaBorkersFromConsul_NoEnv(t *testing.T) {
-	_, err := consulKafkaBroker()
-	FatalIfWrongError(t, err, "no ENV BARITO_CONSUL_URL")
 }
 
 func TestConsulKafkaBorkers(t *testing.T) {
@@ -75,10 +60,7 @@ func TestConsulKafkaBorkers(t *testing.T) {
 ]`))
 	defer ts.Close()
 
-	os.Setenv(EnvConsulUrl, ts.URL)
-	defer os.Clearenv()
-
-	brokers, err := consulKafkaBroker()
+	brokers, err := consulKafkaBroker(ts.URL, "name")
 	FatalIfError(t, err)
 	FatalIf(t, len(brokers) != 2, "return wrong brokers")
 	FatalIf(t, brokers[0] != "172.17.0.3:5000", "return wrong brokers[0]")
