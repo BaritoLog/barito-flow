@@ -8,7 +8,6 @@ import (
 
 	"github.com/BaritoLog/go-boilerplate/saramatestkit"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
-	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	"github.com/Shopify/sarama/mocks"
 )
@@ -62,55 +61,6 @@ func TestHttpAgent_Start(t *testing.T) {
 	FatalIfWrongResponseStatus(t, resp, 200)
 }
 
-func TestHttpAgent_HitMaxTPS(t *testing.T) {
-	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
-
-	maxTps := 10
-	agent := &baritoProducerService{
-		Address:     ":8999",
-		MaxTps:      maxTps,
-		Producer:    producer,
-		tps:         maxTps,
-		TopicSuffix: "_logs",
-	}
-	go agent.Start()
-	defer agent.Close()
-
-	for i := 0; i < maxTps; i++ {
-		producer.ExpectSendMessageAndSucceed()
-		req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
-		RecordResponse(agent.ServeHTTP, req)
-		timekit.Sleep("1ms")
-	}
-
-	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
-	resp := RecordResponse(agent.ServeHTTP, req)
-	FatalIfWrongResponseStatus(t, resp, 509)
-}
-
-func TestHttpAgent_RefillBucket(t *testing.T) {
-	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
-
-	maxTps := 10
-	agent := NewBaritoProducerService(":65502", producer, maxTps, "_logs")
-	go agent.Start()
-	defer agent.Close()
-
-	for i := 0; i < maxTps; i++ {
-		producer.ExpectSendMessageAndSucceed()
-		req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
-		RecordResponse(agent.ServeHTTP, req)
-		timekit.Sleep("1ms")
-	}
-
-	timekit.Sleep("1s")
-
-	producer.ExpectSendMessageAndSucceed()
-	req, _ := http.NewRequest("POST", "/", strings.NewReader(`{"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
-	resp := RecordResponse(agent.ServeHTTP, req)
-	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
-}
-
 func TestHttpAgent_OnBadRequest(t *testing.T) {
 	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
 
@@ -121,5 +71,20 @@ func TestHttpAgent_OnBadRequest(t *testing.T) {
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusBadRequest)
+}
 
+func TestHttpAgent_OnLimitExceed(t *testing.T) {
+	producer := mocks.NewSyncProducer(t, sarama.NewConfig())
+
+	srv := &baritoProducerService{
+		Producer:    producer,
+		TopicSuffix: "_logs",
+		bucket:      &dummyLeakyBucket{},
+	}
+	defer srv.Close()
+
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(``))
+	resp := RecordResponse(srv.ServeHTTP, req)
+
+	FatalIfWrongResponseStatus(t, resp, 509)
 }
