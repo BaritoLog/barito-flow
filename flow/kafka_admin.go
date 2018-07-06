@@ -2,6 +2,7 @@ package flow
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/Shopify/sarama"
 )
@@ -21,6 +22,8 @@ type kafkaAdmin struct {
 	topics []string
 	client sarama.Client
 	config *sarama.Config
+
+	refreshMutex sync.Mutex
 }
 
 func NewKafkaAdmin(brokers []string, config *sarama.Config) (KafkaAdmin, error) {
@@ -52,6 +55,8 @@ func (a *kafkaAdmin) CreateTopicIfNotExist(topic string, numPartitions int32, re
 }
 
 func (a *kafkaAdmin) RefreshTopics() (err error) {
+	a.refreshMutex.Lock()
+	defer a.refreshMutex.Unlock()
 	topics, err := a.client.Topics()
 	if err != nil {
 		return

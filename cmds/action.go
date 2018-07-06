@@ -29,7 +29,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	address := configProducerAddress()
 	kafkaBrokers := configKafkaBrokers()
 	maxRetry := configProducerMaxRetry()
-	producerMaxTps := configProducerMaxTPS()
+	maxTps := configProducerMaxTPS()
 	topicSuffix := configKafkaTopicSuffix()
 
 	// kafka producer config
@@ -42,7 +42,13 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	newEventTopic := "new_app_events"
 	fmt.Println(newEventTopic)
 
-	srv, err := flow.NewBaritoProducerService(address, kafkaBrokers, config, producerMaxTps, topicSuffix, newEventTopic)
+	srv, err := flow.NewBaritoProducerService(
+		address,
+		kafkaBrokers,
+		config,
+		maxTps,
+		topicSuffix,
+		newEventTopic)
 	if err != nil {
 		return
 	}
