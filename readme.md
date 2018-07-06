@@ -3,14 +3,22 @@
 
 Building flow of Barito river with provide kafka reciever or log forwarder 
 
-## Setup Development
+## Setup 
 
+Setup the project
 ```sh
 cd $GOPATH/src
 git clone git@github.com:BaritoLog/barito-flow.git 
 
 cd barito-flow
 go build
+```
+
+Generate mock class
+```sh
+mockgen -source=flow/leaky_bucket.go -destination=mock/leaky_bucket.go -package=mock
+mockgen -source=flow/kafka_admin.go -destination=mock/kafka_admin.go -package=mock
+mockgen -source=flow/Vendor/github.com/sarama/sync_producer.go -destination=mock/sync_producer.go -package=mock
 ```
 
 ## Producer

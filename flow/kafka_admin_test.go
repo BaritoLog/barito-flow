@@ -77,24 +77,3 @@ func TestKafkaAdmin_Exist(t *testing.T) {
 	FatalIf(t, !admin.Exist("new-topic"), "new-topic is exist after refresh")
 	FatalIf(t, admin.Exist("no-topic"), "no-topic is really not exist")
 }
-
-func TestKafkaAdmin_CreateTopicIfNotExist(t *testing.T) {
-
-	topics := []string{"topic01", "topic02"}
-
-	client := saramatestkit.NewClient()
-	client.TopicsFunc = func() ([]string, error) {
-		return topics, nil
-	}
-
-	patch := saramatestkit.PatchNewClient(client, nil)
-	defer patch.Unpatch()
-
-	admin, err := NewKafkaAdmin([]string{}, sarama.NewConfig())
-	FatalIfError(t, err)
-	defer admin.Close()
-
-	creatingTopic, err := admin.CreateTopicIfNotExist("topic02", 3, 1)
-	FatalIfError(t, err)
-	FatalIf(t, creatingTopic, "topic02 already exist")
-}

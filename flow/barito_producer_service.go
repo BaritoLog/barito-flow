@@ -5,7 +5,6 @@ import (
 
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
-	log "github.com/sirupsen/logrus"
 )
 
 type BaritoProducerService interface {
@@ -72,7 +71,10 @@ func (a *baritoProducerService) Close() {
 		a.admin.Close()
 	}
 
-	a.producer.Close()
+	if a.producer != nil {
+		a.producer.Close()
+	}
+
 }
 
 func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -80,36 +82,67 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		onLimitExceeded(rw)
 		return
 	}
+
 	timber, err := ConvertRequestToTimber(req)
 	if err != nil {
 		onBadRequest(rw, err)
 		return
 	}
 
-	topic := timber.Context().KafkaTopic
-	numPartitions := timber.Context().KafkaPartition
-	replicationFactor := timber.Context().KafkaReplicationFactor
-	newTopicCreated, err := s.admin.CreateTopicIfNotExist(topic, numPartitions, replicationFactor)
+	newTopicCreated, err := s.createTopicIfNotExist(timber)
 	if err != nil {
 		onCreateTopicError(rw, err)
 		return
 	}
 
-	if newTopicCreated {
-		log.Infof("Topic '%s' created with partitions:%d and replication_factor:%d", topic, numPartitions, replicationFactor)
+	topic := timber.Context().KafkaTopic
 
-		message := &sarama.ProducerMessage{
-			Topic: s.newEventTopic,
-			Value: sarama.ByteEncoder(topic),
-		}
-		_, _, err = s.producer.SendMessage(message)
+	if newTopicCreated {
+		s.sendCreateTopicEvents(topic)
 	}
 
-	err = kafkaStore(s.producer, timber, s.topicSuffix)
+	err = s.sendLogs(topic, timber)
 	if err != nil {
 		onStoreError(rw, err)
 		return
 	}
 
-	onSuccess(rw)
+	onSuccess(rw, ProduceResult{
+		Topic:      topic,
+		IsNewTopic: newTopicCreated,
+	})
+}
+
+func (s *baritoProducerService) sendLogs(topic string, timber Timber) (err error) {
+	message := ConvertTimberToKafkaMessage(timber, topic+s.topicSuffix)
+	_, _, err = s.producer.SendMessage(message)
+	return
+}
+
+func (s *baritoProducerService) sendCreateTopicEvents(topic string) (err error) {
+	message := &sarama.ProducerMessage{
+		Topic: s.newEventTopic,
+		Value: sarama.ByteEncoder(topic),
+	}
+	_, _, err = s.producer.SendMessage(message)
+	return
+}
+
+func (s *baritoProducerService) createTopicIfNotExist(timber Timber) (creatingTopic bool, err error) {
+	topic := timber.Context().KafkaTopic
+	numPartitions := timber.Context().KafkaPartition
+	replicationFactor := timber.Context().KafkaReplicationFactor
+
+	if s.admin.Exist(topic) {
+		return
+	}
+
+	err = s.admin.CreateTopic(topic, numPartitions, replicationFactor)
+	if err != nil {
+		return
+	}
+
+	s.admin.AddTopic(topic)
+	creatingTopic = true
+	return
 }

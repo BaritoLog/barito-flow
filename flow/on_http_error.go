@@ -1,6 +1,14 @@
 package flow
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
+
+type ProduceResult struct {
+	Topic      string `json:"topic"`
+	IsNewTopic bool   `json:"is_new_topic"`
+}
 
 func onLimitExceeded(rw http.ResponseWriter) {
 	rw.WriteHeader(509)
@@ -17,9 +25,11 @@ func onStoreError(rw http.ResponseWriter, err error) {
 	rw.Write([]byte(err.Error()))
 }
 
-func onSuccess(rw http.ResponseWriter) {
+func onSuccess(rw http.ResponseWriter, result ProduceResult) {
 	rw.WriteHeader(http.StatusOK)
-	rw.Write([]byte("OK"))
+
+	b, _ := json.Marshal(result)
+	rw.Write(b)
 }
 
 func onCreateTopicError(rw http.ResponseWriter, err error) {

@@ -11,10 +11,10 @@ type KafkaAdmin interface {
 	RefreshTopics() error
 	SetTopics([]string)
 	Topics() []string
+	AddTopic(topic string)
 	TopicsWithSuffix(suffix string) []string
 	Exist(topic string) bool
 	CreateTopic(topic string, numPartitions int32, replicationFactor int16) error
-	CreateTopicIfNotExist(topic string, numPartitions int32, replicationFactor int16) (bool, error)
 	Close()
 }
 
@@ -37,21 +37,6 @@ func NewKafkaAdmin(brokers []string, config *sarama.Config) (KafkaAdmin, error) 
 		client: client,
 		config: config,
 	}, nil
-}
-
-func (a *kafkaAdmin) CreateTopicIfNotExist(topic string, numPartitions int32, replicationFactor int16) (creatingTopic bool, err error) {
-	if a.Exist(topic) {
-		return
-	}
-
-	err = a.CreateTopic(topic, numPartitions, replicationFactor)
-	if err != nil {
-		return
-	}
-
-	a.topics = append(a.topics, topic)
-	creatingTopic = true
-	return
 }
 
 func (a *kafkaAdmin) RefreshTopics() (err error) {
@@ -95,6 +80,11 @@ func (a *kafkaAdmin) Exist(topic string) bool {
 	}
 
 	return false
+}
+
+func (a *kafkaAdmin) AddTopic(topic string) {
+	a.topics = append(a.topics, topic)
+
 }
 
 func (a *kafkaAdmin) TopicsWithSuffix(suffix string) (topics []string) {
