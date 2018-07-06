@@ -11,9 +11,11 @@ const (
 type Timber map[string]interface{}
 
 type TimberContext struct {
-	KafkaTopic     string `json:"kafka_topic"`
-	ESIndexPrefix  string `json:"es_index_prefix"`
-	ESDocumentType string `json:"es_document_type"`
+	KafkaTopic             string `json:"kafka_topic"`
+	KafkaPartition         int32  `json:"kafka_partition"`
+	KafkaReplicationFactor int16  `json:"kafka_replication_factor"`
+	ESIndexPrefix          string `json:"es_index_prefix"`
+	ESDocumentType         string `json:"es_document_type"`
 }
 
 func NewTimber() Timber {

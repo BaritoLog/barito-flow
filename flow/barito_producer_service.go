@@ -5,6 +5,7 @@ import (
 
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
+	log "github.com/sirupsen/logrus"
 )
 
 type BaritoProducerService interface {
@@ -14,25 +15,41 @@ type BaritoProducerService interface {
 }
 
 type baritoProducerService struct {
-	Producer    sarama.SyncProducer
-	TopicSuffix string
+	producer      sarama.SyncProducer
+	topicSuffix   string
+	newEventTopic string
 
+	admin  KafkaAdmin
 	bucket LeakyBucket
 	server *http.Server
 }
 
-func NewBaritoProducerService(addr string, producer sarama.SyncProducer, maxTps int, topicSuffix string) BaritoProducerService {
-	s := &baritoProducerService{
-		Producer:    producer,
-		TopicSuffix: topicSuffix,
-		bucket:      NewLeakyBucket(maxTps, timekit.Duration("1s")),
+func NewBaritoProducerService(addr string, brokers []string, config *sarama.Config, maxTps int, topicSuffix string, newEventTopic string) (BaritoProducerService, error) {
+
+	producer, err := sarama.NewSyncProducer(brokers, config)
+	if err != nil {
+		return nil, err
 	}
+
+	admin, err := NewKafkaAdmin(brokers, config)
+	if err != nil {
+		return nil, err
+	}
+
+	s := &baritoProducerService{
+		producer:      producer,
+		admin:         admin,
+		topicSuffix:   topicSuffix,
+		bucket:        NewLeakyBucket(maxTps, timekit.Duration("1s")),
+		newEventTopic: newEventTopic,
+	}
+
 	s.server = &http.Server{
 		Addr:    addr,
 		Handler: s,
 	}
 
-	return s
+	return s, nil
 }
 
 func (a *baritoProducerService) Start() error {
@@ -51,7 +68,11 @@ func (a *baritoProducerService) Close() {
 		a.bucket.Close()
 	}
 
-	a.Producer.Close()
+	if a.admin != nil {
+		a.admin.Close()
+	}
+
+	a.producer.Close()
 }
 
 func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -65,7 +86,26 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	err = kafkaStore(s.Producer, timber, s.TopicSuffix)
+	topic := timber.Context().KafkaTopic
+	numPartitions := timber.Context().KafkaPartition
+	replicationFactor := timber.Context().KafkaReplicationFactor
+	newTopicCreated, err := s.admin.CreateTopicIfNotExist(topic, numPartitions, replicationFactor)
+	if err != nil {
+		onCreateTopicError(rw, err)
+		return
+	}
+
+	if newTopicCreated {
+		log.Infof("Topic '%s' created with partitions:%d and replication_factor:%d", topic, numPartitions, replicationFactor)
+
+		message := &sarama.ProducerMessage{
+			Topic: s.newEventTopic,
+			Value: sarama.ByteEncoder(topic),
+		}
+		_, _, err = s.producer.SendMessage(message)
+	}
+
+	err = kafkaStore(s.producer, timber, s.topicSuffix)
 	if err != nil {
 		onStoreError(rw, err)
 		return

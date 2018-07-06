@@ -15,7 +15,16 @@ func TestConvertBytesToTimber_GenerateTimestamp(t *testing.T) {
 	timekit.FreezeUTC("2018-06-06T12:12:12Z")
 	defer timekit.Unfreeze()
 
-	timber, err := ConvertBytesToTimber([]byte(`{"hello":"world", "_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}}`))
+	timber, err := ConvertBytesToTimber([]byte(`{
+  "hello": "world",
+  "_ctx": {
+    "kafka_topic": "some_topic",
+		"kafka_partition": 3,
+		"kafka_replication_factor": 3,
+    "es_index_prefix": "some-type",
+    "es_document_type": "some-type"
+  }
+}`))
 	FatalIfError(t, err)
 	FatalIf(t, timber.Timestamp() != "2018-06-06T12:12:12Z", "wrong timber.Timestamp()")
 }
@@ -41,7 +50,7 @@ func TestConvertRequestToTimber(t *testing.T) {
     "message":"hello world", 
     "id": "0012", 
     "@timestamp":"2009-11-10T23:00:00Z",
-		"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}
+		"_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}
   }`)
 
 	req, err := http.NewRequest("POST", "/", body)
@@ -63,7 +72,7 @@ func TestNewTimberFromKafka(t *testing.T) {
       "location": "some-location", 
       "message":"some-message", 
       "@timestamp":"2009-11-10T23:00:00Z",
-			"_ctx": {"kafka_topic": "some_topic","es_index_prefix": "some-type","es_document_type": "some-type"}
+			"_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}
     }`),
 	}
 
@@ -89,21 +98,27 @@ func TestConvertToKafkaMessage(t *testing.T) {
 
 func TestConvertMapToTimberContext(t *testing.T) {
 	ctx, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":      "some-topic",
-		"es_index_prefix":  "some-prefix",
-		"es_document_type": "some-type",
+		"kafka_topic":              "some-topic",
+		"kafka_partition":          3.0,
+		"kafka_replication_factor": 1.0,
+		"es_index_prefix":          "some-prefix",
+		"es_document_type":         "some-type",
 	})
 
 	FatalIfError(t, err)
 	FatalIf(t, ctx.KafkaTopic != "some-topic", "wrong kafka_topic")
+	FatalIf(t, ctx.KafkaPartition != 3, "wrong kafka_partition")
+	FatalIf(t, ctx.KafkaReplicationFactor != 1, "wrong kafka_replication_factor")
 	FatalIf(t, ctx.ESIndexPrefix != "some-prefix", "wrong es_index_prefix")
 	FatalIf(t, ctx.ESDocumentType != "some-type", "wrong es_document_type")
 }
 
 func TestConvertMapToTimberContext_KafkaTopicIsMissing(t *testing.T) {
 	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"es_index_prefix":  "some-prefix",
-		"es_document_type": "some-type",
+		"kafka_partition":          3.0,
+		"kafka_replication_factor": 1.0,
+		"es_index_prefix":          "some-prefix",
+		"es_document_type":         "some-type",
 	})
 
 	FatalIfWrongError(t, err, "kafka_topic is missing")
@@ -111,8 +126,10 @@ func TestConvertMapToTimberContext_KafkaTopicIsMissing(t *testing.T) {
 
 func TestConvertMapToTimberContext_ESIndexPrefixIsMissing(t *testing.T) {
 	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":      "some-topic",
-		"es_document_type": "some-type",
+		"kafka_topic":              "some-topic",
+		"kafka_partition":          3.0,
+		"kafka_replication_factor": 1.0,
+		"es_document_type":         "some-type",
 	})
 
 	FatalIfWrongError(t, err, "es_index_prefix is missing")
@@ -120,11 +137,35 @@ func TestConvertMapToTimberContext_ESIndexPrefixIsMissing(t *testing.T) {
 
 func TestConvertMapToTimberContext_ESDocumentTypeIsMissing(t *testing.T) {
 	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":     "some-topic",
-		"es_index_prefix": "some-prefix",
+		"kafka_topic":              "some-topic",
+		"kafka_partition":          3.0,
+		"kafka_replication_factor": 1.0,
+		"es_index_prefix":          "some-prefix",
 	})
 
 	FatalIfWrongError(t, err, "es_document_type is missing")
+}
+
+func TestConvertMapToTimberContext_KafkaPartitionIsMissing(t *testing.T) {
+	_, err := ConvertMapToTimberContext(map[string]interface{}{
+		"kafka_topic":              "some-topic",
+		"kafka_replication_factor": 1.0,
+		"es_index_prefix":          "some-prefix",
+		"es_document_type":         "some-type",
+	})
+
+	FatalIfWrongError(t, err, "kafka_partition is missing")
+}
+
+func TestConvertMapToTimberContext_KafkaReplicationFactorIsMissing(t *testing.T) {
+	_, err := ConvertMapToTimberContext(map[string]interface{}{
+		"kafka_topic":      "some-topic",
+		"kafka_partition":  3.0,
+		"es_index_prefix":  "some-prefix",
+		"es_document_type": "some-type",
+	})
+
+	FatalIfWrongError(t, err, "kafka_replication_factor is missing")
 }
 
 func TestConvertTimberToElasticDocument(t *testing.T) {

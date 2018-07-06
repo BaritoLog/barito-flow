@@ -21,3 +21,8 @@ func onSuccess(rw http.ResponseWriter) {
 	rw.WriteHeader(http.StatusOK)
 	rw.Write([]byte("OK"))
 }
+
+func onCreateTopicError(rw http.ResponseWriter, err error) {
+	rw.WriteHeader(http.StatusServiceUnavailable)
+	rw.Write([]byte(err.Error()))
+}

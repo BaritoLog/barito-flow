@@ -85,10 +85,24 @@ func ConvertMapToTimberContext(m map[string]interface{}) (ctx *TimberContext, er
 		return
 	}
 
+	kafkaPartition, ok := m["kafka_partition"].(float64)
+	if !ok {
+		err = fmt.Errorf("kafka_partition is missing")
+		return
+	}
+
+	kafkaReplicationFactor, ok := m["kafka_replication_factor"].(float64)
+	if !ok {
+		err = fmt.Errorf("kafka_replication_factor is missing")
+		return
+	}
+
 	ctx = &TimberContext{
-		KafkaTopic:     kafkaTopic,
-		ESIndexPrefix:  esIndexPrefix,
-		ESDocumentType: esDocumentType,
+		KafkaTopic:             kafkaTopic,
+		KafkaPartition:         int32(kafkaPartition),
+		KafkaReplicationFactor: int16(kafkaReplicationFactor),
+		ESIndexPrefix:          esIndexPrefix,
+		ESDocumentType:         esDocumentType,
 	}
 
 	return

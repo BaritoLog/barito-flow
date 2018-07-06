@@ -1,6 +1,8 @@
 package cmds
 
 import (
+	"fmt"
+
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/Shopify/sarama"
@@ -35,15 +37,15 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = maxRetry
 	config.Producer.Return.Successes = true
+	config.Version = sarama.V0_10_2_1 // TODO: get version from env
 
-	// kafka producer
-	// TODO: move producer to BaritoProducerService
-	kafkaProducer, err := sarama.NewSyncProducer(kafkaBrokers, config)
+	newEventTopic := "new_app_events"
+	fmt.Println(newEventTopic)
+
+	srv, err := flow.NewBaritoProducerService(address, kafkaBrokers, config, producerMaxTps, topicSuffix, newEventTopic)
 	if err != nil {
 		return
 	}
-
-	srv := flow.NewBaritoProducerService(address, kafkaProducer, producerMaxTps, topicSuffix)
 	srvkit.AsyncGracefulShutdown(srv.Close)
 
 	return srv.Start()
