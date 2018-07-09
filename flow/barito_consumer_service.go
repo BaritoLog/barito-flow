@@ -20,12 +20,7 @@ type baritoConsumerService struct {
 	config       *sarama.Config
 }
 
-func NewBaritoConsumerService(kafkaBrokers []string, kafkaGroupID, elasticURL, topicSuffix string) BaritoConsumerService {
-
-	// TODO:
-	config := sarama.NewConfig()
-	config.Version = sarama.V0_10_2_0
-
+func NewBaritoConsumerService(kafkaBrokers []string, config *sarama.Config, kafkaGroupID, elasticURL, topicSuffix string) BaritoConsumerService {
 	return &baritoConsumerService{
 		KafkaBrokers: kafkaBrokers,
 		KafkaGroupID: kafkaGroupID,

@@ -1,8 +1,6 @@
 package cmds
 
 import (
-	"fmt"
-
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/Shopify/sarama"
@@ -15,8 +13,10 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	esUrl := configElasticsearchUrl()
 	topicSuffix := configKafkaTopicSuffix()
 
-	// TODO: get topicSuffix
-	service := flow.NewBaritoConsumerService(brokers, groupID, esUrl, topicSuffix)
+	config := sarama.NewConfig()
+	config.Version = sarama.V0_10_2_0 // TODO: get version from env
+
+	service := flow.NewBaritoConsumerService(brokers, config, groupID, esUrl, topicSuffix)
 
 	service.Start()
 	srvkit.GracefullShutdown(service.Close)
@@ -40,7 +40,6 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
 
 	newEventTopic := "new_app_events"
-	fmt.Println(newEventTopic)
 
 	srv, err := flow.NewBaritoProducerService(
 		address,
