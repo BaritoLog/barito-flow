@@ -1,6 +1,8 @@
 package flow
 
 import (
+	"strings"
+
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	log "github.com/sirupsen/logrus"
@@ -12,35 +14,39 @@ type BaritoConsumerService interface {
 }
 
 type baritoConsumerService struct {
-	KafkaBrokers []string
-	KafkaGroupID string
-	ElasticUrl   string
-	TopicSuffix  string
-	workers      map[string]ConsumerWorker
-	config       *sarama.Config
+	brokers     []string
+	groupID     string
+	elasticUrl  string
+	topicSuffix string
+	workers     map[string]ConsumerWorker
+	admin       KafkaAdmin
+
+	config *sarama.Config
 }
 
-func NewBaritoConsumerService(kafkaBrokers []string, config *sarama.Config, kafkaGroupID, elasticURL, topicSuffix string) BaritoConsumerService {
-	return &baritoConsumerService{
-		KafkaBrokers: kafkaBrokers,
-		KafkaGroupID: kafkaGroupID,
-		ElasticUrl:   elasticURL,
-		TopicSuffix:  topicSuffix,
-		workers:      make(map[string]ConsumerWorker),
-		config:       config,
+func NewBaritoConsumerService(brokers []string, config *sarama.Config, groupID, elasticURL, topicSuffix string) (BaritoConsumerService, error) {
+
+	admin, err := NewKafkaAdmin(brokers, config)
+	if err != nil {
+		return nil, err
 	}
+
+	return &baritoConsumerService{
+		brokers:     brokers,
+		groupID:     groupID,
+		elasticUrl:  elasticURL,
+		topicSuffix: topicSuffix,
+		workers:     make(map[string]ConsumerWorker),
+		config:      config,
+		admin:       admin,
+	}, nil
 }
 
 func (s baritoConsumerService) Start() (err error) {
 
 	log.Infof("Start Barito Consumer Service")
-	admin, err := NewKafkaAdmin(s.KafkaBrokers, s.config)
-	if err != nil {
-		return
-	}
 
-	topics := admin.TopicsWithSuffix(s.TopicSuffix)
-	admin.Close()
+	topics := s.topicsWithSuffix()
 
 	for _, topic := range topics {
 		log.Infof("Spawn new worker for topic '%s'", topic)
@@ -62,12 +68,17 @@ func (s baritoConsumerService) Close() {
 	for _, worker := range s.workers {
 		worker.Close()
 	}
+
+	if s.admin != nil {
+		s.admin.Close()
+	}
+
 }
 
 func (s baritoConsumerService) spawnNewWorker(topic string) (worker ConsumerWorker, err error) {
 
 	// elastic client
-	client, err := elasticNewClient(s.ElasticUrl)
+	client, err := elasticNewClient(s.elasticUrl)
 
 	// consumer config
 	config := cluster.NewConfig()
@@ -76,7 +87,7 @@ func (s baritoConsumerService) spawnNewWorker(topic string) (worker ConsumerWork
 	config.Group.Return.Notifications = true
 
 	// kafka consumer
-	consumer, err := cluster.NewConsumer(s.KafkaBrokers, s.KafkaGroupID,
+	consumer, err := cluster.NewConsumer(s.brokers, s.groupID,
 		[]string{topic}, config)
 	if err != nil {
 		return
@@ -89,4 +100,13 @@ func (s baritoConsumerService) spawnNewWorker(topic string) (worker ConsumerWork
 
 func (s baritoConsumerService) onErrror(err error) {
 	log.Warn(err.Error())
+}
+
+func (s *baritoConsumerService) topicsWithSuffix() (topics []string) {
+	for _, topic := range s.admin.Topics() {
+		if strings.HasSuffix(topic, s.topicSuffix) {
+			topics = append(topics, topic)
+		}
+	}
+	return
 }

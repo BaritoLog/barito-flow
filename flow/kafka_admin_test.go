@@ -51,7 +51,6 @@ func TestKafkaAdmin_Topics(t *testing.T) {
 	defer admin.Close()
 
 	FatalIf(t, !slicekit.StringSliceEqual(admin.Topics(), topics), "wrong admin.Topics()")
-	FatalIf(t, !slicekit.StringSliceEqual(admin.TopicsWithSuffix("_logs"), []string{"topic02_logs", "topic03_logs"}), "wrong admin.Topics()")
 }
 
 func TestKafkaAdmin_Exist(t *testing.T) {

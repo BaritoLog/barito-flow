@@ -1,7 +1,6 @@
 package flow
 
 import (
-	"strings"
 	"sync"
 
 	"github.com/Shopify/sarama"
@@ -12,7 +11,6 @@ type KafkaAdmin interface {
 	SetTopics([]string)
 	Topics() []string
 	AddTopic(topic string)
-	TopicsWithSuffix(suffix string) []string
 	Exist(topic string) bool
 	CreateTopic(topic string, numPartitions int32, replicationFactor int16) error
 	Close()
@@ -85,15 +83,6 @@ func (a *kafkaAdmin) Exist(topic string) bool {
 func (a *kafkaAdmin) AddTopic(topic string) {
 	a.topics = append(a.topics, topic)
 
-}
-
-func (a *kafkaAdmin) TopicsWithSuffix(suffix string) (topics []string) {
-	for _, topic := range a.Topics() {
-		if strings.HasSuffix(topic, suffix) {
-			topics = append(topics, topic)
-		}
-	}
-	return
 }
 
 func (a *kafkaAdmin) Close() {

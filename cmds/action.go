@@ -16,7 +16,10 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_0 // TODO: get version from env
 
-	service := flow.NewBaritoConsumerService(brokers, config, groupID, esUrl, topicSuffix)
+	service, err := flow.NewBaritoConsumerService(brokers, config, groupID, esUrl, topicSuffix)
+	if err != nil {
+		return
+	}
 
 	service.Start()
 	srvkit.GracefullShutdown(service.Close)
