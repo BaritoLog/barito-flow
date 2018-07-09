@@ -6,28 +6,27 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
+	"github.com/golang/mock/gomock"
 )
 
 func TestKafkaAgent(t *testing.T) {
-	messages := make(chan *sarama.ConsumerMessage)
-	notifications := make(chan *cluster.Notification)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	expectedNotification := &cluster.Notification{}
-
-	go func() {
-		messages <- &sarama.ConsumerMessage{
-			Value: []byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}}`),
-		}
-		notifications <- expectedNotification
-	}()
-	timekit.Sleep("1ms")
-
-	var gotTimber Timber
-	var gotNotification *cluster.Notification
+	consumer := mock.NewMockClusterConsumer(ctrl)
+	consumer.EXPECT().Messages().AnyTimes().
+		Return(sampleMessageChannel(sampleConsumerMessage()))
+	consumer.EXPECT().Notifications().
+		Return(sampleNotificationChannel())
+	consumer.EXPECT().Errors().
+		Return(sampleErrorChannel())
+	consumer.EXPECT().MarkOffset(gomock.Any(), gomock.Any())
+	consumer.EXPECT().Close()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusOK,
@@ -39,11 +38,8 @@ func TestKafkaAgent(t *testing.T) {
 	client, err := elasticNewClient(ts.URL)
 	FatalIfError(t, err)
 
-	consumer := &dummyKafkaConsumer{
-		messages:      messages,
-		notifications: notifications,
-		errors:        make(chan error),
-	}
+	var gotTimber Timber
+	var gotNotification *cluster.Notification
 
 	agent := NewConsumerWorker(consumer, client)
 	agent.OnSuccess(func(timber Timber) { gotTimber = timber })
@@ -65,6 +61,19 @@ func TestKafkaAgent_StoreError(t *testing.T) {
 	}()
 	timekit.Sleep("1ms")
 
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	consumer := mock.NewMockClusterConsumer(ctrl)
+	consumer.EXPECT().Messages().AnyTimes().
+		Return(sampleMessageChannel(sampleConsumerMessage()))
+	consumer.EXPECT().Notifications().
+		Return(sampleNotificationChannel())
+	consumer.EXPECT().Errors().
+		Return(sampleErrorChannel())
+	consumer.EXPECT().MarkOffset(gomock.Any(), gomock.Any())
+	consumer.EXPECT().Close()
+
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusOK,
 		CreateAPIStatus: http.StatusOK,
@@ -74,12 +83,6 @@ func TestKafkaAgent_StoreError(t *testing.T) {
 
 	client, err := elasticNewClient(ts.URL)
 	FatalIfError(t, err)
-
-	consumer := &dummyKafkaConsumer{
-		messages:      messages,
-		notifications: make(chan *cluster.Notification),
-		errors:        make(chan error),
-	}
 
 	agent := NewConsumerWorker(consumer, client)
 	defer agent.Close()
@@ -94,27 +97,28 @@ func TestKafkaAgent_StoreError(t *testing.T) {
 }
 
 func TestKafkaAgent_KafkaError(t *testing.T) {
-	errors := make(chan error)
-	go func() {
-		errors <- fmt.Errorf("expected kafka error")
-	}()
-	timekit.Sleep("1ms")
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	consumer := mock.NewMockClusterConsumer(ctrl)
+	consumer.EXPECT().Messages().AnyTimes().
+		Return(sampleMessageChannel())
+	consumer.EXPECT().Notifications().
+		Return(sampleNotificationChannel())
+	consumer.EXPECT().Errors().
+		Return(sampleErrorChannel(fmt.Errorf("expected kafka error")))
+	consumer.EXPECT().Close()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusOK,
 		CreateAPIStatus: http.StatusOK,
-		PostAPIStatus:   http.StatusInternalServerError,
+		PostAPIStatus:   http.StatusOK,
 	})
 	defer ts.Close()
 
 	client, err := elasticNewClient(ts.URL)
 	FatalIfError(t, err)
-
-	consumer := &dummyKafkaConsumer{
-		messages:      make(chan *sarama.ConsumerMessage),
-		notifications: make(chan *cluster.Notification),
-		errors:        errors,
-	}
 
 	var err0 error
 	agent := NewConsumerWorker(consumer, client)
@@ -128,14 +132,19 @@ func TestKafkaAgent_KafkaError(t *testing.T) {
 }
 
 func TestKafkaAgent_BadKafkaMessage(t *testing.T) {
-	messages := make(chan *sarama.ConsumerMessage)
 
-	go func() {
-		messages <- &sarama.ConsumerMessage{
-			Value: []byte(`invalid message`),
-		}
-	}()
-	timekit.Sleep("1ms")
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	consumer := mock.NewMockClusterConsumer(ctrl)
+	consumer.EXPECT().Messages().AnyTimes().
+		Return(sampleMessageChannel(&sarama.ConsumerMessage{Value: []byte(`invalid message`)}))
+	consumer.EXPECT().Notifications().
+		Return(sampleNotificationChannel())
+	consumer.EXPECT().Errors().
+		Return(sampleErrorChannel())
+	consumer.EXPECT().MarkOffset(gomock.Any(), gomock.Any())
+	consumer.EXPECT().Close()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusOK,
@@ -147,12 +156,6 @@ func TestKafkaAgent_BadKafkaMessage(t *testing.T) {
 	client, err := elasticNewClient(ts.URL)
 	FatalIfError(t, err)
 
-	consumer := &dummyKafkaConsumer{
-		messages:      messages,
-		notifications: make(chan *cluster.Notification),
-		errors:        make(chan error),
-	}
-
 	agent := NewConsumerWorker(consumer, client)
 	defer agent.Close()
 
@@ -163,4 +166,45 @@ func TestKafkaAgent_BadKafkaMessage(t *testing.T) {
 	timekit.Sleep("1ms")
 
 	FatalIfWrongError(t, err0, string(BadKafkaMessageError))
+}
+
+func sampleConsumerMessage() *sarama.ConsumerMessage {
+	return &sarama.ConsumerMessage{
+		Value: []byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}}`),
+	}
+}
+
+func sampleMessageChannel(messages ...*sarama.ConsumerMessage) <-chan *sarama.ConsumerMessage {
+	messageCh := make(chan *sarama.ConsumerMessage)
+	go func() {
+		for _, message := range messages {
+			messageCh <- message
+		}
+	}()
+	timekit.Sleep("1s")
+
+	return messageCh
+}
+
+func sampleNotificationChannel(notifications ...*cluster.Notification) chan *cluster.Notification {
+	notificationCh := make(chan *cluster.Notification)
+	go func() {
+		for _, notification := range notifications {
+			notificationCh <- notification
+		}
+	}()
+	timekit.Sleep("1s")
+
+	return notificationCh
+}
+
+func sampleErrorChannel(errs ...error) chan error {
+	errorCh := make(chan error)
+	go func() {
+		for _, err := range errs {
+			errorCh <- err
+		}
+	}()
+
+	return errorCh
 }

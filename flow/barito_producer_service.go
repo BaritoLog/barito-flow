@@ -25,6 +25,8 @@ type baritoProducerService struct {
 
 func NewBaritoProducerService(addr string, brokers []string, config *sarama.Config, maxTps int, topicSuffix string, newEventTopic string) (BaritoProducerService, error) {
 
+	// TODO: use multiple handle
+
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		return nil, err
@@ -52,6 +54,8 @@ func NewBaritoProducerService(addr string, brokers []string, config *sarama.Conf
 }
 
 func (a *baritoProducerService) Start() error {
+
+	// TODO: return error if bucket or server is nil
 
 	a.bucket.StartRefill()
 

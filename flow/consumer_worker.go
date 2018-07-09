@@ -23,14 +23,14 @@ type ConsumerWorker interface {
 }
 
 type consumerWorker struct {
-	Consumer           KafkaConsumer
+	Consumer           ClusterConsumer
 	Client             *elastic.Client
 	onErrorFunc        func(error)
 	onSuccessFunc      func(Timber)
 	onNotificationFunc func(*cluster.Notification)
 }
 
-func NewConsumerWorker(consumer KafkaConsumer, client *elastic.Client) ConsumerWorker {
+func NewConsumerWorker(consumer ClusterConsumer, client *elastic.Client) ConsumerWorker {
 	return &consumerWorker{
 		Consumer: consumer,
 		Client:   client,
