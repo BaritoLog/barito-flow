@@ -16,7 +16,15 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_0 // TODO: get version from env
 
-	service, err := flow.NewBaritoConsumerService(brokers, config, groupID, esUrl, topicSuffix)
+	newTopicEventName := "new_topic_events" // TODO: get from env
+
+	service, err := flow.NewBaritoConsumerService(
+		brokers,
+		config,
+		groupID,
+		esUrl,
+		topicSuffix,
+		newTopicEventName)
 	if err != nil {
 		return
 	}
@@ -42,7 +50,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Producer.Return.Successes = true
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
 
-	newEventTopic := "new_app_events"
+	newTopicEventName := "new_topic_events" // TODO: get from env
 
 	srv, err := flow.NewBaritoProducerService(
 		address,
@@ -50,7 +58,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		config,
 		maxTps,
 		topicSuffix,
-		newEventTopic)
+		newTopicEventName)
 	if err != nil {
 		return
 	}

@@ -1,11 +1,18 @@
 package flow
 
 import (
+	"context"
 	"strings"
 
+	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
-	cluster "github.com/bsm/sarama-cluster"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	BadKafkaMessageError     = errkit.Error("Bad Kafka Message")
+	StoreFailedError         = errkit.Error("Store Failed")
+	ElasticsearchClientError = errkit.Error("Elasticsearch client error")
 )
 
 type BaritoConsumerService interface {
@@ -24,7 +31,10 @@ type baritoConsumerService struct {
 	config *sarama.Config
 }
 
-func NewBaritoConsumerService(brokers []string, config *sarama.Config, groupID, elasticURL, topicSuffix string) (BaritoConsumerService, error) {
+func NewBaritoConsumerService(
+	brokers []string,
+	config *sarama.Config,
+	groupID, elasticURL, topicSuffix, newTopicEventName string) (BaritoConsumerService, error) {
 
 	admin, err := NewKafkaAdmin(brokers, config)
 	if err != nil {
@@ -76,25 +86,15 @@ func (s baritoConsumerService) Close() {
 }
 
 func (s baritoConsumerService) spawnNewWorker(topic string) (worker ConsumerWorker, err error) {
+	groupID := "barito" // TODO: as parametr
 
-	// elastic client
-	client, err := elasticNewClient(s.elasticUrl)
-
-	// consumer config
-	config := cluster.NewConfig()
-	config.Config = *s.config
-	config.Consumer.Return.Errors = true
-	config.Group.Return.Notifications = true
-
-	// kafka consumer
-	consumer, err := cluster.NewConsumer(s.brokers, s.groupID,
-		[]string{topic}, config)
+	worker, err = NewConsumerWorker(s.brokers, s.config, groupID, topic)
 	if err != nil {
 		return
 	}
 
-	worker = NewConsumerWorker(consumer, client)
 	worker.OnError(s.onErrror)
+	worker.OnSuccess(s.storeTimber)
 	return
 }
 
@@ -109,4 +109,24 @@ func (s *baritoConsumerService) topicsWithSuffix() (topics []string) {
 		}
 	}
 	return
+}
+
+func (s *baritoConsumerService) storeTimber(message *sarama.ConsumerMessage) {
+	// elastic client
+	client, err := elasticNewClient(s.elasticUrl)
+	if err != nil {
+		s.onErrror(errkit.Concat(ElasticsearchClientError, err))
+	}
+
+	timber, err := ConvertKafkaMessageToTimber(message)
+
+	if err != nil {
+		s.onErrror(errkit.Concat(BadKafkaMessageError, err))
+	} else {
+		ctx := context.Background()
+		err = elasticStore(client, ctx, timber)
+		if err != nil {
+			s.onErrror(errkit.Concat(StoreFailedError, err))
+		}
+	}
 }

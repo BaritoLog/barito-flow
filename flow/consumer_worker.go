@@ -1,47 +1,54 @@
 package flow
 
 import (
-	"context"
-
 	"github.com/BaritoLog/go-boilerplate/errkit"
+	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
-	"github.com/olivere/elastic"
 )
 
 const (
-	BadKafkaMessageError = errkit.Error("Bad Kafka Message")
-	StoreFailedError     = errkit.Error("Store Failed")
-	GeneralKafkaError    = errkit.Error("Got Kafka error")
+	RetrieveMessageFailedError = errkit.Error("Retrieve message failed")
 )
 
 type ConsumerWorker interface {
 	Start() error
 	Close()
 	OnError(f func(error))
-	OnSuccess(f func(Timber))
+	OnSuccess(f func(*sarama.ConsumerMessage))
 	OnNotification(f func(*cluster.Notification))
 }
 
 type consumerWorker struct {
 	Consumer           ClusterConsumer
-	Client             *elastic.Client
 	onErrorFunc        func(error)
-	onSuccessFunc      func(Timber)
+	onSuccessFunc      func(*sarama.ConsumerMessage)
 	onNotificationFunc func(*cluster.Notification)
 }
 
-func NewConsumerWorker(consumer ClusterConsumer, client *elastic.Client) ConsumerWorker {
+func NewConsumerWorker(brokers []string, config *sarama.Config, groupID, topic string) (ConsumerWorker, error) {
+	// consumer config
+	clusterConfig := cluster.NewConfig()
+	clusterConfig.Config = *config
+	clusterConfig.Consumer.Return.Errors = true
+	clusterConfig.Group.Return.Notifications = true
+
+	// kafka consumer
+	consumer, err := cluster.NewConsumer(brokers, groupID,
+		[]string{topic}, clusterConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &consumerWorker{
 		Consumer: consumer,
-		Client:   client,
-	}
+	}, nil
 }
 
 func (w *consumerWorker) OnError(f func(error)) {
 	w.onErrorFunc = f
 }
 
-func (w *consumerWorker) OnSuccess(f func(Timber)) {
+func (w *consumerWorker) OnSuccess(f func(*sarama.ConsumerMessage)) {
 	w.onSuccessFunc = f
 }
 
@@ -68,20 +75,7 @@ func (a *consumerWorker) loopMain() {
 		select {
 		case message, ok := <-a.Consumer.Messages():
 			if ok {
-				timber, err := ConvertKafkaMessageToTimber(message)
-
-				if err != nil {
-					a.fireError(BadKafkaMessageError, err)
-				} else {
-					ctx := context.Background()
-					err = elasticStore(a.Client, ctx, timber)
-					if err != nil {
-						a.fireError(StoreFailedError, err)
-					} else {
-						a.fireSuccess(timber)
-					}
-				}
-
+				a.fireSuccess(message)
 				a.Consumer.MarkOffset(message, "")
 
 			}
@@ -97,19 +91,19 @@ func (a *consumerWorker) loopNotification() {
 
 func (a *consumerWorker) loopErrors() {
 	for err := range a.Consumer.Errors() {
-		a.fireError(GeneralKafkaError, err)
+		a.fireError(errkit.Concat(RetrieveMessageFailedError, err))
 	}
 }
 
-func (a *consumerWorker) fireSuccess(timber Timber) {
+func (a *consumerWorker) fireSuccess(message *sarama.ConsumerMessage) {
 	if a.onSuccessFunc != nil {
-		a.onSuccessFunc(timber)
+		a.onSuccessFunc(message)
 	}
 }
 
-func (a *consumerWorker) fireError(prefix, err error) {
+func (a *consumerWorker) fireError(err error) {
 	if a.onErrorFunc != nil {
-		a.onErrorFunc(errkit.Concat(prefix, err))
+		a.onErrorFunc(err)
 	}
 }
 
