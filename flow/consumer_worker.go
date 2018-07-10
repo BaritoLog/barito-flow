@@ -26,6 +26,8 @@ type consumerWorker struct {
 }
 
 func NewConsumerWorker(brokers []string, config *sarama.Config, groupID, topic string) (ConsumerWorker, error) {
+
+	// TODO: move to kafka factory
 	// consumer config
 	clusterConfig := cluster.NewConfig()
 	clusterConfig.Config = *config

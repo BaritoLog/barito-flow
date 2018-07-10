@@ -24,40 +24,37 @@ type BaritoConsumerService interface {
 }
 
 type baritoConsumerService struct {
-	brokers        []string
-	groupID        string
-	elasticUrl     string
-	topicSuffix    string
+	factory     KafkaFactory
+	groupID     string
+	elasticUrl  string
+	topicSuffix string
+
 	workers        map[string]ConsumerWorker
 	admin          KafkaAdmin
 	newTopicWorker ConsumerWorker
 	spawnMutex     sync.Mutex
-
-	config *sarama.Config
 }
 
 func NewBaritoConsumerService(
-	brokers []string,
-	config *sarama.Config,
+	factory KafkaFactory,
 	groupID, elasticURL, topicSuffix, newTopicEventName string) (BaritoConsumerService, error) {
 
-	admin, err := NewKafkaAdmin(brokers, config)
+	admin, err := factory.MakeKafkaAdmin()
 	if err != nil {
 		return nil, err
 	}
 
-	newTopicWorker, err := NewConsumerWorker(brokers, config, groupID, newTopicEventName)
+	newTopicWorker, err := factory.MakeConsumerWorker(groupID, newTopicEventName)
 	if err != nil {
 		return nil, err
 	}
 
 	return &baritoConsumerService{
-		brokers:        brokers,
+		factory:        factory,
 		groupID:        groupID,
 		elasticUrl:     elasticURL,
 		topicSuffix:    topicSuffix,
 		workers:        make(map[string]ConsumerWorker),
-		config:         config,
 		admin:          admin,
 		newTopicWorker: newTopicWorker,
 	}, nil
@@ -86,6 +83,10 @@ func (s baritoConsumerService) Close() {
 	if s.admin != nil {
 		s.admin.Close()
 	}
+
+	if s.newTopicWorker != nil {
+		s.newTopicWorker.Close()
+	}
 }
 
 func (s *baritoConsumerService) startEventsWorker() {
@@ -96,7 +97,7 @@ func (s *baritoConsumerService) startEventsWorker() {
 
 func (s *baritoConsumerService) spawnLogsWorker(topic string) (worker ConsumerWorker) {
 
-	worker, err := NewConsumerWorker(s.brokers, s.config, s.groupID, topic)
+	worker, err := s.factory.MakeConsumerWorker(s.groupID, topic)
 	if err != nil {
 		s.onError(errkit.Concat(ErrConsumerWorkerFailed, err))
 		return
