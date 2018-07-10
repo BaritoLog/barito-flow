@@ -11,7 +11,7 @@ const (
 )
 
 type ConsumerWorker interface {
-	Start() error
+	Start()
 	Close()
 	OnError(f func(error))
 	OnSuccess(f func(*sarama.ConsumerMessage))
@@ -56,7 +56,7 @@ func (w *consumerWorker) OnNotification(f func(*cluster.Notification)) {
 	w.onNotificationFunc = f
 }
 
-func (a *consumerWorker) Start() (err error) {
+func (a *consumerWorker) Start() {
 	go a.loopErrors()
 	go a.loopNotification()
 
@@ -77,7 +77,6 @@ func (a *consumerWorker) loopMain() {
 			if ok {
 				a.fireSuccess(message)
 				a.Consumer.MarkOffset(message, "")
-
 			}
 		}
 	}

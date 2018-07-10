@@ -2,7 +2,9 @@ package flow
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
@@ -13,20 +15,23 @@ const (
 	BadKafkaMessageError     = errkit.Error("Bad Kafka Message")
 	StoreFailedError         = errkit.Error("Store Failed")
 	ElasticsearchClientError = errkit.Error("Elasticsearch client error")
+	ErrConsumerWorkerFailed  = errkit.Error("Consumer Worker Failed")
 )
 
 type BaritoConsumerService interface {
-	Start() error
+	Start()
 	Close()
 }
 
 type baritoConsumerService struct {
-	brokers     []string
-	groupID     string
-	elasticUrl  string
-	topicSuffix string
-	workers     map[string]ConsumerWorker
-	admin       KafkaAdmin
+	brokers        []string
+	groupID        string
+	elasticUrl     string
+	topicSuffix    string
+	workers        map[string]ConsumerWorker
+	admin          KafkaAdmin
+	newTopicWorker ConsumerWorker
+	spawnMutex     sync.Mutex
 
 	config *sarama.Config
 }
@@ -41,39 +46,38 @@ func NewBaritoConsumerService(
 		return nil, err
 	}
 
+	newTopicWorker, err := NewConsumerWorker(brokers, config, groupID, newTopicEventName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &baritoConsumerService{
-		brokers:     brokers,
-		groupID:     groupID,
-		elasticUrl:  elasticURL,
-		topicSuffix: topicSuffix,
-		workers:     make(map[string]ConsumerWorker),
-		config:      config,
-		admin:       admin,
+		brokers:        brokers,
+		groupID:        groupID,
+		elasticUrl:     elasticURL,
+		topicSuffix:    topicSuffix,
+		workers:        make(map[string]ConsumerWorker),
+		config:         config,
+		admin:          admin,
+		newTopicWorker: newTopicWorker,
 	}, nil
 }
 
-func (s baritoConsumerService) Start() (err error) {
+func (s *baritoConsumerService) Start() {
 
 	log.Infof("Start Barito Consumer Service")
 
-	topics := s.topicsWithSuffix()
+	if s.newTopicWorker != nil {
+		s.startEventsWorker()
+	}
 
-	for _, topic := range topics {
-		log.Infof("Spawn new worker for topic '%s'", topic)
-		var worker ConsumerWorker
-		worker, err = s.spawnNewWorker(topic)
-		if err != nil {
-			return
-		}
-
-		// TODO: worker's instrumentation
-
-		s.workers[topic] = worker
-		go worker.Start()
+	for _, topic := range s.topicsWithSuffix() {
+		s.spawnLogsWorker(topic)
 	}
 	return
 }
 
+// Close
 func (s baritoConsumerService) Close() {
 	for _, worker := range s.workers {
 		worker.Close()
@@ -82,23 +86,34 @@ func (s baritoConsumerService) Close() {
 	if s.admin != nil {
 		s.admin.Close()
 	}
-
 }
 
-func (s baritoConsumerService) spawnNewWorker(topic string) (worker ConsumerWorker, err error) {
-	groupID := "barito" // TODO: as parametr
+func (s *baritoConsumerService) startEventsWorker() {
+	s.newTopicWorker.OnSuccess(s.onNewTopicEvent)
+	s.newTopicWorker.OnError(s.onError)
+	go s.newTopicWorker.Start()
+}
 
-	worker, err = NewConsumerWorker(s.brokers, s.config, groupID, topic)
+func (s *baritoConsumerService) spawnLogsWorker(topic string) (worker ConsumerWorker) {
+
+	worker, err := NewConsumerWorker(s.brokers, s.config, s.groupID, topic)
 	if err != nil {
+		s.onError(errkit.Concat(ErrConsumerWorkerFailed, err))
 		return
 	}
 
-	worker.OnError(s.onErrror)
-	worker.OnSuccess(s.storeTimber)
+	log.Infof("Spawn new worker for topic '%s'", topic)
+
+	worker.OnError(s.onError)
+	worker.OnSuccess(s.onStoreTimber)
+	go worker.Start()
+
+	s.workers[topic] = worker
+
 	return
 }
 
-func (s baritoConsumerService) onErrror(err error) {
+func (s *baritoConsumerService) onError(err error) {
 	log.Warn(err.Error())
 }
 
@@ -111,22 +126,33 @@ func (s *baritoConsumerService) topicsWithSuffix() (topics []string) {
 	return
 }
 
-func (s *baritoConsumerService) storeTimber(message *sarama.ConsumerMessage) {
+func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
+
+	fmt.Println("on store timber")
+
 	// elastic client
 	client, err := elasticNewClient(s.elasticUrl)
 	if err != nil {
-		s.onErrror(errkit.Concat(ElasticsearchClientError, err))
+		s.onError(errkit.Concat(ElasticsearchClientError, err))
 	}
 
 	timber, err := ConvertKafkaMessageToTimber(message)
 
 	if err != nil {
-		s.onErrror(errkit.Concat(BadKafkaMessageError, err))
+		s.onError(errkit.Concat(BadKafkaMessageError, err))
 	} else {
 		ctx := context.Background()
 		err = elasticStore(client, ctx, timber)
 		if err != nil {
-			s.onErrror(errkit.Concat(StoreFailedError, err))
+			s.onError(errkit.Concat(StoreFailedError, err))
 		}
 	}
+}
+
+func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {
+	topic := string(message.Value)
+
+	s.spawnMutex.Lock()
+	s.spawnLogsWorker(topic)
+	s.spawnMutex.Unlock()
 }
