@@ -2,10 +2,13 @@ package flow
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
+	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
 )
@@ -78,6 +81,57 @@ func TestBaritoConsumerService(t *testing.T) {
 
 	worker, ok := workerMap["abc_logs"]
 	FatalIf(t, !ok, "worker of topic abc_logs is missing")
-	FatalIf(t, !worker.IsStart(), "worker of topci abc_logs is not starting")
+	FatalIf(t, !worker.IsStart(), "worker of topic abc_logs is not starting")
+}
 
+func TestBaritoConsumerService_onStoreTimber_ErrorElasticsearchClient(t *testing.T) {
+	service := &baritoConsumerService{}
+
+	service.onStoreTimber(&sarama.ConsumerMessage{})
+	FatalIfWrongError(t, service.lastError, string(ErrElasticsearchClient))
+}
+
+func TestBaritoConsumerService_onStoreTimber_ErrorConvertKafkaMessage(t *testing.T) {
+	ts := NewTestServer(http.StatusOK, []byte(`{}`))
+	defer ts.Close()
+
+	service := &baritoConsumerService{
+		elasticUrl: ts.URL,
+	}
+
+	service.onStoreTimber(&sarama.ConsumerMessage{})
+	FatalIfWrongError(t, service.lastError, string(ErrConvertKafkaMessage))
+}
+
+func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
+	ts := httptest.NewServer(&ELasticTestHandler{
+		ExistAPIStatus:  http.StatusOK,
+		CreateAPIStatus: http.StatusOK,
+		PostAPIStatus:   http.StatusBadRequest,
+	})
+	defer ts.Close()
+
+	service := &baritoConsumerService{
+		elasticUrl: ts.URL,
+	}
+
+	service.onStoreTimber(&sarama.ConsumerMessage{
+		Value: sampleRawTimber(),
+	})
+	FatalIfWrongError(t, service.lastError, string(ErrStore))
+}
+
+func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
+	ts := NewTestServer(http.StatusOK, []byte(`{}`))
+	defer ts.Close()
+
+	service := &baritoConsumerService{
+		elasticUrl: ts.URL,
+	}
+
+	service.onStoreTimber(&sarama.ConsumerMessage{
+		Value: sampleRawTimber(),
+	})
+	FatalIfError(t, service.lastError)
+	FatalIf(t, service.lastTimber == nil, "lastTimber can't be nil")
 }

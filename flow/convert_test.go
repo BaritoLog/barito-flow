@@ -68,12 +68,7 @@ func TestNewTimberFromKafka(t *testing.T) {
 
 	message := &sarama.ConsumerMessage{
 		Topic: "some-topic",
-		Value: []byte(`{
-      "location": "some-location", 
-      "message":"some-message", 
-      "@timestamp":"2009-11-10T23:00:00Z",
-			"_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}
-    }`),
+		Value: sampleRawTimber(),
 	}
 
 	timber, err := ConvertKafkaMessageToTimber(message)
@@ -180,4 +175,14 @@ func TestConvertTimberToElasticDocument(t *testing.T) {
 	document := ConvertTimberToElasticDocument(timber)
 	FatalIf(t, len(document) != 1, "wrong document size")
 	FatalIf(t, timber["hello"] != "world", "wrong document.hello")
+}
+
+func sampleRawTimber() []byte {
+	return []byte(`{
+		"location": "some-location", 
+		"message":"some-message", 
+		"@timestamp":"2009-11-10T23:00:00Z",
+		"_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}
+	}`)
+
 }

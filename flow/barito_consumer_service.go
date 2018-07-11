@@ -2,7 +2,6 @@ package flow
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -12,12 +11,12 @@ import (
 )
 
 const (
-	BadKafkaMessageError        = errkit.Error("Bad Kafka Message")
-	StoreFailedError            = errkit.Error("Store Failed")
-	ElasticsearchClientError    = errkit.Error("Elasticsearch client error")
-	ErrConsumerWorkerFailed     = errkit.Error("Consumer Worker Failed")
-	ErrMakeKafkaAdminFailed     = errkit.Error("Make kafka admin failed")
-	ErrMakeNewTopicWorkerFailed = errkit.Error("Make new topic worker failed")
+	ErrConvertKafkaMessage = errkit.Error("Convert KafkaMessage Failed")
+	ErrStore               = errkit.Error("Store Failed")
+	ErrElasticsearchClient = errkit.Error("Elasticsearch Client Failed")
+	ErrConsumerWorker      = errkit.Error("Consumer Worker Failed")
+	ErrMakeKafkaAdmin      = errkit.Error("Make kafka admin failed")
+	ErrMakeNewTopicWorker  = errkit.Error("Make new topic worker failed")
 )
 
 type BaritoConsumerService interface {
@@ -38,6 +37,9 @@ type baritoConsumerService struct {
 	admin               KafkaAdmin
 	newTopicEventWorker ConsumerWorker
 	spawnMutex          sync.Mutex
+
+	lastError  error
+	lastTimber Timber
 }
 
 func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSuffix, newTopicEventName string) BaritoConsumerService {
@@ -58,12 +60,12 @@ func (s *baritoConsumerService) Start() (err error) {
 
 	admin, err := s.initAdmin()
 	if err != nil {
-		return errkit.Concat(ErrMakeKafkaAdminFailed, err)
+		return errkit.Concat(ErrMakeKafkaAdmin, err)
 	}
 
 	worker, err := s.initNewTopicWorker()
 	if err != nil {
-		return errkit.Concat(ErrMakeNewTopicWorkerFailed, err)
+		return errkit.Concat(ErrMakeNewTopicWorker, err)
 	}
 
 	worker.Start()
@@ -72,7 +74,7 @@ func (s *baritoConsumerService) Start() (err error) {
 		if strings.HasSuffix(topic, s.topicSuffix) {
 			err := s.spawnLogsWorker(topic)
 			if err != nil {
-				s.onError(err)
+				s.logError(err)
 			}
 		}
 	}
@@ -94,7 +96,7 @@ func (s *baritoConsumerService) initNewTopicWorker() (worker ConsumerWorker, err
 
 	worker = NewConsumerWorker(consumer)
 	worker.OnSuccess(s.onNewTopicEvent)
-	worker.OnError(s.onError)
+	worker.OnError(s.logError)
 
 	s.newTopicEventWorker = worker
 	return
@@ -119,14 +121,14 @@ func (s *baritoConsumerService) spawnLogsWorker(topic string) (err error) {
 
 	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic)
 	if err != nil {
-		err = errkit.Concat(ErrConsumerWorkerFailed, err)
+		err = errkit.Concat(ErrConsumerWorker, err)
 		return
 	}
 
 	log.Infof("Spawn new worker for topic '%s'", topic)
 
 	worker := NewConsumerWorker(consumer)
-	worker.OnError(s.onError)
+	worker.OnError(s.logError)
 	worker.OnSuccess(s.onStoreTimber)
 	worker.Start()
 
@@ -135,31 +137,41 @@ func (s *baritoConsumerService) spawnLogsWorker(topic string) (err error) {
 	return
 }
 
-func (s *baritoConsumerService) onError(err error) {
+func (s *baritoConsumerService) logError(err error) {
+	s.lastError = err
 	log.Warn(err.Error())
+}
+
+func (s *baritoConsumerService) logTimber(timber Timber) {
+	s.lastTimber = timber
+	log.Info(timber)
 }
 
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
-	fmt.Println("on store timber")
-
-	// elastic client
+	// create elastic client
 	client, err := elasticNewClient(s.elasticUrl)
 	if err != nil {
-		s.onError(errkit.Concat(ElasticsearchClientError, err))
+		s.logError(errkit.Concat(ErrElasticsearchClient, err))
+		return
 	}
 
+	// convert kafka message
 	timber, err := ConvertKafkaMessageToTimber(message)
-
 	if err != nil {
-		s.onError(errkit.Concat(BadKafkaMessageError, err))
-	} else {
-		ctx := context.Background()
-		err = elasticStore(client, ctx, timber)
-		if err != nil {
-			s.onError(errkit.Concat(StoreFailedError, err))
-		}
+		s.logError(errkit.Concat(ErrConvertKafkaMessage, err))
+		return
 	}
+
+	// store to elasticsearch
+	ctx := context.Background()
+	err = elasticStore(client, ctx, timber)
+	if err != nil {
+		s.logError(errkit.Concat(ErrStore, err))
+		return
+	}
+
+	s.logTimber(timber)
 }
 
 func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {
@@ -168,7 +180,7 @@ func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage)
 	s.spawnMutex.Lock()
 	err := s.spawnLogsWorker(topic)
 	if err != nil {
-		s.onError(err)
+		s.logError(err)
 	}
 	s.spawnMutex.Unlock()
 }
@@ -179,5 +191,4 @@ func (s *baritoConsumerService) WorkerMap() map[string]ConsumerWorker {
 
 func (s *baritoConsumerService) NewTopicEventWorker() ConsumerWorker {
 	return s.newTopicEventWorker
-
 }
