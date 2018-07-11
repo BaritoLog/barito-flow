@@ -3,7 +3,6 @@ package flow
 import (
 	"context"
 	"strings"
-	"sync"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
@@ -11,12 +10,14 @@ import (
 )
 
 const (
-	ErrConvertKafkaMessage = errkit.Error("Convert KafkaMessage Failed")
-	ErrStore               = errkit.Error("Store Failed")
-	ErrElasticsearchClient = errkit.Error("Elasticsearch Client Failed")
-	ErrConsumerWorker      = errkit.Error("Consumer Worker Failed")
-	ErrMakeKafkaAdmin      = errkit.Error("Make kafka admin failed")
-	ErrMakeNewTopicWorker  = errkit.Error("Make new topic worker failed")
+	ErrConvertKafkaMessage   = errkit.Error("Convert KafkaMessage Failed")
+	ErrStore                 = errkit.Error("Store Failed")
+	ErrElasticsearchClient   = errkit.Error("Elasticsearch Client Failed")
+	ErrConsumerWorker        = errkit.Error("Consumer Worker Failed")
+	ErrMakeKafkaAdmin        = errkit.Error("Make kafka admin failed")
+	ErrMakeNewTopicWorker    = errkit.Error("Make new topic worker failed")
+	ErrSpawnWorkerOnNewTopic = errkit.Error("Spawn worker on new topic failed")
+	ErrSpawnWorker           = errkit.Error("Span worker failed")
 )
 
 type BaritoConsumerService interface {
@@ -33,13 +34,13 @@ type baritoConsumerService struct {
 	topicSuffix       string
 	newTopicEventName string
 
-	workers             map[string]ConsumerWorker
+	workerMap           map[string]ConsumerWorker
 	admin               KafkaAdmin
 	newTopicEventWorker ConsumerWorker
-	spawnMutex          sync.Mutex
 
-	lastError  error
-	lastTimber Timber
+	lastError    error
+	lastTimber   Timber
+	lastNewTopic string
 }
 
 func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSuffix, newTopicEventName string) BaritoConsumerService {
@@ -50,7 +51,7 @@ func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSu
 		elasticUrl:        elasticURL,
 		topicSuffix:       topicSuffix,
 		newTopicEventName: newTopicEventName,
-		workers:           make(map[string]ConsumerWorker),
+		workerMap:         make(map[string]ConsumerWorker),
 	}
 }
 
@@ -74,7 +75,7 @@ func (s *baritoConsumerService) Start() (err error) {
 		if strings.HasSuffix(topic, s.topicSuffix) {
 			err := s.spawnLogsWorker(topic)
 			if err != nil {
-				s.logError(err)
+				s.logError(errkit.Concat(ErrSpawnWorker, err))
 			}
 		}
 	}
@@ -104,7 +105,7 @@ func (s *baritoConsumerService) initNewTopicWorker() (worker ConsumerWorker, err
 
 // Close
 func (s baritoConsumerService) Close() {
-	for _, worker := range s.workers {
+	for _, worker := range s.workerMap {
 		worker.Stop()
 	}
 
@@ -132,7 +133,7 @@ func (s *baritoConsumerService) spawnLogsWorker(topic string) (err error) {
 	worker.OnSuccess(s.onStoreTimber)
 	worker.Start()
 
-	s.workers[topic] = worker
+	s.workerMap[topic] = worker
 
 	return
 }
@@ -145,6 +146,11 @@ func (s *baritoConsumerService) logError(err error) {
 func (s *baritoConsumerService) logTimber(timber Timber) {
 	s.lastTimber = timber
 	log.Info(timber)
+}
+
+func (s *baritoConsumerService) logNewTopic(topic string) {
+	s.lastNewTopic = topic
+	log.Info(topic)
 }
 
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
@@ -177,16 +183,17 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {
 	topic := string(message.Value)
 
-	s.spawnMutex.Lock()
 	err := s.spawnLogsWorker(topic)
 	if err != nil {
-		s.logError(err)
+		s.logError(errkit.Concat(ErrSpawnWorkerOnNewTopic, err))
+		return
 	}
-	s.spawnMutex.Unlock()
+
+	s.logNewTopic(topic)
 }
 
 func (s *baritoConsumerService) WorkerMap() map[string]ConsumerWorker {
-	return s.workers
+	return s.workerMap
 }
 
 func (s *baritoConsumerService) NewTopicEventWorker() ConsumerWorker {

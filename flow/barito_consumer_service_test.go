@@ -1,12 +1,10 @@
 package flow
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
@@ -19,23 +17,16 @@ func init() {
 
 func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 	factory := NewDummyKafkaFactory()
-	factory.MakeKafkaAdminFunc = func() (admin KafkaAdmin, err error) {
-		return nil, fmt.Errorf("some-error")
-	}
+	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
 
 	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", "newTopicEventName")
 	err := service.Start()
 	FatalIfWrongError(t, err, "Make kafka admin failed: some-error")
 }
 
-func TestBaritoConsumerService_MakeConsumerWorkerError(t *testing.T) {
+func TestBaritoConsumerService_MakeNewTopicWorkerError(t *testing.T) {
 	factory := NewDummyKafkaFactory()
-	factory.MakeKafkaAdminFunc = func() (KafkaAdmin, error) {
-		return nil, nil
-	}
-	factory.MakeClusterConsumerFunc = func(groupID, topic string) (ClusterConsumer, error) {
-		return nil, fmt.Errorf("some-error")
-	}
+	factory.Expect_MakeClusterConsumer_AlwaysError("some-error")
 
 	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", "newTopicEventName")
 	err := service.Start()
@@ -44,28 +35,15 @@ func TestBaritoConsumerService_MakeConsumerWorkerError(t *testing.T) {
 }
 
 func TestBaritoConsumerService(t *testing.T) {
-	newTopicEventName := "new_topic_events"
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	factory := NewDummyKafkaFactory()
-	factory.MakeKafkaAdminFunc = func() (KafkaAdmin, error) {
-		admin := mock.NewMockKafkaAdmin(ctrl)
-		admin.EXPECT().Topics().Return([]string{"abc_logs"})
-		admin.EXPECT().Close()
-		return admin, nil
-	}
-	factory.MakeClusterConsumerFunc = func(groupID, topic string) (ClusterConsumer, error) {
-		consumer := mock.NewMockClusterConsumer(ctrl)
-		consumer.EXPECT().Messages().AnyTimes()
-		consumer.EXPECT().Notifications().AnyTimes()
-		consumer.EXPECT().Errors().AnyTimes()
-		consumer.EXPECT().Close()
-		return consumer, nil
-	}
+	factory.Expect_MakeKafkaAdmin_ConsumerSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
 
-	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "_logs", newTopicEventName)
+	service := NewBaritoConsumerService(factory, "", "", "_logs", "")
 
 	err := service.Start()
 	FatalIfError(t, err)
@@ -82,6 +60,28 @@ func TestBaritoConsumerService(t *testing.T) {
 	worker, ok := workerMap["abc_logs"]
 	FatalIf(t, !ok, "worker of topic abc_logs is missing")
 	FatalIf(t, !worker.IsStart(), "worker of topic abc_logs is not starting")
+}
+
+func TestBaritoConsumerService_SpawnWorkerError(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeKafkaAdmin_ConsumerSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeClusterConsumer_ConsumerSpawnWorkerErrorCase(ctrl, "new_topic_events", "some-error")
+
+	service := &baritoConsumerService{
+		factory:           factory,
+		newTopicEventName: "new_topic_events",
+	}
+
+	err := service.Start()
+	FatalIfError(t, err)
+
+	defer service.Close()
+
+	FatalIfWrongError(t, service.lastError, string(ErrSpawnWorker))
 }
 
 func TestBaritoConsumerService_onStoreTimber_ErrorElasticsearchClient(t *testing.T) {
@@ -134,4 +134,44 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	})
 	FatalIfError(t, service.lastError)
 	FatalIf(t, service.lastTimber == nil, "lastTimber can't be nil")
+}
+
+func TestBaritoConsumerService_onNewTopicEvent(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
+
+	service := &baritoConsumerService{
+		factory:   factory,
+		workerMap: make(map[string]ConsumerWorker),
+	}
+	defer service.Close()
+
+	service.onNewTopicEvent(&sarama.ConsumerMessage{
+		Value: []byte("some-new-topic"),
+	})
+
+	FatalIf(t, service.lastNewTopic != "some-new-topic", "wrong service.lastNewTopic")
+}
+
+func TestBaritoConsumerService_onNewTopicEvent_ErrorSpawnWorker(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeClusterConsumer_AlwaysError("some-error")
+
+	service := &baritoConsumerService{
+		factory:   factory,
+		workerMap: make(map[string]ConsumerWorker),
+	}
+	defer service.Close()
+
+	service.onNewTopicEvent(&sarama.ConsumerMessage{
+		Value: []byte("some-new-topic"),
+	})
+
+	FatalIfWrongError(t, service.lastError, string(ErrSpawnWorkerOnNewTopic))
 }
