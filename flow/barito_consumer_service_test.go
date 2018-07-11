@@ -17,12 +17,12 @@ func init() {
 func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.MakeKafkaAdminFunc = func() (admin KafkaAdmin, err error) {
-		return nil, fmt.Errorf("some-admin-error")
+		return nil, fmt.Errorf("some-error")
 	}
 
-	_, err := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", "newTopicEventName")
-
-	FatalIfWrongError(t, err, "some-admin-error")
+	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", "newTopicEventName")
+	err := service.Start()
+	FatalIfWrongError(t, err, "Make kafka admin failed: some-error")
 }
 
 func TestBaritoConsumerService_MakeConsumerWorkerError(t *testing.T) {
@@ -30,16 +30,18 @@ func TestBaritoConsumerService_MakeConsumerWorkerError(t *testing.T) {
 	factory.MakeKafkaAdminFunc = func() (KafkaAdmin, error) {
 		return nil, nil
 	}
-	factory.MakeConsumerWorkerFunc = func(groupID, topic string) (ConsumerWorker, error) {
-		return nil, fmt.Errorf("some-consumer-error")
+	factory.MakeClusterConsumerFunc = func(groupID, topic string) (ClusterConsumer, error) {
+		return nil, fmt.Errorf("some-error")
 	}
 
-	_, err := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", "newTopicEventName")
+	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", "newTopicEventName")
+	err := service.Start()
 
-	FatalIfWrongError(t, err, "some-consumer-error")
+	FatalIfWrongError(t, err, "Make new topic worker failed: some-error")
 }
 
 func TestBaritoConsumerService(t *testing.T) {
+	newTopicEventName := "new_topic_events"
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -47,26 +49,35 @@ func TestBaritoConsumerService(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.MakeKafkaAdminFunc = func() (KafkaAdmin, error) {
 		admin := mock.NewMockKafkaAdmin(ctrl)
-		admin.EXPECT().Topics().Return([]string{"topic_logs"})
+		admin.EXPECT().Topics().Return([]string{"abc_logs"})
 		admin.EXPECT().Close()
 		return admin, nil
 	}
-	factory.MakeConsumerWorkerFunc = func(groupID, topic string) (ConsumerWorker, error) {
-		worker := mock.NewMockConsumerWorker(ctrl)
-		worker.EXPECT().OnSuccess(gomock.Any()).AnyTimes()
-		worker.EXPECT().OnError(gomock.Any()).AnyTimes()
-		worker.EXPECT().OnNotification(gomock.Any()).AnyTimes()
-		worker.EXPECT().Start().AnyTimes()
-		worker.EXPECT().Close().AnyTimes()
-		return worker, nil
+	factory.MakeClusterConsumerFunc = func(groupID, topic string) (ClusterConsumer, error) {
+		consumer := mock.NewMockClusterConsumer(ctrl)
+		consumer.EXPECT().Messages().AnyTimes()
+		consumer.EXPECT().Notifications().AnyTimes()
+		consumer.EXPECT().Errors().AnyTimes()
+		consumer.EXPECT().Close()
+		return consumer, nil
 	}
 
-	service, err := NewBaritoConsumerService(factory, "groupID", "elasticURL", "_logs", "newTopicEvent")
+	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "_logs", newTopicEventName)
+
+	err := service.Start()
 	FatalIfError(t, err)
 
-	service.Start()
 	defer service.Close()
 
-	// TODO:
+	worker := service.NewTopicEventWorker()
+	FatalIf(t, worker == nil, "newTopicEventWorker can't be nil")
+	FatalIf(t, !worker.IsStart(), "newTopicEventWorker is not starting")
+
+	workerMap := service.WorkerMap()
+	FatalIf(t, len(workerMap) != 1, "wrong worker map")
+
+	worker, ok := workerMap["abc_logs"]
+	FatalIf(t, !ok, "worker of topic abc_logs is missing")
+	FatalIf(t, !worker.IsStart(), "worker of topci abc_logs is not starting")
 
 }

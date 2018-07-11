@@ -1,8 +1,8 @@
 package flow
 
 type dummyKafkaFactory struct {
-	MakeKafkaAdminFunc     func() (admin KafkaAdmin, err error)
-	MakeConsumerWorkerFunc func(groupID, topic string) (worker ConsumerWorker, err error)
+	MakeKafkaAdminFunc      func() (admin KafkaAdmin, err error)
+	MakeClusterConsumerFunc func(groupID, topic string) (consumer ClusterConsumer, err error)
 }
 
 func NewDummyKafkaFactory() *dummyKafkaFactory {
@@ -10,7 +10,7 @@ func NewDummyKafkaFactory() *dummyKafkaFactory {
 		MakeKafkaAdminFunc: func() (admin KafkaAdmin, err error) {
 			return nil, nil
 		},
-		MakeConsumerWorkerFunc: func(groupID, topic string) (worker ConsumerWorker, err error) {
+		MakeClusterConsumerFunc: func(groupID, topic string) (worker ClusterConsumer, err error) {
 			return nil, nil
 		},
 	}
@@ -19,6 +19,6 @@ func NewDummyKafkaFactory() *dummyKafkaFactory {
 func (f *dummyKafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
 	return f.MakeKafkaAdminFunc()
 }
-func (f *dummyKafkaFactory) MakeConsumerWorker(groupID, topic string) (worker ConsumerWorker, err error) {
-	return f.MakeConsumerWorkerFunc(groupID, topic)
+func (f *dummyKafkaFactory) MakeClusterConsumer(groupID, topic string) (worker ClusterConsumer, err error) {
+	return f.MakeClusterConsumerFunc(groupID, topic)
 }

@@ -18,18 +18,14 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 
 	newTopicEventName := "new_topic_events" // TODO: get from env
 
-	service, err := flow.NewBaritoConsumerService(
-		brokers,
-		config,
-		groupID,
-		esUrl,
-		topicSuffix,
-		newTopicEventName)
-	if err != nil {
+	factory := flow.NewKafkaFactory(brokers, config)
+
+	service := flow.NewBaritoConsumerService(factory, groupID, esUrl, topicSuffix, newTopicEventName)
+
+	if err = service.Start(); err != nil {
 		return
 	}
 
-	service.Start()
 	srvkit.GracefullShutdown(service.Close)
 
 	return

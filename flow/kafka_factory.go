@@ -1,10 +1,13 @@
 package flow
 
-import "github.com/Shopify/sarama"
+import (
+	"github.com/Shopify/sarama"
+	cluster "github.com/bsm/sarama-cluster"
+)
 
 type KafkaFactory interface {
 	MakeKafkaAdmin() (admin KafkaAdmin, err error)
-	MakeConsumerWorker(groupID, topic string) (worker ConsumerWorker, err error)
+	MakeClusterConsumer(groupID, topic string) (worker ClusterConsumer, err error)
 }
 
 type kafkaFactory struct {
@@ -24,7 +27,13 @@ func (f kafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
 	return
 }
 
-func (f kafkaFactory) MakeConsumerWorker(groupID, topic string) (worker ConsumerWorker, err error) {
-	worker, err = NewConsumerWorker(f.brokers, f.config, groupID, topic)
+func (f kafkaFactory) MakeClusterConsumer(groupID, topic string) (consumer ClusterConsumer, err error) {
+	clusterConfig := cluster.NewConfig()
+	clusterConfig.Config = *f.config
+	clusterConfig.Consumer.Return.Errors = true
+	clusterConfig.Group.Return.Notifications = true
+
+	topics := []string{topic}
+	consumer, err = cluster.NewConsumer(f.brokers, groupID, topics, clusterConfig)
 	return
 }

@@ -14,19 +14,17 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func TestKafkaAgent(t *testing.T) {
+func TestConsumerWorker(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	want := &sarama.ConsumerMessage{}
+	wantNotification := &cluster.Notification{}
 
 	consumer := mock.NewMockClusterConsumer(ctrl)
-	consumer.EXPECT().Messages().AnyTimes().
-		Return(sampleMessageChannel(want))
-	consumer.EXPECT().Notifications().
-		Return(sampleNotificationChannel())
-	consumer.EXPECT().Errors().
-		Return(sampleErrorChannel())
+	consumer.EXPECT().Messages().AnyTimes().Return(sampleMessageChannel(want))
+	consumer.EXPECT().Notifications().Return(sampleNotificationChannel(wantNotification))
+	consumer.EXPECT().Errors().Return(sampleErrorChannel())
 	consumer.EXPECT().MarkOffset(gomock.Any(), gomock.Any())
 	consumer.EXPECT().Close()
 
@@ -40,29 +38,28 @@ func TestKafkaAgent(t *testing.T) {
 	var got *sarama.ConsumerMessage
 	var gotNotification *cluster.Notification
 
-	agent := &consumerWorker{Consumer: consumer}
-	agent.OnSuccess(func(message *sarama.ConsumerMessage) { got = message })
-	agent.OnNotification(func(notification *cluster.Notification) { gotNotification = notification })
-	defer agent.Close()
+	worker := NewConsumerWorker(consumer)
+	worker.OnSuccess(func(message *sarama.ConsumerMessage) { got = message })
+	worker.OnNotification(func(notification *cluster.Notification) { gotNotification = notification })
 
-	go agent.Start()
+	worker.Start()
+	defer worker.Stop()
+
 	timekit.Sleep("2ms")
 
 	FatalIf(t, got != want, "wrong message")
+	FatalIf(t, gotNotification != wantNotification, "wrong notification")
 }
 
-func TestKafkaAgent_KafkaError(t *testing.T) {
+func TestConsumerWorker_KafkaError(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	consumer := mock.NewMockClusterConsumer(ctrl)
-	consumer.EXPECT().Messages().AnyTimes().
-		Return(sampleMessageChannel())
-	consumer.EXPECT().Notifications().
-		Return(sampleNotificationChannel())
-	consumer.EXPECT().Errors().
-		Return(sampleErrorChannel(fmt.Errorf("expected kafka error")))
+	consumer.EXPECT().Messages().AnyTimes().Return(sampleMessageChannel())
+	consumer.EXPECT().Notifications().Return(sampleNotificationChannel())
+	consumer.EXPECT().Errors().Return(sampleErrorChannel(fmt.Errorf("expected kafka error")))
 	consumer.EXPECT().Close()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
@@ -72,15 +69,17 @@ func TestKafkaAgent_KafkaError(t *testing.T) {
 	})
 	defer ts.Close()
 
-	var err0 error
-	agent := &consumerWorker{Consumer: consumer}
-	agent.OnError(func(err error) { err0 = err })
-	defer agent.Close()
+	var gotErr error
 
-	go agent.Start()
+	worker := NewConsumerWorker(consumer)
+	worker.OnError(func(err error) { gotErr = err })
+
+	worker.Start()
+	defer worker.Stop()
+
 	timekit.Sleep("1ms")
 
-	FatalIfWrongError(t, err0, "expected kafka error")
+	FatalIfWrongError(t, gotErr, "expected kafka error")
 }
 
 func sampleMessageChannel(messages ...*sarama.ConsumerMessage) <-chan *sarama.ConsumerMessage {

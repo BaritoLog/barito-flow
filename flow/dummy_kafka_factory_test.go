@@ -12,8 +12,8 @@ func TestDummyKafkaFactory(t *testing.T) {
 
 	FatalIf(t, !ok, "factory must be implement fo KafkaFactory")
 
-	worker, err := factory.MakeConsumerWorker("groupID", "topic")
-	FatalIf(t, worker != nil || err != nil, "MakeConsumerWorker return wrong value")
+	consumer, err := factory.MakeClusterConsumer("groupID", "topic")
+	FatalIf(t, consumer != nil || err != nil, "MakeClusterConsumer return wrong value")
 
 	admin, err := factory.MakeKafkaAdmin()
 	FatalIf(t, admin != nil || err != nil, "MakeKafkaAdmin return wrong value")

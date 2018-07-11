@@ -12,38 +12,50 @@ const (
 
 type ConsumerWorker interface {
 	Start()
-	Close()
+	Stop()
+	IsStart() bool
 	OnError(f func(error))
 	OnSuccess(f func(*sarama.ConsumerMessage))
 	OnNotification(f func(*cluster.Notification))
 }
 
 type consumerWorker struct {
-	Consumer           ClusterConsumer
+	isStart            bool
+	consumer           ClusterConsumer
 	onErrorFunc        func(error)
 	onSuccessFunc      func(*sarama.ConsumerMessage)
 	onNotificationFunc func(*cluster.Notification)
+	stop               chan int
 }
 
-func NewConsumerWorker(brokers []string, config *sarama.Config, groupID, topic string) (ConsumerWorker, error) {
+func NewConsumerWorker(consumer ClusterConsumer) ConsumerWorker {
+	return &consumerWorker{
+		consumer: consumer,
+		stop:     make(chan int),
+	}
+}
 
-	// TODO: move to kafka factory
-	// consumer config
-	clusterConfig := cluster.NewConfig()
-	clusterConfig.Config = *config
-	clusterConfig.Consumer.Return.Errors = true
-	clusterConfig.Group.Return.Notifications = true
+func (w *consumerWorker) Start() {
+	go w.loopErrors()
+	go w.loopNotification()
+	go w.loopMain()
+	w.isStart = true
+}
 
-	// kafka consumer
-	consumer, err := cluster.NewConsumer(brokers, groupID,
-		[]string{topic}, clusterConfig)
-	if err != nil {
-		return nil, err
+func (w *consumerWorker) Stop() {
+	if w.consumer != nil {
+		w.consumer.Close()
 	}
 
-	return &consumerWorker{
-		Consumer: consumer,
-	}, nil
+	go func() {
+		w.stop <- 1
+	}()
+
+	w.isStart = false
+}
+
+func (w *consumerWorker) IsStart() bool {
+	return w.isStart
 }
 
 func (w *consumerWorker) OnError(f func(error)) {
@@ -58,47 +70,35 @@ func (w *consumerWorker) OnNotification(f func(*cluster.Notification)) {
 	w.onNotificationFunc = f
 }
 
-func (a *consumerWorker) Start() {
-	go a.loopErrors()
-	go a.loopNotification()
-
-	a.loopMain()
-	return
-}
-
-func (a *consumerWorker) Close() {
-	if a.Consumer != nil {
-		a.Consumer.Close()
-	}
-}
-
-func (a *consumerWorker) loopMain() {
+func (w *consumerWorker) loopMain() {
 	for {
 		select {
-		case message, ok := <-a.Consumer.Messages():
+		case message, ok := <-w.consumer.Messages():
 			if ok {
-				a.fireSuccess(message)
-				a.Consumer.MarkOffset(message, "")
+				w.fireSuccess(message)
+				w.consumer.MarkOffset(message, "")
 			}
+		case <-w.stop:
+			return
 		}
 	}
 }
 
-func (a *consumerWorker) loopNotification() {
-	for notification := range a.Consumer.Notifications() {
-		a.fireNotification(notification)
+func (w *consumerWorker) loopNotification() {
+	for notification := range w.consumer.Notifications() {
+		w.fireNotification(notification)
 	}
 }
 
-func (a *consumerWorker) loopErrors() {
-	for err := range a.Consumer.Errors() {
-		a.fireError(errkit.Concat(RetrieveMessageFailedError, err))
+func (w *consumerWorker) loopErrors() {
+	for err := range w.consumer.Errors() {
+		w.fireError(errkit.Concat(RetrieveMessageFailedError, err))
 	}
 }
 
-func (a *consumerWorker) fireSuccess(message *sarama.ConsumerMessage) {
-	if a.onSuccessFunc != nil {
-		a.onSuccessFunc(message)
+func (w *consumerWorker) fireSuccess(message *sarama.ConsumerMessage) {
+	if w.onSuccessFunc != nil {
+		w.onSuccessFunc(message)
 	}
 }
 
