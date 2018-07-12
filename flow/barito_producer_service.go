@@ -3,7 +3,6 @@ package flow
 import (
 	"net/http"
 
-	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 )
 
@@ -14,52 +13,57 @@ type BaritoProducerService interface {
 }
 
 type baritoProducerService struct {
-	producer      sarama.SyncProducer
+	factory       KafkaFactory
+	addr          string
 	topicSuffix   string
 	newEventTopic string
 
-	admin  KafkaAdmin
-	bucket LeakyBucket
-	server *http.Server
+	producer sarama.SyncProducer
+	admin    KafkaAdmin
+	server   *http.Server
 }
 
-func NewBaritoProducerService(addr string, brokers []string, config *sarama.Config, maxTps int, topicSuffix string, newEventTopic string) (BaritoProducerService, error) {
+func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, topicSuffix string, newEventTopic string) BaritoProducerService {
 
-	// TODO: use multiple handle
-
-	producer, err := sarama.NewSyncProducer(brokers, config)
-	if err != nil {
-		return nil, err
-	}
-
-	admin, err := NewKafkaAdmin(brokers, config)
-	if err != nil {
-		return nil, err
-	}
-
-	s := &baritoProducerService{
-		producer:      producer,
-		admin:         admin,
+	return &baritoProducerService{
+		factory:       factory,
+		addr:          addr,
 		topicSuffix:   topicSuffix,
-		bucket:        NewLeakyBucket(maxTps, timekit.Duration("1s")),
 		newEventTopic: newEventTopic,
 	}
 
-	s.server = &http.Server{
-		Addr:    addr,
+}
+
+func (s *baritoProducerService) Start() (err error) {
+
+	// TODO: change to ratelimiter
+	// a.bucket.StartRefill()
+
+	s.producer, err = s.factory.MakeSyncProducer()
+	if err != nil {
+		return
+	}
+
+	s.admin, err = s.factory.MakeKafkaAdmin()
+	if err != nil {
+		return
+	}
+
+	server := s.initHttpServer()
+
+	return server.ListenAndServe()
+}
+
+func (s *baritoProducerService) initHttpServer() (server *http.Server) {
+	server = &http.Server{
+		Addr:    s.addr,
 		Handler: s,
 	}
 
-	return s, nil
-}
+	s.server = server
 
-func (a *baritoProducerService) Start() error {
+	return
 
-	// TODO: return error if bucket or server is nil
-
-	a.bucket.StartRefill()
-
-	return a.server.ListenAndServe()
 }
 
 func (a *baritoProducerService) Close() {
@@ -67,9 +71,10 @@ func (a *baritoProducerService) Close() {
 		a.server.Close()
 	}
 
-	if a.bucket != nil {
-		a.bucket.Close()
-	}
+	// TODO: change to rate limiter
+	// if a.bucket != nil {
+	// 	a.bucket.Close()
+	// }
 
 	if a.admin != nil {
 		a.admin.Close()
@@ -82,10 +87,11 @@ func (a *baritoProducerService) Close() {
 }
 
 func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if !s.bucket.Take() {
-		onLimitExceeded(rw)
-		return
-	}
+	// TODO: change to reate limit
+	// if !s.bucket.Take() {
+	// 	onLimitExceeded(rw)
+	// 	return
+	// }
 
 	timber, err := ConvertRequestToTimber(req)
 	if err != nil {

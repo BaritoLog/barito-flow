@@ -48,19 +48,22 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 	newTopicEventName := "new_topic_events" // TODO: get from env
 
-	srv, err := flow.NewBaritoProducerService(
+	factory := flow.NewKafkaFactory(kafkaBrokers, config)
+
+	srv := flow.NewBaritoProducerService(
+		factory,
 		address,
-		kafkaBrokers,
-		config,
 		maxTps,
 		topicSuffix,
 		newTopicEventName)
+
+	err = srv.Start()
 	if err != nil {
 		return
 	}
 	srvkit.AsyncGracefulShutdown(srv.Close)
 
-	return srv.Start()
+	return
 }
 
 // TODO: implement on consumer worker

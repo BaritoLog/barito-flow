@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	"github.com/BaritoLog/barito-flow/mock"
+	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
 )
 
 type dummyKafkaFactory struct {
 	MakeKafkaAdminFunc      func() (admin KafkaAdmin, err error)
 	MakeClusterConsumerFunc func(groupID, topic string) (consumer ClusterConsumer, err error)
+	MakeSyncProducerFunc    func() (producer sarama.SyncProducer, err error)
 }
 
 func NewDummyKafkaFactory() *dummyKafkaFactory {
@@ -20,6 +22,9 @@ func NewDummyKafkaFactory() *dummyKafkaFactory {
 		MakeClusterConsumerFunc: func(groupID, topic string) (worker ClusterConsumer, err error) {
 			return nil, nil
 		},
+		MakeSyncProducerFunc: func() (producer sarama.SyncProducer, err error) {
+			return nil, nil
+		},
 	}
 }
 
@@ -28,6 +33,10 @@ func (f *dummyKafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
 }
 func (f *dummyKafkaFactory) MakeClusterConsumer(groupID, topic string) (worker ClusterConsumer, err error) {
 	return f.MakeClusterConsumerFunc(groupID, topic)
+}
+
+func (f *dummyKafkaFactory) MakeSyncProducer() (producer sarama.SyncProducer, err error) {
+	return f.MakeSyncProducerFunc()
 }
 
 func (f *dummyKafkaFactory) Expect_MakeClusterConsumer_AlwaysError(errMsg string) {

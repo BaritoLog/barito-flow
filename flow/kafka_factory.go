@@ -8,6 +8,7 @@ import (
 type KafkaFactory interface {
 	MakeKafkaAdmin() (admin KafkaAdmin, err error)
 	MakeClusterConsumer(groupID, topic string) (worker ClusterConsumer, err error)
+	MakeSyncProducer() (producer sarama.SyncProducer, err error)
 }
 
 type kafkaFactory struct {
@@ -35,5 +36,10 @@ func (f kafkaFactory) MakeClusterConsumer(groupID, topic string) (consumer Clust
 
 	topics := []string{topic}
 	consumer, err = cluster.NewConsumer(f.brokers, groupID, topics, clusterConfig)
+	return
+}
+
+func (f kafkaFactory) MakeSyncProducer() (producer sarama.SyncProducer, err error) {
+	producer, err = sarama.NewSyncProducer(f.brokers, f.config)
 	return
 }

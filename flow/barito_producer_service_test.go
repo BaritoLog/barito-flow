@@ -14,23 +14,18 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func TestBaritoProducerService_ServeHTTP_OnLimitExceed(t *testing.T) {
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	bucket := mock.NewMockLeakyBucket(ctrl)
-	bucket.EXPECT().Take().Return(false)
-
-	srv := &baritoProducerService{
-		bucket: bucket,
-	}
-
-	req, _ := http.NewRequest("POST", "/", producerRequestBody())
-	resp := RecordResponse(srv.ServeHTTP, req)
-
-	FatalIfWrongResponseStatus(t, resp, 509)
-}
+// func TestBaritoProducerService_ServeHTTP_OnLimitExceed(t *testing.T) {
+//
+// 	ctrl := gomock.NewController(t)
+// 	defer ctrl.Finish()
+//
+// 	srv := &baritoProducerService{}
+//
+// 	req, _ := http.NewRequest("POST", "/", producerRequestBody())
+// 	resp := RecordResponse(srv.ServeHTTP, req)
+//
+// 	FatalIfWrongResponseStatus(t, resp, 509)
+// }
 
 func TestBaritoProducerService_ServeHTTP_OnBadRequest(t *testing.T) {
 
@@ -43,14 +38,9 @@ func TestBaritoProducerService_ServeHTTP_OnBadRequest(t *testing.T) {
 	admin := mock.NewMockKafkaAdmin(ctrl)
 	admin.EXPECT().Close().AnyTimes()
 
-	bucket := mock.NewMockLeakyBucket(ctrl)
-	bucket.EXPECT().Take().Return(true)
-	bucket.EXPECT().Close()
-
 	agent := &baritoProducerService{
 		producer:    producer,
 		topicSuffix: "_logs",
-		bucket:      bucket,
 		admin:       admin,
 	}
 	defer agent.Close()
@@ -65,9 +55,6 @@ func TestBaritoProducerService_ServeHTTP_OnStoreError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bucket := mock.NewMockLeakyBucket(ctrl)
-	bucket.EXPECT().Take().Return(true)
-
 	admin := mock.NewMockKafkaAdmin(ctrl)
 	admin.EXPECT().Exist(gomock.Any()).Return(true)
 
@@ -78,7 +65,6 @@ func TestBaritoProducerService_ServeHTTP_OnStoreError(t *testing.T) {
 	agent := &baritoProducerService{
 		producer:    producer,
 		topicSuffix: "_logs",
-		bucket:      bucket,
 		admin:       admin,
 	}
 
@@ -92,9 +78,6 @@ func TestBaritoProducerService_ServeHTTP_OnCreateTopicError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bucket := mock.NewMockLeakyBucket(ctrl)
-	bucket.EXPECT().Take().Return(true)
-
 	admin := mock.NewMockKafkaAdmin(ctrl)
 	admin.EXPECT().Exist(gomock.Any()).Return(false)
 	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -105,7 +88,6 @@ func TestBaritoProducerService_ServeHTTP_OnCreateTopicError(t *testing.T) {
 	agent := &baritoProducerService{
 		producer:    producer,
 		topicSuffix: "_logs",
-		bucket:      bucket,
 		admin:       admin,
 	}
 
@@ -119,9 +101,6 @@ func TestBaritoProducerService_ServeHTTP_OnSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	bucket := mock.NewMockLeakyBucket(ctrl)
-	bucket.EXPECT().Take().Return(true)
-
 	admin := mock.NewMockKafkaAdmin(ctrl)
 	admin.EXPECT().Exist(gomock.Any()).Return(false)
 	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -134,7 +113,6 @@ func TestBaritoProducerService_ServeHTTP_OnSuccess(t *testing.T) {
 	agent := &baritoProducerService{
 		producer:    producer,
 		topicSuffix: "_logs",
-		bucket:      bucket,
 		admin:       admin,
 	}
 
