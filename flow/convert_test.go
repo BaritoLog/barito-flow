@@ -3,7 +3,6 @@ package flow
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"testing"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
@@ -15,16 +14,7 @@ func TestConvertBytesToTimber_GenerateTimestamp(t *testing.T) {
 	timekit.FreezeUTC("2018-06-06T12:12:12Z")
 	defer timekit.Unfreeze()
 
-	timber, err := ConvertBytesToTimber([]byte(`{
-  "hello": "world",
-  "_ctx": {
-    "kafka_topic": "some_topic",
-		"kafka_partition": 3,
-		"kafka_replication_factor": 3,
-    "es_index_prefix": "some-type",
-    "es_document_type": "some-type"
-  }
-}`))
+	timber, err := ConvertBytesToTimber(sampleRawTimber())
 	FatalIfError(t, err)
 	FatalIf(t, timber.Timestamp() != "2018-06-06T12:12:12Z", "wrong timber.Timestamp()")
 }
@@ -46,12 +36,7 @@ func TestConvertBytesToTimber_InvalidContext(t *testing.T) {
 
 func TestConvertRequestToTimber(t *testing.T) {
 
-	body := strings.NewReader(`{
-    "message":"hello world", 
-    "id": "0012", 
-    "@timestamp":"2009-11-10T23:00:00Z",
-		"_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}
-  }`)
+	body := sampleProducerRequestBody()
 
 	req, err := http.NewRequest("POST", "/", body)
 	FatalIfError(t, err)
@@ -59,9 +44,7 @@ func TestConvertRequestToTimber(t *testing.T) {
 	timber, err := ConvertRequestToTimber(req)
 	FatalIfError(t, err)
 
-	FatalIf(t, timber["message"] != "hello world", "Wrong timber.message")
-	FatalIf(t, timber["id"] != "0012", "Wrong timber.id")
-	FatalIf(t, timber.Timestamp() != "2009-11-10T23:00:00Z", "Wrong timestamp")
+	FatalIf(t, timber["message"] != "some-message", "Wrong timber.message")
 }
 
 func TestNewTimberFromKafka(t *testing.T) {
@@ -74,7 +57,6 @@ func TestNewTimberFromKafka(t *testing.T) {
 	timber, err := ConvertKafkaMessageToTimber(message)
 	FatalIfError(t, err)
 	FatalIf(t, timber["message"] != "some-message", "Wrong timber[message]")
-	FatalIf(t, timber.Timestamp() != "2009-11-10T23:00:00Z", "Wrong message: %v", timber.Timestamp)
 }
 
 func TestConvertToKafkaMessage(t *testing.T) {
@@ -89,78 +71,6 @@ func TestConvertToKafkaMessage(t *testing.T) {
 	get, _ := message.Value.Encode()
 	expected, _ := json.Marshal(timber)
 	FatalIf(t, string(get) != string(expected), "Wrong message value")
-}
-
-func TestConvertMapToTimberContext(t *testing.T) {
-	ctx, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":              "some-topic",
-		"kafka_partition":          3.0,
-		"kafka_replication_factor": 1.0,
-		"es_index_prefix":          "some-prefix",
-		"es_document_type":         "some-type",
-	})
-
-	FatalIfError(t, err)
-	FatalIf(t, ctx.KafkaTopic != "some-topic", "wrong kafka_topic")
-	FatalIf(t, ctx.KafkaPartition != 3, "wrong kafka_partition")
-	FatalIf(t, ctx.KafkaReplicationFactor != 1, "wrong kafka_replication_factor")
-	FatalIf(t, ctx.ESIndexPrefix != "some-prefix", "wrong es_index_prefix")
-	FatalIf(t, ctx.ESDocumentType != "some-type", "wrong es_document_type")
-}
-
-func TestConvertMapToTimberContext_KafkaTopicIsMissing(t *testing.T) {
-	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_partition":          3.0,
-		"kafka_replication_factor": 1.0,
-		"es_index_prefix":          "some-prefix",
-		"es_document_type":         "some-type",
-	})
-
-	FatalIfWrongError(t, err, "kafka_topic is missing")
-}
-
-func TestConvertMapToTimberContext_ESIndexPrefixIsMissing(t *testing.T) {
-	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":              "some-topic",
-		"kafka_partition":          3.0,
-		"kafka_replication_factor": 1.0,
-		"es_document_type":         "some-type",
-	})
-
-	FatalIfWrongError(t, err, "es_index_prefix is missing")
-}
-
-func TestConvertMapToTimberContext_ESDocumentTypeIsMissing(t *testing.T) {
-	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":              "some-topic",
-		"kafka_partition":          3.0,
-		"kafka_replication_factor": 1.0,
-		"es_index_prefix":          "some-prefix",
-	})
-
-	FatalIfWrongError(t, err, "es_document_type is missing")
-}
-
-func TestConvertMapToTimberContext_KafkaPartitionIsMissing(t *testing.T) {
-	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":              "some-topic",
-		"kafka_replication_factor": 1.0,
-		"es_index_prefix":          "some-prefix",
-		"es_document_type":         "some-type",
-	})
-
-	FatalIfWrongError(t, err, "kafka_partition is missing")
-}
-
-func TestConvertMapToTimberContext_KafkaReplicationFactorIsMissing(t *testing.T) {
-	_, err := ConvertMapToTimberContext(map[string]interface{}{
-		"kafka_topic":      "some-topic",
-		"kafka_partition":  3.0,
-		"es_index_prefix":  "some-prefix",
-		"es_document_type": "some-type",
-	})
-
-	FatalIfWrongError(t, err, "kafka_replication_factor is missing")
 }
 
 func TestConvertTimberToElasticDocument(t *testing.T) {
@@ -181,8 +91,14 @@ func sampleRawTimber() []byte {
 	return []byte(`{
 		"location": "some-location", 
 		"message":"some-message", 
-		"@timestamp":"2009-11-10T23:00:00Z",
-		"_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}
+		"_ctx": {
+			"kafka_topic": "some_topic",
+			"kafka_partition": 3,
+			"kafka_replication_factor": 1,
+			"es_index_prefix": "some-type",
+			"es_document_type": "some-type",
+			"app_max_tps": 10
+		}
 	}`)
 
 }

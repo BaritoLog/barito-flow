@@ -2,7 +2,6 @@ package flow
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -64,46 +63,4 @@ func ConvertTimberToElasticDocument(timber Timber) map[string]interface{} {
 	delete(doc, "_ctx")
 
 	return doc
-}
-
-func ConvertMapToTimberContext(m map[string]interface{}) (ctx *TimberContext, err error) {
-	kafkaTopic, ok := m["kafka_topic"].(string)
-	if !ok {
-		err = fmt.Errorf("kafka_topic is missing")
-		return
-	}
-
-	esIndexPrefix, ok := m["es_index_prefix"].(string)
-	if !ok {
-		err = fmt.Errorf("es_index_prefix is missing")
-		return
-	}
-
-	esDocumentType, ok := m["es_document_type"].(string)
-	if !ok {
-		err = fmt.Errorf("es_document_type is missing")
-		return
-	}
-
-	kafkaPartition, ok := m["kafka_partition"].(float64)
-	if !ok {
-		err = fmt.Errorf("kafka_partition is missing")
-		return
-	}
-
-	kafkaReplicationFactor, ok := m["kafka_replication_factor"].(float64)
-	if !ok {
-		err = fmt.Errorf("kafka_replication_factor is missing")
-		return
-	}
-
-	ctx = &TimberContext{
-		KafkaTopic:             kafkaTopic,
-		KafkaPartition:         int32(kafkaPartition),
-		KafkaReplicationFactor: int16(kafkaReplicationFactor),
-		ESIndexPrefix:          esIndexPrefix,
-		ESDocumentType:         esDocumentType,
-	}
-
-	return
 }

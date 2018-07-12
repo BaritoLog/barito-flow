@@ -1,6 +1,10 @@
 package flow
 
-import "github.com/BaritoLog/go-boilerplate/errkit"
+import (
+	"fmt"
+
+	"github.com/BaritoLog/go-boilerplate/errkit"
+)
 
 const (
 	InvalidContextError = errkit.Error("Invalid Context Error")
@@ -16,6 +20,7 @@ type TimberContext struct {
 	KafkaReplicationFactor int16  `json:"kafka_replication_factor"`
 	ESIndexPrefix          string `json:"es_index_prefix"`
 	ESDocumentType         string `json:"es_document_type"`
+	AppMaxTPS              int    `json:"app_max_tps"`
 }
 
 func NewTimber() Timber {
@@ -48,12 +53,61 @@ func (t Timber) InitContext() (err error) {
 		return
 	}
 
-	ctx, err := ConvertMapToTimberContext(ctxMap)
+	ctx, err := mapToContext(ctxMap)
 	if err != nil {
 		err = errkit.Concat(InvalidContextError, err)
 		return
 	}
 
 	t.SetContext(ctx)
+	return
+}
+
+func mapToContext(m map[string]interface{}) (ctx *TimberContext, err error) {
+	kafkaTopic, ok := m["kafka_topic"].(string)
+	if !ok {
+		err = fmt.Errorf("kafka_topic is missing")
+		return
+	}
+
+	esIndexPrefix, ok := m["es_index_prefix"].(string)
+	if !ok {
+		err = fmt.Errorf("es_index_prefix is missing")
+		return
+	}
+
+	esDocumentType, ok := m["es_document_type"].(string)
+	if !ok {
+		err = fmt.Errorf("es_document_type is missing")
+		return
+	}
+
+	kafkaPartition, ok := m["kafka_partition"].(float64)
+	if !ok {
+		err = fmt.Errorf("kafka_partition is missing")
+		return
+	}
+
+	kafkaReplicationFactor, ok := m["kafka_replication_factor"].(float64)
+	if !ok {
+		err = fmt.Errorf("kafka_replication_factor is missing")
+		return
+	}
+
+	appMaxTPS, ok := m["app_max_tps"].(float64)
+	if !ok {
+		err = fmt.Errorf("app_max_tps is missing")
+		return
+	}
+
+	ctx = &TimberContext{
+		KafkaTopic:             kafkaTopic,
+		KafkaPartition:         int32(kafkaPartition),
+		KafkaReplicationFactor: int16(kafkaReplicationFactor),
+		ESIndexPrefix:          esIndexPrefix,
+		ESDocumentType:         esDocumentType,
+		AppMaxTPS:              int(appMaxTPS),
+	}
+
 	return
 }

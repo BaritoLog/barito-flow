@@ -13,7 +13,7 @@ import (
 func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber([]byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}}`))
+	timber, err := ConvertBytesToTimber(sampleRawTimber())
 	FatalIfError(t, err)
 
 	ts := httptest.NewServer(&ELasticTestHandler{
@@ -34,7 +34,7 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber([]byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}}`))
+	timber, err := ConvertBytesToTimber(sampleRawTimber())
 	FatalIfError(t, err)
 
 	ts := httptest.NewServer(&ELasticTestHandler{
@@ -56,7 +56,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 func TestElasticStoreman_store_SaveError(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber([]byte(`{"hello": "world", "_ctx": {"kafka_topic": "some_topic","kafka_partition": 3,"kafka_replication_factor": 1,"es_index_prefix": "some-type","es_document_type": "some-type"}}`))
+	timber, err := ConvertBytesToTimber(sampleRawTimber())
 	FatalIfError(t, err)
 
 	ts := httptest.NewServer(&ELasticTestHandler{

@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,7 +27,7 @@ func TestBaritoProducerService_ServeHTTP_OnLimitExceed(t *testing.T) {
 		limiter: limiter,
 	}
 
-	req, _ := http.NewRequest("POST", "/", producerRequestBody())
+	req, _ := http.NewRequest("POST", "/", sampleProducerRequestBody())
 	resp := RecordResponse(srv.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, 509)
@@ -76,7 +77,7 @@ func TestBaritoProducerService_ServeHTTP_OnStoreError(t *testing.T) {
 		limiter:     limiter,
 	}
 
-	req, _ := http.NewRequest("POST", "/", producerRequestBody())
+	req, _ := http.NewRequest("POST", "/", sampleProducerRequestBody())
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusBadGateway)
@@ -102,7 +103,7 @@ func TestBaritoProducerService_ServeHTTP_OnCreateTopicError(t *testing.T) {
 		limiter:     limiter,
 	}
 
-	req, _ := http.NewRequest("POST", "/", producerRequestBody())
+	req, _ := http.NewRequest("POST", "/", sampleProducerRequestBody())
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusServiceUnavailable)
@@ -130,7 +131,7 @@ func TestBaritoProducerService_ServeHTTP_OnSuccess(t *testing.T) {
 		limiter:     limiter,
 	}
 
-	req, _ := http.NewRequest("POST", "/", producerRequestBody())
+	req, _ := http.NewRequest("POST", "/", sampleProducerRequestBody())
 	resp := RecordResponse(agent.ServeHTTP, req)
 
 	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
@@ -143,14 +144,7 @@ func TestBaritoProducerService_ServeHTTP_OnSuccess(t *testing.T) {
 	FatalIf(t, result.IsNewTopic != true, "wrong result.IsNewTopic")
 }
 
-func producerRequestBody() io.Reader {
-	return strings.NewReader(`{
-		"_ctx": {
-			"kafka_topic": "some_topic",
-			"kafka_partition": 3,
-			"kafka_replication_factor": 1,
-			"es_index_prefix": "some-type",
-			"es_document_type": "some-type"
-		}
-	}`)
+func sampleProducerRequestBody() io.Reader {
+
+	return bytes.NewReader(sampleRawTimber())
 }

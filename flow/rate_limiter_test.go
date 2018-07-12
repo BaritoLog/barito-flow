@@ -43,6 +43,6 @@ func TestRateLimiter(t *testing.T) {
 	FatalIf(t, !limiter.Bucket("def").IsFull(), "bucket must be full")
 
 	limiter.Stop()
-	timekit.Sleep("100ns")
+	timekit.Sleep("1ms")
 	FatalIf(t, limiter.IsStart(), "limiter should be stop")
 }
