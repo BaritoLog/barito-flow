@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
+	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
 	log "github.com/sirupsen/logrus"
@@ -47,6 +48,9 @@ func TestBaritoConsumerService(t *testing.T) {
 
 	err := service.Start()
 	FatalIfError(t, err)
+
+	// service.Start() execute goroutine, so wait 1ms to make sure it come in to mainLoop
+	timekit.Sleep("1ms")
 
 	defer service.Close()
 

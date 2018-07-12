@@ -39,7 +39,6 @@ func (w *consumerWorker) Start() {
 	go w.loopErrors()
 	go w.loopNotification()
 	go w.loopMain()
-	w.isStart = true
 }
 
 func (w *consumerWorker) Stop() {
@@ -50,8 +49,6 @@ func (w *consumerWorker) Stop() {
 	go func() {
 		w.stop <- 1
 	}()
-
-	w.isStart = false
 }
 
 func (w *consumerWorker) IsStart() bool {
@@ -71,6 +68,7 @@ func (w *consumerWorker) OnNotification(f func(*cluster.Notification)) {
 }
 
 func (w *consumerWorker) loopMain() {
+	w.isStart = true
 	for {
 		select {
 		case message, ok := <-w.consumer.Messages():
@@ -79,6 +77,7 @@ func (w *consumerWorker) loopMain() {
 				w.consumer.MarkOffset(message, "")
 			}
 		case <-w.stop:
+			w.isStart = false
 			return
 		}
 	}
@@ -102,14 +101,14 @@ func (w *consumerWorker) fireSuccess(message *sarama.ConsumerMessage) {
 	}
 }
 
-func (a *consumerWorker) fireError(err error) {
-	if a.onErrorFunc != nil {
-		a.onErrorFunc(err)
+func (w *consumerWorker) fireError(err error) {
+	if w.onErrorFunc != nil {
+		w.onErrorFunc(err)
 	}
 }
 
-func (a *consumerWorker) fireNotification(notification *cluster.Notification) {
-	if a.onNotificationFunc != nil {
-		a.onNotificationFunc(notification)
+func (w *consumerWorker) fireNotification(notification *cluster.Notification) {
+	if w.onNotificationFunc != nil {
+		w.onNotificationFunc(notification)
 	}
 }
