@@ -4,17 +4,14 @@ import (
 	"testing"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
-	"github.com/BaritoLog/go-boilerplate/timekit"
 )
 
 func TestLeakyBucket(t *testing.T) {
 	max := 4
-	duration := timekit.Duration("3ms")
 
-	bucket := NewLeakyBucket(max, duration)
-	defer bucket.Close()
-
-	go bucket.StartRefill()
+	bucket := NewLeakyBucket(max)
+	FatalIf(t, bucket.Max() != max, "bucket.Max() is wrong")
+	FatalIf(t, bucket.Token() != max, "bucket.Token() is wrong")
 
 	for i := 0; i < max; i++ {
 		FatalIf(t, !bucket.Take(), "bucket still have token")
@@ -22,19 +19,7 @@ func TestLeakyBucket(t *testing.T) {
 
 	FatalIf(t, bucket.Take(), "bucket is empty")
 
-	timekit.Sleep("4ms")
-	FatalIf(t, bucket.Token() != bucket.Max(), "bucket must be refill")
+	bucket.Refill()
+	FatalIf(t, !bucket.IsFull(), "bucket must be full")
 	FatalIf(t, !bucket.Take(), "bucket is refilled")
-}
-
-func TestLeakyBucket_IsThreadSafe(t *testing.T) {
-	max := 20
-	bucket := NewLeakyBucket(max, timekit.Duration("1s"))
-
-	for i := 0; i < max; i++ {
-		go bucket.Take()
-	}
-
-	timekit.Sleep("1ms")
-	FatalIf(t, bucket.Token() > 0, "bucket must be empty")
 }

@@ -14,18 +14,23 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-// func TestBaritoProducerService_ServeHTTP_OnLimitExceed(t *testing.T) {
-//
-// 	ctrl := gomock.NewController(t)
-// 	defer ctrl.Finish()
-//
-// 	srv := &baritoProducerService{}
-//
-// 	req, _ := http.NewRequest("POST", "/", producerRequestBody())
-// 	resp := RecordResponse(srv.ServeHTTP, req)
-//
-// 	FatalIfWrongResponseStatus(t, resp, 509)
-// }
+func TestBaritoProducerService_ServeHTTP_OnLimitExceed(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	limiter := NewDummyRateLimiter()
+	limiter.Expect_IsHitLimit_AlwaysTrue()
+
+	srv := &baritoProducerService{
+		limiter: limiter,
+	}
+
+	req, _ := http.NewRequest("POST", "/", producerRequestBody())
+	resp := RecordResponse(srv.ServeHTTP, req)
+
+	FatalIfWrongResponseStatus(t, resp, 509)
+}
 
 func TestBaritoProducerService_ServeHTTP_OnBadRequest(t *testing.T) {
 
@@ -62,10 +67,13 @@ func TestBaritoProducerService_ServeHTTP_OnStoreError(t *testing.T) {
 	producer.EXPECT().SendMessage(gomock.Any()).
 		Return(int32(0), int64(0), fmt.Errorf("some-error"))
 
+	limiter := NewDummyRateLimiter()
+
 	agent := &baritoProducerService{
 		producer:    producer,
 		topicSuffix: "_logs",
 		admin:       admin,
+		limiter:     limiter,
 	}
 
 	req, _ := http.NewRequest("POST", "/", producerRequestBody())
@@ -85,10 +93,13 @@ func TestBaritoProducerService_ServeHTTP_OnCreateTopicError(t *testing.T) {
 
 	producer := mock.NewMockSyncProducer(ctrl)
 
+	limiter := NewDummyRateLimiter()
+
 	agent := &baritoProducerService{
 		producer:    producer,
 		topicSuffix: "_logs",
 		admin:       admin,
+		limiter:     limiter,
 	}
 
 	req, _ := http.NewRequest("POST", "/", producerRequestBody())
@@ -110,10 +121,13 @@ func TestBaritoProducerService_ServeHTTP_OnSuccess(t *testing.T) {
 	producer := mock.NewMockSyncProducer(ctrl)
 	producer.EXPECT().SendMessage(gomock.Any()).AnyTimes()
 
+	limiter := NewDummyRateLimiter()
+
 	agent := &baritoProducerService{
 		producer:    producer,
 		topicSuffix: "_logs",
 		admin:       admin,
+		limiter:     limiter,
 	}
 
 	req, _ := http.NewRequest("POST", "/", producerRequestBody())

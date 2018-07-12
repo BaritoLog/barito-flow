@@ -3,6 +3,7 @@ package flow
 import (
 	"net/http"
 
+	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 )
 
@@ -21,6 +22,7 @@ type baritoProducerService struct {
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
 	server   *http.Server
+	limiter  RateLimiter
 }
 
 func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, topicSuffix string, newEventTopic string) BaritoProducerService {
@@ -36,9 +38,6 @@ func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, top
 
 func (s *baritoProducerService) Start() (err error) {
 
-	// TODO: change to ratelimiter
-	// a.bucket.StartRefill()
-
 	s.producer, err = s.factory.MakeSyncProducer()
 	if err != nil {
 		return
@@ -49,8 +48,10 @@ func (s *baritoProducerService) Start() (err error) {
 		return
 	}
 
-	server := s.initHttpServer()
+	s.limiter = NewRateLimiter(timekit.Duration("1s"))
+	s.limiter.Start()
 
+	server := s.initHttpServer()
 	return server.ListenAndServe()
 }
 
@@ -71,10 +72,9 @@ func (a *baritoProducerService) Close() {
 		a.server.Close()
 	}
 
-	// TODO: change to rate limiter
-	// if a.bucket != nil {
-	// 	a.bucket.Close()
-	// }
+	if a.limiter != nil {
+		a.limiter.Stop()
+	}
 
 	if a.admin != nil {
 		a.admin.Close()
@@ -87,15 +87,17 @@ func (a *baritoProducerService) Close() {
 }
 
 func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// TODO: change to reate limit
-	// if !s.bucket.Take() {
-	// 	onLimitExceeded(rw)
-	// 	return
-	// }
 
 	timber, err := ConvertRequestToTimber(req)
 	if err != nil {
 		onBadRequest(rw, err)
+		return
+	}
+
+	topic := timber.Context().KafkaTopic
+	maxTokenIfNotExist := 100 // TODO: get from context
+	if s.limiter.IsHitLimit(topic, maxTokenIfNotExist) {
+		onLimitExceeded(rw)
 		return
 	}
 
@@ -104,8 +106,6 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		onCreateTopicError(rw, err)
 		return
 	}
-
-	topic := timber.Context().KafkaTopic
 
 	if newTopicCreated {
 		s.sendCreateTopicEvents(topic)
