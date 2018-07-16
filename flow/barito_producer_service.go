@@ -6,6 +6,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -106,14 +107,23 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	newTopicCreated, err := s.createTopicIfNotExist(timber)
-	if err != nil {
-		onCreateTopicError(rw, err)
-		return
-	}
+	var newTopicCreated bool
 
-	if newTopicCreated {
+	if !s.admin.Exist(topic) {
+		numPartitions := timber.Context().KafkaPartition
+		replicationFactor := timber.Context().KafkaReplicationFactor
+
+		log.Infof("%s is not exist. Creating topic with partition:%v replication_factor:%v", topic, numPartitions, replicationFactor)
+
+		err = s.admin.CreateTopic(topic, numPartitions, replicationFactor)
+		if err != nil {
+			onCreateTopicError(rw, err)
+			return
+		}
+
+		s.admin.AddTopic(topic)
 		s.sendCreateTopicEvents(topic)
+		newTopicCreated = true
 	}
 
 	err = s.sendLogs(topic, timber)
@@ -140,24 +150,5 @@ func (s *baritoProducerService) sendCreateTopicEvents(topic string) (err error) 
 		Value: sarama.ByteEncoder(topic),
 	}
 	_, _, err = s.producer.SendMessage(message)
-	return
-}
-
-func (s *baritoProducerService) createTopicIfNotExist(timber Timber) (creatingTopic bool, err error) {
-	topic := timber.Context().KafkaTopic
-	numPartitions := timber.Context().KafkaPartition
-	replicationFactor := timber.Context().KafkaReplicationFactor
-
-	if s.admin.Exist(topic) {
-		return
-	}
-
-	err = s.admin.CreateTopic(topic, numPartitions, replicationFactor)
-	if err != nil {
-		return
-	}
-
-	s.admin.AddTopic(topic)
-	creatingTopic = true
 	return
 }
