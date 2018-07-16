@@ -57,8 +57,6 @@ func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSu
 
 func (s *baritoConsumerService) Start() (err error) {
 
-	log.Infof("Start Barito Consumer Service")
-
 	admin, err := s.initAdmin()
 	if err != nil {
 		return errkit.Concat(ErrMakeKafkaAdmin, err)
@@ -90,12 +88,13 @@ func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
 }
 
 func (s *baritoConsumerService) initNewTopicWorker() (worker ConsumerWorker, err error) { // TODO: return worker
-	consumer, err := s.factory.MakeClusterConsumer(s.groupID, s.newTopicEventName)
+	topic := s.newTopicEventName
+	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic)
 	if err != nil {
 		return
 	}
 
-	worker = NewConsumerWorker(consumer)
+	worker = NewConsumerWorker(topic, consumer)
 	worker.OnSuccess(s.onNewTopicEvent)
 	worker.OnError(s.logError)
 
@@ -126,9 +125,7 @@ func (s *baritoConsumerService) spawnLogsWorker(topic string) (err error) {
 		return
 	}
 
-	log.Infof("Spawn new worker for topic '%s'", topic)
-
-	worker := NewConsumerWorker(consumer)
+	worker := NewConsumerWorker(topic, consumer)
 	worker.OnError(s.logError)
 	worker.OnSuccess(s.onStoreTimber)
 	worker.Start()

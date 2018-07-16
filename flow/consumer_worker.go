@@ -4,6 +4,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,6 +21,7 @@ type ConsumerWorker interface {
 }
 
 type consumerWorker struct {
+	name               string
 	isStart            bool
 	consumer           ClusterConsumer
 	onErrorFunc        func(error)
@@ -28,14 +30,17 @@ type consumerWorker struct {
 	stop               chan int
 }
 
-func NewConsumerWorker(consumer ClusterConsumer) ConsumerWorker {
+func NewConsumerWorker(name string, consumer ClusterConsumer) ConsumerWorker {
 	return &consumerWorker{
+		name:     name,
 		consumer: consumer,
 		stop:     make(chan int),
 	}
 }
 
 func (w *consumerWorker) Start() {
+	log.Infof("Start worker '%s'", w.name)
+
 	go w.loopErrors()
 	go w.loopNotification()
 	go w.loopMain()
