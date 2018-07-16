@@ -71,7 +71,7 @@ func (s *baritoConsumerService) Start() (err error) {
 
 	for _, topic := range admin.Topics() {
 		if strings.HasSuffix(topic, s.topicSuffix) {
-			err := s.spawnLogsWorker(topic)
+			err := s.spawnLogsWorker(topic, sarama.OffsetNewest)
 			if err != nil {
 				s.logError(errkit.Concat(ErrSpawnWorker, err))
 			}
@@ -89,7 +89,7 @@ func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
 
 func (s *baritoConsumerService) initNewTopicWorker() (worker ConsumerWorker, err error) { // TODO: return worker
 	topic := s.newTopicEventName
-	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic)
+	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic, sarama.OffsetNewest)
 	if err != nil {
 		return
 	}
@@ -117,9 +117,9 @@ func (s baritoConsumerService) Close() {
 	}
 }
 
-func (s *baritoConsumerService) spawnLogsWorker(topic string) (err error) {
+func (s *baritoConsumerService) spawnLogsWorker(topic string, initialOffset int64) (err error) {
 
-	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic)
+	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic, initialOffset)
 	if err != nil {
 		err = errkit.Concat(ErrConsumerWorker, err)
 		return
@@ -142,12 +142,12 @@ func (s *baritoConsumerService) logError(err error) {
 
 func (s *baritoConsumerService) logTimber(timber Timber) {
 	s.lastTimber = timber
-	log.Info(timber)
+	log.Infof("Timber: %v", timber)
 }
 
 func (s *baritoConsumerService) logNewTopic(topic string) {
 	s.lastNewTopic = topic
-	log.Info(topic)
+	log.Infof("New topic: %s", topic)
 }
 
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
@@ -180,7 +180,8 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {
 	topic := string(message.Value)
 
-	err := s.spawnLogsWorker(topic)
+	err := s.spawnLogsWorker(topic, sarama.OffsetOldest)
+
 	if err != nil {
 		s.logError(errkit.Concat(ErrSpawnWorkerOnNewTopic, err))
 		return

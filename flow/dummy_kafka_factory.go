@@ -10,7 +10,7 @@ import (
 
 type dummyKafkaFactory struct {
 	MakeKafkaAdminFunc      func() (admin KafkaAdmin, err error)
-	MakeClusterConsumerFunc func(groupID, topic string) (consumer ClusterConsumer, err error)
+	MakeClusterConsumerFunc func(groupID, topic string, initialOffset int64) (consumer ClusterConsumer, err error)
 	MakeSyncProducerFunc    func() (producer sarama.SyncProducer, err error)
 }
 
@@ -19,7 +19,7 @@ func NewDummyKafkaFactory() *dummyKafkaFactory {
 		MakeKafkaAdminFunc: func() (admin KafkaAdmin, err error) {
 			return nil, nil
 		},
-		MakeClusterConsumerFunc: func(groupID, topic string) (worker ClusterConsumer, err error) {
+		MakeClusterConsumerFunc: func(groupID, topic string, initialOffset int64) (worker ClusterConsumer, err error) {
 			return nil, nil
 		},
 		MakeSyncProducerFunc: func() (producer sarama.SyncProducer, err error) {
@@ -31,8 +31,8 @@ func NewDummyKafkaFactory() *dummyKafkaFactory {
 func (f *dummyKafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
 	return f.MakeKafkaAdminFunc()
 }
-func (f *dummyKafkaFactory) MakeClusterConsumer(groupID, topic string) (worker ClusterConsumer, err error) {
-	return f.MakeClusterConsumerFunc(groupID, topic)
+func (f *dummyKafkaFactory) MakeClusterConsumer(groupID, topic string, initialOffset int64) (worker ClusterConsumer, err error) {
+	return f.MakeClusterConsumerFunc(groupID, topic, initialOffset)
 }
 
 func (f *dummyKafkaFactory) MakeSyncProducer() (producer sarama.SyncProducer, err error) {
@@ -40,13 +40,13 @@ func (f *dummyKafkaFactory) MakeSyncProducer() (producer sarama.SyncProducer, er
 }
 
 func (f *dummyKafkaFactory) Expect_MakeClusterConsumer_AlwaysError(errMsg string) {
-	f.MakeClusterConsumerFunc = func(groupID, topic string) (ClusterConsumer, error) {
+	f.MakeClusterConsumerFunc = func(groupID, topic string, initialOffset int64) (ClusterConsumer, error) {
 		return nil, fmt.Errorf(errMsg)
 	}
 }
 
 func (f *dummyKafkaFactory) Expect_MakeClusterConsumer_AlwaysSuccess(ctrl *gomock.Controller) {
-	f.MakeClusterConsumerFunc = func(groupID, topic string) (ClusterConsumer, error) {
+	f.MakeClusterConsumerFunc = func(groupID, topic string, initialOffset int64) (ClusterConsumer, error) {
 		consumer := mock.NewMockClusterConsumer(ctrl)
 		consumer.EXPECT().Messages().AnyTimes()
 		consumer.EXPECT().Notifications().AnyTimes()
@@ -57,7 +57,7 @@ func (f *dummyKafkaFactory) Expect_MakeClusterConsumer_AlwaysSuccess(ctrl *gomoc
 }
 
 func (f *dummyKafkaFactory) Expect_MakeClusterConsumer_ConsumerSpawnWorkerErrorCase(ctrl *gomock.Controller, newTopicEventName, errMsg string) {
-	f.MakeClusterConsumerFunc = func(groupID, topic string) (ClusterConsumer, error) {
+	f.MakeClusterConsumerFunc = func(groupID, topic string, initialOffset int64) (ClusterConsumer, error) {
 		if topic == newTopicEventName {
 			consumer := mock.NewMockClusterConsumer(ctrl)
 			consumer.EXPECT().Messages().AnyTimes()

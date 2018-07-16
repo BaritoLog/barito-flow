@@ -7,7 +7,7 @@ import (
 
 type KafkaFactory interface {
 	MakeKafkaAdmin() (admin KafkaAdmin, err error)
-	MakeClusterConsumer(groupID, topic string) (worker ClusterConsumer, err error)
+	MakeClusterConsumer(groupID, topic string, initialOffset int64) (worker ClusterConsumer, err error)
 	MakeSyncProducer() (producer sarama.SyncProducer, err error)
 }
 
@@ -28,9 +28,13 @@ func (f kafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
 	return
 }
 
-func (f kafkaFactory) MakeClusterConsumer(groupID, topic string) (consumer ClusterConsumer, err error) {
+func (f kafkaFactory) MakeClusterConsumer(groupID, topic string, initialOffset int64) (consumer ClusterConsumer, err error) {
+
+	config := *f.config
+	config.Consumer.Offsets.Initial = initialOffset
+
 	clusterConfig := cluster.NewConfig()
-	clusterConfig.Config = *f.config
+	clusterConfig.Config = config
 	clusterConfig.Consumer.Return.Errors = true
 	clusterConfig.Group.Return.Notifications = true
 

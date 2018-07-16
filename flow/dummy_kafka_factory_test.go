@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
+	"github.com/Shopify/sarama"
 )
 
 func TestDummyKafkaFactory(t *testing.T) {
@@ -12,7 +13,7 @@ func TestDummyKafkaFactory(t *testing.T) {
 
 	FatalIf(t, !ok, "factory must be implement fo KafkaFactory")
 
-	consumer, err := factory.MakeClusterConsumer("groupID", "topic")
+	consumer, err := factory.MakeClusterConsumer("groupID", "topic", sarama.OffsetNewest)
 	FatalIf(t, consumer != nil || err != nil, "MakeClusterConsumer return wrong value")
 
 	admin, err := factory.MakeKafkaAdmin()
