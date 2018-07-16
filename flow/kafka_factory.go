@@ -24,7 +24,12 @@ func NewKafkaFactory(brokers []string, config *sarama.Config) KafkaFactory {
 }
 
 func (f kafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
-	admin, err = NewKafkaAdmin(f.brokers, f.config)
+	client, err := sarama.NewClient(f.brokers, f.config)
+	if err != nil {
+		return nil, err
+	}
+
+	admin = NewKafkaAdmin(client)
 	return
 }
 

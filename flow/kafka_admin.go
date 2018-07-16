@@ -19,22 +19,14 @@ type KafkaAdmin interface {
 type kafkaAdmin struct {
 	topics []string
 	client sarama.Client
-	config *sarama.Config
 
 	refreshMutex sync.Mutex
 }
 
-func NewKafkaAdmin(brokers []string, config *sarama.Config) (KafkaAdmin, error) {
-
-	client, err := sarama.NewClient(brokers, config)
-	if err != nil {
-		return nil, err
-	}
-
+func NewKafkaAdmin(client sarama.Client) KafkaAdmin {
 	return &kafkaAdmin{
 		client: client,
-		config: config,
-	}, nil
+	}
 }
 
 func (a *kafkaAdmin) RefreshTopics() (err error) {
@@ -90,11 +82,12 @@ func (a *kafkaAdmin) Close() {
 }
 
 func (a *kafkaAdmin) CreateTopic(topic string, numPartitions int32, replicationFactor int16) (err error) {
+	config := a.client.Config()
 
 	request := a.createTopicsRequest(topic, numPartitions, replicationFactor)
 
 	for _, broker := range a.client.Brokers() {
-		err = broker.Open(a.config)
+		err = broker.Open(config)
 		defer broker.Close()
 
 		if err != nil {
@@ -108,16 +101,16 @@ func (a *kafkaAdmin) CreateTopic(topic string, numPartitions int32, replicationF
 	}
 
 	return
-
 }
 
 func (a *kafkaAdmin) createTopicsRequest(topic string, numPartitions int32, replicationFactor int16) *sarama.CreateTopicsRequest {
+	config := a.client.Config()
 
 	var version int16 = 0
-	if a.config.Version.IsAtLeast(sarama.V0_11_0_0) {
+	if config.Version.IsAtLeast(sarama.V0_11_0_0) {
 		version = 1
 	}
-	if a.config.Version.IsAtLeast(sarama.V1_0_0_0) {
+	if config.Version.IsAtLeast(sarama.V1_0_0_0) {
 		version = 2
 	}
 
