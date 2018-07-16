@@ -8,6 +8,7 @@ import (
 
 	"github.com/BaritoLog/barito-flow/es"
 	"github.com/olivere/elastic"
+	log "github.com/sirupsen/logrus"
 )
 
 func elasticNewClient(urls ...string) (*elastic.Client, error) {
@@ -27,9 +28,11 @@ func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (e
 	exists, _ := client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
+		log.Infof("ES index '%s' is not exist", indexName)
 		index := elasticCreateIndex(indexPrefix)
 		_, err = client.CreateIndex(indexName).
-			BodyJson(index).Do(ctx)
+			BodyJson(index).
+			Do(ctx)
 		instruESCreateIndex(err)
 		if err != nil {
 			return
@@ -38,8 +41,11 @@ func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (e
 
 	document := ConvertTimberToElasticDocument(timber)
 
-	_, err = client.Index().Index(indexName).Type(documentType).
-		BodyJson(document).Do(ctx)
+	_, err = client.Index().
+		Index(indexName).
+		Type(documentType).
+		BodyJson(document).
+		Do(ctx)
 	instruESStore(err)
 
 	return
