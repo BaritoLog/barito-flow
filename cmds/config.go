@@ -148,7 +148,7 @@ func sliceEnvOrDefault(key, separator string, defaultSlice []string) []string {
 		return slice
 	}
 
-	logConfig("env", key, defaultSlice)
+	logConfig("default", key, defaultSlice)
 	return defaultSlice
 }
 
