@@ -94,7 +94,9 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	topic := timber.Context().KafkaTopic
+	// add suffix
+	topic := timber.Context().KafkaTopic + s.topicSuffix
+
 	maxTokenIfNotExist := timber.Context().AppMaxTPS
 	if s.limiter.IsHitLimit(topic, maxTokenIfNotExist) {
 		onLimitExceeded(rw)
@@ -124,7 +126,7 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 }
 
 func (s *baritoProducerService) sendLogs(topic string, timber Timber) (err error) {
-	message := ConvertTimberToKafkaMessage(timber, topic+s.topicSuffix)
+	message := ConvertTimberToKafkaMessage(timber, topic)
 	_, _, err = s.producer.SendMessage(message)
 	return
 }

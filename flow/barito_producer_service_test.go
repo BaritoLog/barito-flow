@@ -140,7 +140,7 @@ func TestBaritoProducerService_ServeHTTP_OnSuccess(t *testing.T) {
 	b, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(b, &result)
 
-	FatalIf(t, result.Topic != "some_topic", "wrong result.Topic")
+	FatalIf(t, result.Topic != "some_topic_logs", "wrong result.Topic")
 	FatalIf(t, result.IsNewTopic != true, "wrong result.IsNewTopic")
 }
 
