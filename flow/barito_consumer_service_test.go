@@ -41,7 +41,7 @@ func TestBaritoConsumerService(t *testing.T) {
 	defer ctrl.Finish()
 
 	factory := NewDummyKafkaFactory()
-	factory.Expect_MakeKafkaAdmin_ConsumerSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
 
 	service := NewBaritoConsumerService(factory, "", "", "_logs", "")
@@ -72,7 +72,7 @@ func TestBaritoConsumerService_SpawnWorkerError(t *testing.T) {
 	defer ctrl.Finish()
 
 	factory := NewDummyKafkaFactory()
-	factory.Expect_MakeKafkaAdmin_ConsumerSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_ConsumerSpawnWorkerErrorCase(ctrl, "new_topic_events", "some-error")
 
 	service := &baritoConsumerService{

@@ -77,11 +77,25 @@ func (f *dummyKafkaFactory) Expect_MakeKafkaAdmin_AlwaysError(errMsg string) {
 	}
 }
 
-func (f *dummyKafkaFactory) Expect_MakeKafkaAdmin_ConsumerSuccess(ctrl *gomock.Controller, topics []string) {
+func (f *dummyKafkaFactory) Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl *gomock.Controller, topics []string) {
 	f.MakeKafkaAdminFunc = func() (KafkaAdmin, error) {
 		admin := mock.NewMockKafkaAdmin(ctrl)
 		admin.EXPECT().Topics().Return(topics)
 		admin.EXPECT().Close()
 		return admin, nil
+	}
+}
+
+func (f *dummyKafkaFactory) Expect_MakeKafkaAdmin_ProducerServiceSuccess(ctrl *gomock.Controller, topics []string) {
+	f.MakeKafkaAdminFunc = func() (KafkaAdmin, error) {
+		admin := mock.NewMockKafkaAdmin(ctrl)
+		admin.EXPECT().Close()
+		return admin, nil
+	}
+}
+
+func (f *dummyKafkaFactory) Expect_MakeSyncProducerFunc_AlwaysError(errMsg string) {
+	f.MakeSyncProducerFunc = func() (producer sarama.SyncProducer, err error) {
+		return nil, fmt.Errorf(errMsg)
 	}
 }

@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -36,9 +37,7 @@ func TestConvertBytesToTimber_InvalidContext(t *testing.T) {
 
 func TestConvertRequestToTimber(t *testing.T) {
 
-	body := sampleProducerRequestBody()
-
-	req, err := http.NewRequest("POST", "/", body)
+	req, err := http.NewRequest("POST", "/", bytes.NewReader(sampleRawTimber()))
 	FatalIfError(t, err)
 
 	timber, err := ConvertRequestToTimber(req)

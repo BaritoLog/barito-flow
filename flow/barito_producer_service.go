@@ -3,8 +3,13 @@ package flow
 import (
 	"net/http"
 
+	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
+)
+
+const (
+	ErrMakeSyncProducer = errkit.Error("Make sync producer failed")
 )
 
 type BaritoProducerService interface {
@@ -26,25 +31,25 @@ type baritoProducerService struct {
 }
 
 func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, topicSuffix string, newEventTopic string) BaritoProducerService {
-
 	return &baritoProducerService{
 		factory:       factory,
 		addr:          addr,
 		topicSuffix:   topicSuffix,
 		newEventTopic: newEventTopic,
 	}
-
 }
 
 func (s *baritoProducerService) Start() (err error) {
 
 	s.producer, err = s.factory.MakeSyncProducer()
 	if err != nil {
+		err = errkit.Concat(ErrMakeSyncProducer, err)
 		return
 	}
 
 	s.admin, err = s.factory.MakeKafkaAdmin()
 	if err != nil {
+		err = errkit.Concat(ErrMakeKafkaAdmin, err)
 		return
 	}
 
@@ -62,9 +67,7 @@ func (s *baritoProducerService) initHttpServer() (server *http.Server) {
 	}
 
 	s.server = server
-
 	return
-
 }
 
 func (a *baritoProducerService) Close() {
