@@ -110,3 +110,12 @@ func TestConfigKafkaTopicSuffix(t *testing.T) {
 
 	FatalIf(t, configKafkaTopicSuffix() != "some-topic-suffix", "should get from env variable")
 }
+
+func TestConfigNewTopicEventName(t *testing.T) {
+	FatalIf(t, configNewTopicEvent() != DefaultNewTopicEventName, "should return default")
+
+	os.Setenv(EnvNewTopicEventName, "some-new-topic-event")
+	defer os.Clearenv()
+
+	FatalIf(t, configNewTopicEvent() != "some-new-topic-event", "should get from env variable")
+}

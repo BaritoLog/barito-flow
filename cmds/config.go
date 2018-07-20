@@ -25,6 +25,8 @@ const (
 	EnvConsulUrl               = "BARITO_CONSUL_URL"
 	EnvConsulKafkaName         = "BARITO_CONSUL_KAFKA_NAME"
 	EnvConsulElasticsearchName = "BARITO_CONSUL_ELASTICSEARCH_NAME"
+
+	EnvNewTopicEventName = "BARITO_NEW_TOPIC_EVENT"
 )
 
 var (
@@ -44,6 +46,8 @@ var (
 	DefaultProducerAddress  = ":8080"
 	DefaultProducerMaxRetry = 10
 	DefaultProducerMaxTPS   = 100
+
+	DefaultNewTopicEventName = "new_topic_events"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -114,6 +118,11 @@ func configConsulUrl() (s string) {
 
 func configKafkaTopicSuffix() string {
 	return stringEnvOrDefault(EnvKafkaTopicSuffix, DefaultKafkaTopicSuffix)
+}
+
+func configNewTopicEvent() string {
+	return stringEnvOrDefault(EnvNewTopicEventName, DefaultNewTopicEventName)
+
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {

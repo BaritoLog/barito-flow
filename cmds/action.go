@@ -12,11 +12,10 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	groupID := configKafkaGroupId()
 	esUrl := configElasticsearchUrl()
 	topicSuffix := configKafkaTopicSuffix()
+	newTopicEventName := configNewTopicEvent()
 
 	config := sarama.NewConfig()
-	config.Version = sarama.V0_10_2_0 // TODO: get version from env
-
-	newTopicEventName := "new_topic_events" // TODO: get from env
+	config.Version = sarama.V0_10_2_1 // TODO: get version from env
 
 	factory := flow.NewKafkaFactory(brokers, config)
 
@@ -38,6 +37,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	maxRetry := configProducerMaxRetry()
 	maxTps := configProducerMaxTPS()
 	topicSuffix := configKafkaTopicSuffix()
+	newTopicEventName := configNewTopicEvent()
 
 	// kafka producer config
 	config := sarama.NewConfig()
@@ -45,8 +45,6 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Producer.Retry.Max = maxRetry
 	config.Producer.Return.Successes = true
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
-
-	newTopicEventName := "new_topic_events" // TODO: get from env
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
