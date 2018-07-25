@@ -1,19 +1,18 @@
 language: go
 
-go:
-  - 1.9
-
 notifications:
   email: false
 
 install:
-  - # skip
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+  - dep ensure
 
 script:
   - go test ./...
-  - GOOS=linux GOARCH=amd64 go build -o barito-flow-linux
-  - GOOS=darwin GOARCH=amd64 go build -o barito-flow-darwin
-  - ls # debug purpose
+  - GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Commit=${TRAVIS_COMMIT} -X main.Build=$(date +%Y%m%d) -s -w" -o barito-flow-linux
+  - GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.Commit=${TRAVIS_COMMIT} -X main.Build=$(date +%Y%m%d) -s -w" -o barito-flow-darwin
+# Debug purpose to check deps
+  - file barito-flow-linux && file barito-flow-darwin && ldd barito-flow-linux 
 
 deploy:
   provider: releases
