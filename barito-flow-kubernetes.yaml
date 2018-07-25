@@ -16,6 +16,7 @@ spec:
       - name: barito-flow
         image: barito-flow:0.0.1
         imagePullPolicy: Never
+        args: ["producer"]
         ports:
         - containerPort: 8080
 ---
