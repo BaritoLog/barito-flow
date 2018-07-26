@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+    ports:
+      - 9200:9200
+      - 9300:9300
+    
+  kafka:
+    image: spotify/kafka
+    ports:
+      - 9092:9092
+      - 2181:2181
+
+  producer:
+    depends_on:
+      - kafka
+    image: baritolog/barito-flow
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: "producer"
+    environment:
+      - BARITO_KAFKA_BROKERS=kafka:9092
+    ports:
+      - 8080:8080
+:q
+
+  consumer:
+    image: baritolog/barito-flow
+    command: "consumer"
+    environment:
+      - BARITO_PRODUCER_ADDRESS=producer:8080
+      - BARITO_KAFKA_BROKERS=kafka:9092
+      - BARITO_ELASTICSEARCH_URL=http://es:9200
+    ports:
+      - 9090:8080
+    depends_on:
+      - producer
+      - es
