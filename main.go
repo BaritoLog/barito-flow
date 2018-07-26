@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/BaritoLog/barito-flow/cmds"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -14,11 +14,16 @@ const (
 	Version = "0.7.0"
 )
 
+var (
+	Commit string = "N/A"
+	Build  string = "MANUAL"
+)
+
 func main() {
 	app := cli.App{
 		Name:    Name,
 		Usage:   "Provide kafka producer or consumer for Barito project",
-		Version: Version,
+		Version: fmt.Sprintf("%s-%s-%s", Version, Build, Commit),
 		Commands: []cli.Command{
 			{
 				Name:      "producer",
@@ -33,10 +38,18 @@ func main() {
 				Action:    cmds.ActionBaritoConsumerService,
 			},
 		},
+		UsageText: "barito-flow [commands]",
+		Before: func(c *cli.Context) error {
+			fmt.Fprintf(os.Stderr, "%s Started. Version: %s Build: %s Commit: %s\n", Name, Version, Build, Commit)
+			return nil
+		},
+		CommandNotFound: func(c *cli.Context, command string) {
+			fmt.Fprintf(os.Stderr, "Command not found: '%s'. Please use '%s -h' to view usage\n", command, Name)
+		},
 	}
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Some error occurred: %s", err.Error()))
+		log.Fatalf("Some error occurred: %s", err.Error())
 	}
 }
