@@ -83,6 +83,19 @@ Environment Variables
 | PushMetricToken | push metric api token| BARITO_PUSH_METRIC_TOKEN |  |
 | PushMetricInterval | push metric interval| BARITO_PUSH_METRIC_INTERVAL | 30s |
 
+## Running Test Stack using Docker Compose
+
+First you'd need to Install [Docker for Windows](https://www.docker.com/docker-windows) or [Docker
+for Mac](https://www.docker.com/docker-mac) if you're using Windows or Linux.
+
+Run `docker-compose`:
+
+```sh
+$ docker-compose -f docker/docker-compose.yml up -d
+```
+
+This will pull Elastic Search, Kafka, and build image for produces as well as consumer. The ports
+are mapped as if they are running on local machine.
 
 ## Changes Log
 
