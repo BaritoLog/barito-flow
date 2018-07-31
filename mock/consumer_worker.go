@@ -44,14 +44,26 @@ func (mr *MockConsumerWorkerMockRecorder) Start() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockConsumerWorker)(nil).Start))
 }
 
-// Close mocks base method
-func (m *MockConsumerWorker) Close() {
-	m.ctrl.Call(m, "Close")
+// Stop mocks base method
+func (m *MockConsumerWorker) Stop() {
+	m.ctrl.Call(m, "Stop")
 }
 
-// Close indicates an expected call of Close
-func (mr *MockConsumerWorkerMockRecorder) Close() *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockConsumerWorker)(nil).Close))
+// Stop indicates an expected call of Stop
+func (mr *MockConsumerWorkerMockRecorder) Stop() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockConsumerWorker)(nil).Stop))
+}
+
+// IsStart mocks base method
+func (m *MockConsumerWorker) IsStart() bool {
+	ret := m.ctrl.Call(m, "IsStart")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsStart indicates an expected call of IsStart
+func (mr *MockConsumerWorkerMockRecorder) IsStart() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsStart", reflect.TypeOf((*MockConsumerWorker)(nil).IsStart))
 }
 
 // OnError mocks base method

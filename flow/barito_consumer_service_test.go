@@ -3,8 +3,10 @@ package flow
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
@@ -44,10 +46,12 @@ func TestBaritoConsumerService(t *testing.T) {
 	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
 
-	service := NewBaritoConsumerService(factory, "", "", "_logs", "")
+	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", "")
+	service := v.(*baritoConsumerService)
 
 	err := service.Start()
 	FatalIfError(t, err)
+	FatalIf(t, !strings.HasPrefix(service.eventWorkerGroupID, PrefixEventGroupID), "eventWorkerGroup should be have prefix")
 
 	// service.Start() execute goroutine, so wait 1ms to make sure it come in to mainLoop
 	timekit.Sleep("1ms")
@@ -178,4 +182,31 @@ func TestBaritoConsumerService_onNewTopicEvent_ErrorSpawnWorker(t *testing.T) {
 	})
 
 	FatalIfWrongError(t, service.lastError, string(ErrSpawnWorkerOnNewTopic))
+}
+
+func TestBaritoConsumerService_onNewTopicEvent_IgnoreIfTopicExist(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
+
+	worker := mock.NewMockConsumerWorker(ctrl)
+	worker.EXPECT().Stop().AnyTimes()
+
+	workerMap := map[string]ConsumerWorker{
+		"topic001": worker,
+	}
+
+	service := &baritoConsumerService{
+		factory:   factory,
+		workerMap: workerMap,
+	}
+	defer service.Close()
+
+	service.onNewTopicEvent(&sarama.ConsumerMessage{Value: []byte("topic002")})
+	service.onNewTopicEvent(&sarama.ConsumerMessage{Value: []byte("topic001")})
+
+	FatalIf(t, service.lastNewTopic == "topic001", "lastNewTopic should be not topic001")
 }

@@ -2,10 +2,12 @@ package flow
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
+	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,6 +20,8 @@ const (
 	ErrMakeNewTopicWorker    = errkit.Error("Make new topic worker failed")
 	ErrSpawnWorkerOnNewTopic = errkit.Error("Spawn worker on new topic failed")
 	ErrSpawnWorker           = errkit.Error("Span worker failed")
+
+	PrefixEventGroupID = "nte"
 )
 
 type BaritoConsumerService interface {
@@ -37,6 +41,7 @@ type baritoConsumerService struct {
 	workerMap           map[string]ConsumerWorker
 	admin               KafkaAdmin
 	newTopicEventWorker ConsumerWorker
+	eventWorkerGroupID  string
 
 	lastError    error
 	lastTimber   Timber
@@ -62,7 +67,11 @@ func (s *baritoConsumerService) Start() (err error) {
 		return errkit.Concat(ErrMakeKafkaAdmin, err)
 	}
 
-	worker, err := s.initNewTopicWorker()
+	uuid := uuid.NewV4()
+	s.eventWorkerGroupID = fmt.Sprintf("%s-%s", PrefixEventGroupID, uuid)
+	log.Infof("Generate event worker group id: %s", s.eventWorkerGroupID)
+
+	worker, err := s.initNewTopicWorker(s.eventWorkerGroupID)
 	if err != nil {
 		return errkit.Concat(ErrMakeNewTopicWorker, err)
 	}
@@ -87,9 +96,10 @@ func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
 	return
 }
 
-func (s *baritoConsumerService) initNewTopicWorker() (worker ConsumerWorker, err error) { // TODO: return worker
+func (s *baritoConsumerService) initNewTopicWorker(groupID string) (worker ConsumerWorker, err error) { // TODO: return worker
 	topic := s.newTopicEventName
-	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic, sarama.OffsetNewest)
+
+	consumer, err := s.factory.MakeClusterConsumer(groupID, topic, sarama.OffsetNewest)
 	if err != nil {
 		return
 	}
@@ -179,6 +189,11 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
 func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {
 	topic := string(message.Value)
+
+	_, ok := s.workerMap[topic]
+	if ok {
+		return
+	}
 
 	err := s.spawnLogsWorker(topic, sarama.OffsetOldest)
 
