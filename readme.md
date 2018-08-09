@@ -99,6 +99,12 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.8.1
+- Fix bug when checking for new events
+
+#### 0.8.0
+- Support for multiple topics and indexes
+
 #### 0.7.0 
 - Graceful Shutdown
 
