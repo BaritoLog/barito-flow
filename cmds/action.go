@@ -1,8 +1,12 @@
 package cmds
 
 import (
+	"fmt"
+
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
+	"github.com/BaritoLog/go-boilerplate/timekit"
+	"github.com/BaritoLog/instru"
 	"github.com/Shopify/sarama"
 	"github.com/urfave/cli"
 )
@@ -20,6 +24,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	factory := flow.NewKafkaFactory(brokers, config)
 
 	service := flow.NewBaritoConsumerService(factory, groupID, esUrl, topicSuffix, newTopicEventName)
+
+	callbackInstrumentation()
 
 	if err = service.Start(); err != nil {
 		return
@@ -64,21 +70,20 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	return
 }
 
-// TODO: implement on consumer worker
-// func callbackInstrumentation() bool {
-// 	pushMetricUrl := configPushMetricUrl()
-// 	pushMetricToken := configPushMetricToken()
-// 	pushMetricInterval := configPushMetricInterval()
-//
-// 	if pushMetricToken == "" || pushMetricUrl == "" {
-// 		log.Infof("No callback for instrumentation")
-// 		return false
-// 	}
-//
-// 	instru.SetCallback(
-// 		timekit.Duration(pushMetricInterval),
-// 		NewMetricMarketCallback(pushMetricUrl, pushMetricToken),
-// 	)
-// 	return true
-//
-// }
+func callbackInstrumentation() bool {
+	pushMetricUrl := configPushMetricUrl()
+	pushMetricToken := configPushMetricToken()
+	pushMetricInterval := configPushMetricInterval()
+
+	if pushMetricToken == "" || pushMetricUrl == "" {
+		fmt.Print("No callback for instrumentation")
+		return false
+	}
+
+	instru.SetCallback(
+		timekit.Duration(pushMetricInterval),
+		NewMetricMarketCallback(pushMetricUrl, pushMetricToken),
+	)
+	return true
+
+}
