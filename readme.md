@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.8.2
+- Send metrics to market
+
 #### 0.8.1
 - Fix bug when checking for new events
 
