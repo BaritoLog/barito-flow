@@ -24,6 +24,7 @@ func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (e
 	indexPrefix := timber.Context().ESIndexPrefix
 	documentType := timber.Context().ESDocumentType
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
+	appSecret := timber.Context().AppSecret
 
 	exists, _ := client.IndexExists(indexName).Do(ctx)
 
@@ -46,7 +47,7 @@ func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (e
 		Type(documentType).
 		BodyJson(document).
 		Do(ctx)
-	instruESStore(err)
+	instruESStore(appSecret, err)
 
 	return
 }

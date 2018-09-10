@@ -88,15 +88,16 @@ func TestConvertTimberToElasticDocument(t *testing.T) {
 
 func sampleRawTimber() []byte {
 	return []byte(`{
-		"location": "some-location", 
-		"message":"some-message", 
+		"location": "some-location",
+		"message":"some-message",
 		"_ctx": {
 			"kafka_topic": "some_topic",
 			"kafka_partition": 3,
 			"kafka_replication_factor": 1,
 			"es_index_prefix": "some-type",
 			"es_document_type": "some-type",
-			"app_max_tps": 10
+			"app_max_tps": 10,
+			"app_secret": "some-secret-1234"
 		}
 	}`)
 

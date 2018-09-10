@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -47,10 +48,12 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	client, err := elasticNewClient(ts.URL)
 	FatalIfError(t, err)
 
+	appSecret := timber.Context().AppSecret
+
 	err = elasticStore(client, context.Background(), timber)
 	FatalIfError(t, err)
 	FatalIf(t, instru.GetEventCount("es_create_index", "success") != 1, "wrong es_store.total success event")
-	FatalIf(t, instru.GetEventCount("es_store", "success") != 1, "wrong total es_store.success event")
+	FatalIf(t, instru.GetEventCount(fmt.Sprintf("%s_es_store", appSecret), "success") != 1, "wrong total es_store.success event")
 }
 
 func TestElasticStoreman_store_SaveError(t *testing.T) {
@@ -69,7 +72,9 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 	client, err := elasticNewClient(ts.URL)
 	FatalIfError(t, err)
 
+	appSecret := timber.Context().AppSecret
+
 	err = elasticStore(client, context.Background(), timber)
 	FatalIfWrongError(t, err, "elastic: Error 400 (Bad Request)")
-	FatalIf(t, instru.GetEventCount("es_store", "fail") != 1, "wrong total fail event")
+	FatalIf(t, instru.GetEventCount(fmt.Sprintf("%s_es_store", appSecret), "fail") != 1, "wrong total fail event")
 }
