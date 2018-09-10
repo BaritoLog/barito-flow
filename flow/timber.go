@@ -21,6 +21,7 @@ type TimberContext struct {
 	ESIndexPrefix          string `json:"es_index_prefix"`
 	ESDocumentType         string `json:"es_document_type"`
 	AppMaxTPS              int    `json:"app_max_tps"`
+	AppSecret              string `json:"app_secret"`
 }
 
 func NewTimber() Timber {
@@ -100,6 +101,12 @@ func mapToContext(m map[string]interface{}) (ctx *TimberContext, err error) {
 		return
 	}
 
+	appSecret, ok := m["app_secret"].(string)
+	if !ok {
+		err = fmt.Errorf("app_secret is missing")
+		return
+	}
+
 	ctx = &TimberContext{
 		KafkaTopic:             kafkaTopic,
 		KafkaPartition:         int32(kafkaPartition),
@@ -107,6 +114,7 @@ func mapToContext(m map[string]interface{}) (ctx *TimberContext, err error) {
 		ESIndexPrefix:          esIndexPrefix,
 		ESDocumentType:         esDocumentType,
 		AppMaxTPS:              int(appMaxTPS),
+		AppSecret:              appSecret,
 	}
 
 	return

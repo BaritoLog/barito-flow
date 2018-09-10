@@ -53,14 +53,6 @@ func TestGetPushMetricUrl(t *testing.T) {
 	FatalIf(t, configPushMetricUrl() != "http://some-push-metric", "should get from env variable")
 }
 
-func TestGetPushMetricToken(t *testing.T) {
-	FatalIf(t, configPushMetricToken() != DefaultPushMetricToken, "should return default ")
-
-	os.Setenv(EnvPushMetricToken, "some-token")
-	defer os.Clearenv()
-	FatalIf(t, configPushMetricToken() != "some-token", "should get from env variable")
-}
-
 func TestGetPushMetricInterval(t *testing.T) {
 	FatalIf(t, configPushMetricInterval() != DefaultPushMetricInterval, "should return default ")
 

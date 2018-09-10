@@ -71,5 +71,6 @@ func sampleContextMap() map[string]interface{} {
 		"es_index_prefix":          "some-prefix",
 		"es_document_type":         "some-type",
 		"app_max_tps":              10.0,
+		"app_secret":               "some-secret-1234",
 	}
 }

@@ -72,17 +72,16 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 func callbackInstrumentation() bool {
 	pushMetricUrl := configPushMetricUrl()
-	pushMetricToken := configPushMetricToken()
 	pushMetricInterval := configPushMetricInterval()
 
-	if pushMetricToken == "" || pushMetricUrl == "" {
+	if pushMetricUrl == "" {
 		fmt.Print("No callback for instrumentation")
 		return false
 	}
 
 	instru.SetCallback(
 		timekit.Duration(pushMetricInterval),
-		NewMetricMarketCallback(pushMetricUrl, pushMetricToken),
+		NewMetricMarketCallback(pushMetricUrl),
 	)
 	return true
 

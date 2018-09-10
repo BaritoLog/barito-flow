@@ -15,7 +15,6 @@ const (
 	EnvElasticsearchUrl = "BARITO_ELASTICSEARCH_URL"
 
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
-	EnvPushMetricToken    = "BARITO_PUSH_METRIC_TOKEN"
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
 
 	EnvProducerAddress  = "BARITO_PRODUCER_ADDRESS" // TODO: rename to better name
@@ -39,8 +38,7 @@ var (
 
 	DefaultElasticsearchUrl = "http://localhost:9200"
 
-	DefaultPushMetricUrl      = "http://localhost:3000/api/increase_log_count"
-	DefaultPushMetricToken    = ""
+	DefaultPushMetricUrl      = ""
 	DefaultPushMetricInterval = "30s"
 
 	DefaultProducerAddress  = ":8080"
@@ -86,10 +84,6 @@ func configKafkaGroupId() (s string) {
 
 func configPushMetricUrl() (s string) {
 	return stringEnvOrDefault(EnvPushMetricUrl, DefaultPushMetricUrl)
-}
-
-func configPushMetricToken() (s string) {
-	return stringEnvOrDefault(EnvPushMetricToken, DefaultPushMetricToken)
 }
 
 func configPushMetricInterval() (s string) {
