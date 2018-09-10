@@ -67,7 +67,7 @@ func (s *baritoConsumerService) Start() (err error) {
 		return errkit.Concat(ErrMakeKafkaAdmin, err)
 	}
 
-	uuid, _ := uuid.NewV4()
+	uuid := uuid.NewV4()
 	s.eventWorkerGroupID = fmt.Sprintf("%s-%s", PrefixEventGroupID, uuid)
 	log.Infof("Generate event worker group id: %s", s.eventWorkerGroupID)
 
