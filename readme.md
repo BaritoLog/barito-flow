@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.8.3
+- Also send application secret from context when sending metrics
+
 #### 0.8.2
 - Send metrics to market
 
