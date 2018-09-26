@@ -210,3 +210,54 @@ func TestBaritoConsumerService_onNewTopicEvent_IgnoreIfTopicExist(t *testing.T) 
 
 	FatalIf(t, service.lastNewTopic == "topic001", "lastNewTopic should be not topic001")
 }
+
+func TestHaltAllWorker(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
+
+	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", "")
+	service := v.(*baritoConsumerService)
+
+	err := service.Start()
+	FatalIfError(t, err)
+	FatalIf(t, !strings.HasPrefix(service.eventWorkerGroupID, PrefixEventGroupID), "eventWorkerGroup should be have prefix")
+
+	// service.Start() execute goroutine, so wait 1ms to make sure it come in to mainLoop
+	timekit.Sleep("1ms")
+
+	worker := service.NewTopicEventWorker()
+	workerMap := service.WorkerMap()
+
+	service.HaltAllWorker()
+
+	FatalIf(t, !service.isHalt, "Consumer Worker should be halted")
+	FatalIf(t, !worker.IsStart(), "New Topic Event Worker should be halted")
+
+	for _, w := range workerMap {
+		FatalIf(t, !w.IsStart(), "Worker should be halted")
+	}
+}
+
+func TestResumeWorker(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
+
+	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", "")
+	service := v.(*baritoConsumerService)
+
+	err := service.ResumeWorker()
+	FatalIfError(t, err)
+	FatalIf(t, service.isHalt, "Consumer Worker should be started")
+	// service.Start() execute goroutine, so wait 1ms to make sure it come in to mainLoop
+	timekit.Sleep("1ms")
+	defer service.Close()
+}
