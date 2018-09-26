@@ -14,6 +14,7 @@ const (
 type ConsumerWorker interface {
 	Start()
 	Stop()
+	Halt()
 	IsStart() bool
 	OnError(f func(error))
 	OnSuccess(f func(*sarama.ConsumerMessage))
@@ -28,6 +29,7 @@ type consumerWorker struct {
 	onSuccessFunc      func(*sarama.ConsumerMessage)
 	onNotificationFunc func(*cluster.Notification)
 	stop               chan int
+	lastMessage        *sarama.ConsumerMessage
 }
 
 func NewConsumerWorker(name string, consumer ClusterConsumer) ConsumerWorker {
@@ -56,6 +58,13 @@ func (w *consumerWorker) Stop() {
 	}()
 }
 
+func (w *consumerWorker) Halt() {
+	go func() {
+		w.stop <- 1
+	}()
+	log.Warnf("Halt worker '%s'", w.name)
+}
+
 func (w *consumerWorker) IsStart() bool {
 	return w.isStart
 }
@@ -78,8 +87,9 @@ func (w *consumerWorker) loopMain() {
 		select {
 		case message, ok := <-w.consumer.Messages():
 			if ok {
-				w.fireSuccess(message)
 				w.consumer.MarkOffset(message, "")
+				w.fireSuccess(message)
+				log.Infof("Mark Offset, %s", message)
 			}
 		case <-w.stop:
 			w.isStart = false

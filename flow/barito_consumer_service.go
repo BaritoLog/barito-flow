@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,6 +21,7 @@ const (
 	ErrMakeNewTopicWorker    = errkit.Error("Make new topic worker failed")
 	ErrSpawnWorkerOnNewTopic = errkit.Error("Spawn worker on new topic failed")
 	ErrSpawnWorker           = errkit.Error("Span worker failed")
+	ErrHaltWorker            = errkit.Error("Consumer Worker Halted")
 
 	PrefixEventGroupID = "nte"
 )
@@ -46,6 +48,7 @@ type baritoConsumerService struct {
 	lastError    error
 	lastTimber   Timber
 	lastNewTopic string
+	isHalt       bool
 }
 
 func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSuffix, newTopicEventName string) BaritoConsumerService {
@@ -63,11 +66,12 @@ func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSu
 func (s *baritoConsumerService) Start() (err error) {
 
 	admin, err := s.initAdmin()
+
 	if err != nil {
 		return errkit.Concat(ErrMakeKafkaAdmin, err)
 	}
 
-	uuid := uuid.NewV4()
+	uuid, _ := uuid.NewV4()
 	s.eventWorkerGroupID = fmt.Sprintf("%s-%s", PrefixEventGroupID, uuid)
 	log.Infof("Generate event worker group id: %s", s.eventWorkerGroupID)
 
@@ -93,6 +97,7 @@ func (s *baritoConsumerService) Start() (err error) {
 func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
 	admin, err = s.factory.MakeKafkaAdmin()
 	s.admin = admin
+
 	return
 }
 
@@ -160,10 +165,16 @@ func (s *baritoConsumerService) logNewTopic(topic string) {
 	log.Infof("New topic: %s", topic)
 }
 
+func (s *baritoConsumerService) onElasticRetry(err error) {
+	s.logError(errkit.Concat(ErrElasticsearchClient, err))
+	s.HaltAllWorker()
+}
+
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
 	// create elastic client
-	client, err := elasticNewClient(s.elasticUrl)
+	retrier := s.elasticRetrier()
+	elastic, err := NewElastic(retrier, s.elasticUrl)
 	if err != nil {
 		s.logError(errkit.Concat(ErrElasticsearchClient, err))
 		return
@@ -178,10 +189,18 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
 	// store to elasticsearch
 	ctx := context.Background()
-	err = elasticStore(client, ctx, timber)
+	err = elastic.Store(ctx, timber)
 	if err != nil {
 		s.logError(errkit.Concat(ErrStore, err))
 		return
+	}
+
+	if s.isHalt {
+		err = s.ResumeWorker()
+		if err != nil {
+			s.logError(errkit.Concat(ErrConsumerWorker, err))
+			return
+		}
 	}
 
 	s.logTimber(timber)
@@ -211,4 +230,23 @@ func (s *baritoConsumerService) WorkerMap() map[string]ConsumerWorker {
 
 func (s *baritoConsumerService) NewTopicEventWorker() ConsumerWorker {
 	return s.newTopicEventWorker
+}
+
+func (s *baritoConsumerService) HaltAllWorker() {
+	if !s.isHalt {
+		s.isHalt = true
+		s.logError(ErrHaltWorker)
+		s.Close()
+	}
+}
+
+func (s *baritoConsumerService) elasticRetrier() *ElasticRetrier {
+	return NewElasticRetrier(30*time.Second, s.onElasticRetry)
+}
+
+func (s *baritoConsumerService) ResumeWorker() (err error) {
+	s.isHalt = false
+	err = s.Start()
+
+	return
 }

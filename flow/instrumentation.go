@@ -49,6 +49,7 @@ func InstruApplicationSecret(appSecret string) {
 
 func GetApplicationSecretCollection() []string {
 	collection := instru.Metric("application_group").Get("app_secrets")
+
 	if collection == nil {
 		return []string{}
 	}
