@@ -18,11 +18,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:913e517251821e5e76ac74ed005b67a5c3067a8101f1dfd0d9fdbd7c556aaa22"
+  digest = "1:8b471df8c622a3d15e6ac49140be5bd0712dc3ef20492b9231eaddb04ba2dac1"
   name = "github.com/BaritoLog/instru"
   packages = ["."]
   pruneopts = "UT"
-  revision = "6c2745f219df1f34656bfa59f9875d09198c092c"
+  revision = "89d3c28ee748bd621ec1901159ca9c36bbe413dd"
 
 [[projects]]
   digest = "1:66b8ed452b31eb9075bc53295952487c333a9cb555de57ed61f5664c058d9050"
