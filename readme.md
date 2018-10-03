@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.8.5
+- Produce logs if flow has to return 5xx errors
+
 #### 0.8.4
 - Use updated instru that avoid race condition problem
 
