@@ -122,7 +122,11 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		}
 
 		s.admin.AddTopic(topic)
-		s.sendCreateTopicEvents(topic)
+		err = s.sendCreateTopicEvents(topic)
+		if err != nil {
+			onSendCreateTopicError(rw, err)
+			return
+		}
 		newTopicCreated = true
 	}
 
