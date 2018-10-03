@@ -3,6 +3,8 @@ package flow
 import (
 	"encoding/json"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type ProduceResult struct {
@@ -18,11 +20,13 @@ func onLimitExceeded(rw http.ResponseWriter) {
 func onBadRequest(rw http.ResponseWriter, err error) {
 	rw.WriteHeader(http.StatusBadRequest)
 	rw.Write([]byte(err.Error()))
+	log.Warn(err)
 }
 
 func onStoreError(rw http.ResponseWriter, err error) {
 	rw.WriteHeader(http.StatusBadGateway)
 	rw.Write([]byte(err.Error()))
+	log.Warn(err)
 }
 
 func onSuccess(rw http.ResponseWriter, result ProduceResult) {
@@ -35,9 +39,11 @@ func onSuccess(rw http.ResponseWriter, result ProduceResult) {
 func onCreateTopicError(rw http.ResponseWriter, err error) {
 	rw.WriteHeader(http.StatusServiceUnavailable)
 	rw.Write([]byte(err.Error()))
+	log.Warn(err)
 }
 
 func onSendCreateTopicError(rw http.ResponseWriter, err error) {
 	rw.WriteHeader(http.StatusServiceUnavailable)
 	rw.Write([]byte(err.Error()))
+	log.Warn(err)
 }
