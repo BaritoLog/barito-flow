@@ -95,6 +95,7 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 	timber, err := ConvertRequestToTimber(req)
 	if err != nil {
 		onBadRequest(rw, err)
+		log.Warn(err)
 		return
 	}
 
@@ -118,17 +119,24 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		err = s.admin.CreateTopic(topic, numPartitions, replicationFactor)
 		if err != nil {
 			onCreateTopicError(rw, err)
+			log.Warn(err)
 			return
 		}
 
 		s.admin.AddTopic(topic)
-		s.sendCreateTopicEvents(topic)
+		err = s.sendCreateTopicEvents(topic)
+		if err != nil {
+			onSendCreateTopicError(rw, err)
+			log.Warn(err)
+			return
+		}
 		newTopicCreated = true
 	}
 
 	err = s.sendLogs(topic, timber)
 	if err != nil {
 		onStoreError(rw, err)
+		log.Warn(err)
 		return
 	}
 

@@ -36,3 +36,8 @@ func onCreateTopicError(rw http.ResponseWriter, err error) {
 	rw.WriteHeader(http.StatusServiceUnavailable)
 	rw.Write([]byte(err.Error()))
 }
+
+func onSendCreateTopicError(rw http.ResponseWriter, err error) {
+	rw.WriteHeader(http.StatusServiceUnavailable)
+	rw.Write([]byte(err.Error()))
+}

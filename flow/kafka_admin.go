@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/Shopify/sarama"
+	log "github.com/sirupsen/logrus"
 )
 
 type KafkaAdmin interface {
@@ -34,6 +35,7 @@ func (a *kafkaAdmin) RefreshTopics() (err error) {
 	defer a.refreshMutex.Unlock()
 	topics, err := a.client.Topics()
 	if err != nil {
+		log.Warn(err)
 		return
 	}
 
