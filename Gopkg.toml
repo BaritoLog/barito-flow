@@ -1,6 +1,6 @@
 # Gopkg.toml example
 #
-# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -30,28 +30,36 @@
   name = "github.com/BaritoLog/go-boilerplate"
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/BaritoLog/instru"
+
+[[constraint]]
   name = "github.com/Shopify/sarama"
-  version = "1.17.0"
+  version = "1.19.0"
 
 [[constraint]]
   name = "github.com/bsm/sarama-cluster"
-  version = "2.1.13"
+  version = "2.1.15"
 
 [[constraint]]
-  branch = "master"
+  name = "github.com/gofrs/uuid"
+  version = "3.1.1"
+
+[[constraint]]
   name = "github.com/golang/mock"
+  version = "1.1.1"
 
 [[constraint]]
   name = "github.com/hashicorp/consul"
-  version = "1.1.0"
+  version = "1.2.3"
 
 [[constraint]]
   name = "github.com/olivere/elastic"
-  version = "6.1.23"
+  version = "6.2.10"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "1.0.5"
+  version = "1.1.1"
 
 [[constraint]]
   name = "github.com/urfave/cli"

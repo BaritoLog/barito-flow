@@ -18,7 +18,7 @@ func TestKafkaAdmin_RefreshTopics_ReturnError(t *testing.T) {
 	patch := saramatestkit.PatchNewClient(client, nil)
 	defer patch.Unpatch()
 
-	admin := NewKafkaAdmin(client)
+	admin, _ := NewKafkaAdmin(client)
 	defer admin.Close()
 
 	err := admin.RefreshTopics()
@@ -36,7 +36,7 @@ func TestKafkaAdmin_Topics(t *testing.T) {
 	patch := saramatestkit.PatchNewClient(client, nil)
 	defer patch.Unpatch()
 
-	admin := NewKafkaAdmin(client)
+	admin, _ := NewKafkaAdmin(client)
 	defer admin.Close()
 
 	FatalIf(t, !slicekit.StringSliceEqual(admin.Topics(), topics), "wrong admin.Topics()")
@@ -54,7 +54,7 @@ func TestKafkaAdmin_Exist(t *testing.T) {
 	patch := saramatestkit.PatchNewClient(client, nil)
 	defer patch.Unpatch()
 
-	admin := NewKafkaAdmin(client)
+	admin, _ := NewKafkaAdmin(client)
 	defer admin.Close()
 
 	// assume admin already cache for its topics
