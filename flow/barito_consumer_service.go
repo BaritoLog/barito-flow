@@ -7,7 +7,7 @@ import (
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -67,7 +67,7 @@ func (s *baritoConsumerService) Start() (err error) {
 		return errkit.Concat(ErrMakeKafkaAdmin, err)
 	}
 
-	uuid := uuid.NewV4()
+	uuid, _ := uuid.NewV4()
 	s.eventWorkerGroupID = fmt.Sprintf("%s-%s", PrefixEventGroupID, uuid)
 	log.Infof("Generate event worker group id: %s", s.eventWorkerGroupID)
 
