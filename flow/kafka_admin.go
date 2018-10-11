@@ -18,16 +18,27 @@ type KafkaAdmin interface {
 }
 
 type kafkaAdmin struct {
-	topics []string
-	client sarama.Client
-
+	topics       []string
+	client       sarama.Client
+	clusterAdmin sarama.ClusterAdmin
 	refreshMutex sync.Mutex
 }
 
-func NewKafkaAdmin(client sarama.Client) KafkaAdmin {
-	return &kafkaAdmin{
-		client: client,
+func NewKafkaAdmin(client sarama.Client) (admin KafkaAdmin, err error) {
+	var brokers []string
+	for _, broker := range client.Brokers() {
+		brokers = append(brokers, broker.Addr())
 	}
+
+	clusterAdmin, err := sarama.NewClusterAdmin(brokers, client.Config())
+	if err != nil {
+		return
+	}
+
+	return &kafkaAdmin{
+		client:       client,
+		clusterAdmin: clusterAdmin,
+	}, nil
 }
 
 func (a *kafkaAdmin) RefreshTopics() (err error) {
@@ -76,7 +87,6 @@ func (a *kafkaAdmin) Exist(topic string) bool {
 
 func (a *kafkaAdmin) AddTopic(topic string) {
 	a.topics = append(a.topics, topic)
-
 }
 
 func (a *kafkaAdmin) Close() {
@@ -84,47 +94,11 @@ func (a *kafkaAdmin) Close() {
 }
 
 func (a *kafkaAdmin) CreateTopic(topic string, numPartitions int32, replicationFactor int16) (err error) {
-	config := a.client.Config()
-
-	request := a.createTopicsRequest(topic, numPartitions, replicationFactor)
-
-	for _, broker := range a.client.Brokers() {
-		err = broker.Open(config)
-		defer broker.Close()
-
-		if err != nil {
-			return
-		}
-
-		_, err = broker.CreateTopics(request)
-		if err != nil {
-			return
-		}
+	detail := &sarama.TopicDetail{NumPartitions: numPartitions, ReplicationFactor: replicationFactor}
+	err = a.clusterAdmin.CreateTopic(topic, detail, false)
+	if err != nil {
+		return
 	}
 
 	return
-}
-
-func (a *kafkaAdmin) createTopicsRequest(topic string, numPartitions int32, replicationFactor int16) *sarama.CreateTopicsRequest {
-	config := a.client.Config()
-
-	var version int16 = 0
-	if config.Version.IsAtLeast(sarama.V0_11_0_0) {
-		version = 1
-	}
-	if config.Version.IsAtLeast(sarama.V1_0_0_0) {
-		version = 2
-	}
-
-	return &sarama.CreateTopicsRequest{
-		Version: version,
-		TopicDetails: map[string]*sarama.TopicDetail{
-			topic: &sarama.TopicDetail{
-				NumPartitions:     numPartitions,
-				ReplicationFactor: replicationFactor,
-			},
-		},
-		ValidateOnly: false,
-	}
-
 }
