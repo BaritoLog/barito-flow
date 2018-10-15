@@ -29,7 +29,11 @@ func (f kafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
 		return nil, err
 	}
 
-	admin = NewKafkaAdmin(client)
+	admin, err = NewKafkaAdmin(client)
+	if err != nil {
+		return nil, err
+	}
+
 	return
 }
 

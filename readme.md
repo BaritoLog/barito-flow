@@ -99,6 +99,19 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.9.0
+- Upgrade sarama to 1.19.0
+- Use sarama ClusterAdmin for creating topic
+
+#### 0.8.5
+- Produce logs if flow has to return 5xx errors
+
+#### 0.8.4
+- Use updated instru that avoid race condition problem
+
+#### 0.8.3
+- Also send application secret from context when sending metrics
+
 #### 0.8.2
 - Send metrics to market
 

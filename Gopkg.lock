@@ -7,7 +7,6 @@
   packages = [
     "errkit",
     "saramatestkit",
-    "slicekit",
     "srvkit",
     "testkit",
     "timekit"
@@ -18,13 +17,13 @@
   branch = "master"
   name = "github.com/BaritoLog/instru"
   packages = ["."]
-  revision = "6c2745f219df1f34656bfa59f9875d09198c092c"
+  revision = "89d3c28ee748bd621ec1901159ca9c36bbe413dd"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
   packages = ["."]
-  revision = "a6144ae922fd99dd0ea5046c8137acfb7fab0914"
-  version = "v1.18.0"
+  revision = "ec843464b50d4c8b56403ec9d589cf41ea30e722"
+  version = "v1.19.0"
 
 [[projects]]
   name = "github.com/bouk/monkey"
@@ -69,10 +68,10 @@
   version = "v3.1.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/golang/mock"
   packages = ["gomock"]
-  revision = "600781dde9cca80734169b9e969d9054ccc57937"
+  revision = "c34cdb4725f4c3844d095133c6e40e448b86589b"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -105,6 +104,12 @@
   version = "v0.8.1"
 
 [[projects]]
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/mailru/easyjson"
   packages = [
@@ -124,8 +129,8 @@
 [[projects]]
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "fa473d140ef3c6adf42d6b391fe76707f1f243c8"
-  version = "v1.0.0"
+  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
+  version = "v1.1.2"
 
 [[projects]]
   name = "github.com/olivere/elastic"
@@ -134,8 +139,8 @@
     "config",
     "uritemplates"
   ]
-  revision = "e6cae211ee802eab70248a68fe2cb03b616744c9"
-  version = "v6.2.5"
+  revision = "156bc8f4ccd31cbf7567a0ed3a64335d6767e4b9"
+  version = "v6.2.10"
 
 [[projects]]
   name = "github.com/pierrec/lz4"
@@ -143,8 +148,8 @@
     ".",
     "internal/xxh32"
   ]
-  revision = "bb6bfd13c6a262f1943c0446eb25b7f54c1fb9a2"
-  version = "v2.0.6"
+  revision = "635575b42742856941dbc767b44905bb9ba083f6"
+  version = "v2.0.7"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -161,8 +166,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
-  version = "v1.0.6"
+  revision = "ad15b42461921f1fb3529b058c6786c6a45d5162"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/urfave/cli"
@@ -174,13 +179,13 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
+  revision = "7c1a557ab941a71c619514f229f0b27ccb0c27cf"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
+  revision = "146acd28ed5894421fb5aac80ca93bc1b1f46f87"
 
 [[projects]]
   branch = "master"
@@ -189,11 +194,11 @@
     "unix",
     "windows"
   ]
-  revision = "d641721ec2dead6fe5ca284096fe4b1fcd49e427"
+  revision = "4497e2df6f9e69048a54498c7affbbec3294ad47"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e9bffaaebc83a627b3c0ef16751ca4e8c61fd65b391170a57a1e496392e7c6f7"
+  inputs-digest = "bcf56a7a4eb1cb5cf2a84d59b5e88e961a35c8b1e5d02342140e12ac883f36f4"
   solver-name = "gps-cdcl"
   solver-version = 1
