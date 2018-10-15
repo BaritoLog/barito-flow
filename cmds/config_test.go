@@ -111,3 +111,11 @@ func TestConfigNewTopicEventName(t *testing.T) {
 
 	FatalIf(t, configNewTopicEvent() != "some-new-topic-event", "should get from env variable")
 }
+
+func TestGetConsumerElasticsearchRetrierInterval(t *testing.T) {
+	FatalIf(t, configElasticsearhRetrierInterval() != DefaultElasticsearchRetrierInterval, "should return default ")
+
+	os.Setenv(EnvConsumerElasticsearchRetrierInterval, "30s")
+	defer os.Clearenv()
+	FatalIf(t, configElasticsearhRetrierInterval() != "30s", "should get from env variable")
+}

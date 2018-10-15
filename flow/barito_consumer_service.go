@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
+	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	uuid "github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
@@ -45,21 +45,23 @@ type baritoConsumerService struct {
 	newTopicEventWorker ConsumerWorker
 	eventWorkerGroupID  string
 
-	lastError    error
-	lastTimber   Timber
-	lastNewTopic string
-	isHalt       bool
+	lastError              error
+	lastTimber             Timber
+	lastNewTopic           string
+	isHalt                 bool
+	elasticRetrierInterval string
 }
 
-func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSuffix, newTopicEventName string) BaritoConsumerService {
+func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSuffix, newTopicEventName, elasticRetrierInterval string) BaritoConsumerService {
 
 	return &baritoConsumerService{
-		factory:           factory,
-		groupID:           groupID,
-		elasticUrl:        elasticURL,
-		topicSuffix:       topicSuffix,
-		newTopicEventName: newTopicEventName,
-		workerMap:         make(map[string]ConsumerWorker),
+		factory:                factory,
+		groupID:                groupID,
+		elasticUrl:             elasticURL,
+		topicSuffix:            topicSuffix,
+		newTopicEventName:      newTopicEventName,
+		workerMap:              make(map[string]ConsumerWorker),
+		elasticRetrierInterval: elasticRetrierInterval,
 	}
 }
 
@@ -241,7 +243,7 @@ func (s *baritoConsumerService) HaltAllWorker() {
 }
 
 func (s *baritoConsumerService) elasticRetrier() *ElasticRetrier {
-	return NewElasticRetrier(30*time.Second, s.onElasticRetry)
+	return NewElasticRetrier(timekit.Duration(s.elasticRetrierInterval), s.onElasticRetry)
 }
 
 func (s *baritoConsumerService) ResumeWorker() (err error) {

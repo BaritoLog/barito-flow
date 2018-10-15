@@ -17,13 +17,14 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	esUrl := configElasticsearchUrl()
 	topicSuffix := configKafkaTopicSuffix()
 	newTopicEventName := configNewTopicEvent()
+	elasticRetrierInterval := configElasticsearhRetrierInterval()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
 
 	factory := flow.NewKafkaFactory(brokers, config)
 
-	service := flow.NewBaritoConsumerService(factory, groupID, esUrl, topicSuffix, newTopicEventName)
+	service := flow.NewBaritoConsumerService(factory, groupID, esUrl, topicSuffix, newTopicEventName, elasticRetrierInterval)
 
 	callbackInstrumentation()
 
