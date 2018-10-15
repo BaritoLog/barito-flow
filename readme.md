@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.10.0
+- Implement Elasticsearch backoff functionality
+
 #### 0.9.0
 - Upgrade sarama to 1.19.0
 - Use sarama ClusterAdmin for creating topic
