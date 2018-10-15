@@ -5,10 +5,11 @@
 package mock
 
 import (
+	reflect "reflect"
+
 	sarama "github.com/Shopify/sarama"
 	sarama_cluster "github.com/bsm/sarama-cluster"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockConsumerWorker is a mock of ConsumerWorker interface
@@ -54,6 +55,16 @@ func (mr *MockConsumerWorkerMockRecorder) Stop() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockConsumerWorker)(nil).Stop))
 }
 
+// Start mocks base method
+func (m *MockConsumerWorker) Halt() {
+	m.ctrl.Call(m, "Start")
+}
+
+// Start indicates an expected call of Start
+func (mr *MockConsumerWorkerMockRecorder) Halt() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Halt", reflect.TypeOf((*MockConsumerWorker)(nil).Halt))
+}
+
 // IsStart mocks base method
 func (m *MockConsumerWorker) IsStart() bool {
 	ret := m.ctrl.Call(m, "IsStart")
@@ -64,6 +75,18 @@ func (m *MockConsumerWorker) IsStart() bool {
 // IsStart indicates an expected call of IsStart
 func (mr *MockConsumerWorkerMockRecorder) IsStart() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsStart", reflect.TypeOf((*MockConsumerWorker)(nil).IsStart))
+}
+
+// IsHalt mocks base method
+func (m *MockConsumerWorker) IsHalt() bool {
+	ret := m.ctrl.Call(m, "IsHalt")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsStart indicates an expected call of IsStart
+func (mr *MockConsumerWorkerMockRecorder) IsHalt() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsHalt", reflect.TypeOf((*MockConsumerWorker)(nil).IsHalt))
 }
 
 // OnError mocks base method
@@ -94,4 +117,9 @@ func (m *MockConsumerWorker) OnNotification(f func(*sarama_cluster.Notification)
 // OnNotification indicates an expected call of OnNotification
 func (mr *MockConsumerWorkerMockRecorder) OnNotification(f interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnNotification", reflect.TypeOf((*MockConsumerWorker)(nil).OnNotification), f)
+}
+
+// OnHalt mocks base method
+func (m *MockConsumerWorker) OnHalt(f func()) {
+	m.ctrl.Call(m, "OnHalt", f)
 }

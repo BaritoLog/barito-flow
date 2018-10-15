@@ -11,27 +11,43 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func elasticNewClient(urls ...string) (*elastic.Client, error) {
-	return elastic.NewClient(
+type Elastic interface {
+	OnFailure(f func(*Timber))
+	Store(ctx context.Context, timber Timber)
+	NewClient()
+}
+
+type elasticClient struct {
+	client        *elastic.Client
+	onFailureFunc func(*Timber)
+}
+
+func NewElastic(retrierFunc *ElasticRetrier, urls ...string) (client elasticClient, err error) {
+
+	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
+		elastic.SetRetrier(retrierFunc),
 	)
+
+	return elasticClient{
+		client: c,
+	}, err
 }
 
-func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (err error) {
-
+func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 	indexPrefix := timber.Context().ESIndexPrefix
 	documentType := timber.Context().ESDocumentType
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 	appSecret := timber.Context().AppSecret
 
-	exists, _ := client.IndexExists(indexName).Do(ctx)
+	exists, _ := e.client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
 		log.Infof("ES index '%s' is not exist", indexName)
 		index := elasticCreateIndex(indexPrefix)
-		_, err = client.CreateIndex(indexName).
+		_, err = e.client.CreateIndex(indexName).
 			BodyJson(index).
 			Do(ctx)
 		instruESCreateIndex(err)
@@ -42,7 +58,7 @@ func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (e
 
 	document := ConvertTimberToElasticDocument(timber)
 
-	_, err = client.Index().
+	_, err = e.client.Index().
 		Index(indexName).
 		Type(documentType).
 		BodyJson(document).
@@ -50,6 +66,10 @@ func elasticStore(client *elastic.Client, ctx context.Context, timber Timber) (e
 	instruESStore(appSecret, err)
 
 	return
+}
+
+func (e *elasticClient) OnFailure(f func(*Timber)) {
+	e.onFailureFunc = f
 }
 
 func elasticCreateIndex(indexPrefix string) *es.Index {
