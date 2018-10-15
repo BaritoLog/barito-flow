@@ -17,7 +17,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	esUrl := configElasticsearchUrl()
 	topicSuffix := configKafkaTopicSuffix()
 	newTopicEventName := configNewTopicEvent()
-	elasticRetrierInterval := configElasticsearhRetrierInterval()
+	elasticRetrierInterval := configElasticsearchRetrierInterval()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env

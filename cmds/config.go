@@ -121,7 +121,7 @@ func configNewTopicEvent() string {
 
 }
 
-func configElasticsearhRetrierInterval() string {
+func configElasticsearchRetrierInterval() string {
 	return stringEnvOrDefault(EnvConsumerElasticsearchRetrierInterval, DefaultElasticsearchRetrierInterval)
 }
 
