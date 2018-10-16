@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.10.1
+- Use updated instru that avoid race condition problem on counter
+
 #### 0.10.0
 - Implement Elasticsearch backoff functionality
 
