@@ -14,6 +14,12 @@ const (
 // Timber
 type Timber map[string]interface{}
 
+// Timber Collection
+type TimberCollection struct {
+	Items   []Timber      `json:"items"`
+	Context TimberContext `json:"_ctx"`
+}
+
 type TimberContext struct {
 	KafkaTopic             string `json:"kafka_topic"`
 	KafkaPartition         int32  `json:"kafka_partition"`
