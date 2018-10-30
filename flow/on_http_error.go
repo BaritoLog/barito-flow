@@ -8,8 +8,7 @@ import (
 )
 
 type ProduceResult struct {
-	Topic      string `json:"topic"`
-	IsNewTopic bool   `json:"is_new_topic"`
+	Topic string `json:"topic"`
 }
 
 func onLimitExceeded(rw http.ResponseWriter) {
