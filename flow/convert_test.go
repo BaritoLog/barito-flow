@@ -24,6 +24,10 @@ func TestConvertBytesToTimber_JsonParseError(t *testing.T) {
 	_, err := ConvertBytesToTimber([]byte(`invalid_json`))
 	FatalIfWrongError(t, err, string(JsonParseError))
 }
+func TestConvertBytesToTimberCollection_JsonParseError(t *testing.T) {
+	_, err := ConvertBytesToTimberCollection([]byte(`invalid_json`))
+	FatalIfWrongError(t, err, string(JsonParseError))
+}
 
 func TestConvertBytesToTimber_MissingContext(t *testing.T) {
 	_, err := ConvertBytesToTimber([]byte(`{"hello":"world"}`))
@@ -44,6 +48,17 @@ func TestConvertRequestToTimber(t *testing.T) {
 	FatalIfError(t, err)
 
 	FatalIf(t, timber["message"] != "some-message", "Wrong timber.message")
+}
+
+func TestConvertBatchRequestToTimberCollection(t *testing.T) {
+
+	req, err := http.NewRequest("POST", "/produce_batch", bytes.NewReader(sampleRawTimberCollection()))
+	FatalIfError(t, err)
+
+	timberCollection, err := ConvertBatchRequestToTimberCollection(req)
+	FatalIfError(t, err)
+
+	FatalIf(t, timberCollection.Items[0]["message"] != "some-message-1", "Wrong timber.message")
 }
 
 func TestNewTimberFromKafka(t *testing.T) {
@@ -90,6 +105,31 @@ func sampleRawTimber() []byte {
 	return []byte(`{
 		"location": "some-location",
 		"message":"some-message",
+		"_ctx": {
+			"kafka_topic": "some_topic",
+			"kafka_partition": 3,
+			"kafka_replication_factor": 1,
+			"es_index_prefix": "some-type",
+			"es_document_type": "some-type",
+			"app_max_tps": 10,
+			"app_secret": "some-secret-1234"
+		}
+	}`)
+
+}
+
+func sampleRawTimberCollection() []byte {
+	return []byte(`{
+		"items": [
+			{
+				"location": "some-location-1",
+				"message":"some-message-1"
+			},
+			{
+				"location": "some-location-2",
+				"message":"some-message-2"
+			}
+		],
 		"_ctx": {
 			"kafka_topic": "some_topic",
 			"kafka_partition": 3,
