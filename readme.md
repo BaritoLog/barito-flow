@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.1
+- Bugfix: Rate limiter on produce batch should count per request, not per log
+
 #### 0.11
 - New feature: Ability to process batch logs
 
