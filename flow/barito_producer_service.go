@@ -102,13 +102,22 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 			return
 		}
 
+		// add suffix
+		topic = timberCollection.Context.KafkaTopic + s.topicSuffix
+
+		maxTokenIfNotExist := timberCollection.Context.AppMaxTPS
+		if s.limiter.IsHitLimit(topic, maxTokenIfNotExist) {
+			onLimitExceeded(rw)
+			return
+		}
+
 		for _, timber := range timberCollection.Items {
 			timber.SetContext(&timberCollection.Context)
 			if timber.Timestamp() == "" {
 				timber.SetTimestamp(time.Now().UTC().Format(time.RFC3339))
 			}
 
-			success, topic = s.handleProduce(rw, timber)
+			success = s.handleProduce(rw, timber, topic)
 
 			if success == false {
 				return
@@ -122,7 +131,16 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 			return
 		}
 
-		success, topic = s.handleProduce(rw, timber)
+		// add suffix
+		topic = timber.Context().KafkaTopic + s.topicSuffix
+
+		maxTokenIfNotExist := timber.Context().AppMaxTPS
+		if s.limiter.IsHitLimit(topic, maxTokenIfNotExist) {
+			onLimitExceeded(rw)
+			return
+		}
+
+		success = s.handleProduce(rw, timber, topic)
 	}
 
 	if success == true {
@@ -147,17 +165,8 @@ func (s *baritoProducerService) sendCreateTopicEvents(topic string) (err error) 
 	return
 }
 
-func (s *baritoProducerService) handleProduce(rw http.ResponseWriter, timber Timber) (bool, string) {
+func (s *baritoProducerService) handleProduce(rw http.ResponseWriter, timber Timber, topic string) bool {
 	var err error
-
-	// add suffix
-	topic := timber.Context().KafkaTopic + s.topicSuffix
-
-	maxTokenIfNotExist := timber.Context().AppMaxTPS
-	if s.limiter.IsHitLimit(topic, maxTokenIfNotExist) {
-		onLimitExceeded(rw)
-		return false, ""
-	}
 
 	if !s.admin.Exist(topic) {
 		numPartitions := timber.Context().KafkaPartition
@@ -168,22 +177,22 @@ func (s *baritoProducerService) handleProduce(rw http.ResponseWriter, timber Tim
 		err = s.admin.CreateTopic(topic, numPartitions, replicationFactor)
 		if err != nil {
 			onCreateTopicError(rw, err)
-			return false, ""
+			return false
 		}
 
 		s.admin.AddTopic(topic)
 		err = s.sendCreateTopicEvents(topic)
 		if err != nil {
 			onSendCreateTopicError(rw, err)
-			return false, ""
+			return false
 		}
 	}
 
 	err = s.sendLogs(topic, timber)
 	if err != nil {
 		onStoreError(rw, err)
-		return false, ""
+		return false
 	}
 
-	return true, topic
+	return true
 }

@@ -178,9 +178,6 @@ func TestBaritoProducerService_ServeHTTP_ProduceBatch_OnSuccess(t *testing.T) {
 	b, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(b, &result)
 
-	fmt.Println(string(b))
-	fmt.Println(result)
-
 	FatalIf(t, result.Topic != "some_topic_logs", "wrong result.Topic")
 }
 
