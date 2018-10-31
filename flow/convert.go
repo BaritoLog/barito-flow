@@ -33,10 +33,29 @@ func ConvertBytesToTimber(data []byte) (timber Timber, err error) {
 	return
 }
 
+func ConvertBytesToTimberCollection(data []byte) (timberCollection TimberCollection, err error) {
+	err = json.Unmarshal(data, &timberCollection)
+	if err != nil {
+		err = errkit.Concat(JsonParseError, err)
+		return
+	}
+
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // NewTimberFromRequest create timber instance from http request
 func ConvertRequestToTimber(req *http.Request) (Timber, error) {
 	body, _ := ioutil.ReadAll(req.Body)
 	return ConvertBytesToTimber(body)
+}
+
+func ConvertBatchRequestToTimberCollection(req *http.Request) (TimberCollection, error) {
+	body, _ := ioutil.ReadAll(req.Body)
+	return ConvertBytesToTimberCollection(body)
 }
 
 // NewTimberFromKafkaMessage create timber instance from kafka message

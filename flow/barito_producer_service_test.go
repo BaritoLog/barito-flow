@@ -141,7 +141,47 @@ func TestBaritoProducerService_ServeHTTP_OnSuccess(t *testing.T) {
 	json.Unmarshal(b, &result)
 
 	FatalIf(t, result.Topic != "some_topic_logs", "wrong result.Topic")
-	FatalIf(t, result.IsNewTopic != true, "wrong result.IsNewTopic")
+}
+
+func TestBaritoProducerService_ServeHTTP_ProduceBatch_OnSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	admin := mock.NewMockKafkaAdmin(ctrl)
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+
+	producer := mock.NewMockSyncProducer(ctrl)
+	producer.EXPECT().SendMessage(gomock.Any()).AnyTimes()
+
+	limiter := NewDummyRateLimiter()
+
+	agent := &baritoProducerService{
+		producer:    producer,
+		topicSuffix: "_logs",
+		admin:       admin,
+		limiter:     limiter,
+	}
+
+	req, _ := http.NewRequest("POST", "/produce_batch", bytes.NewReader(sampleRawTimberCollection()))
+	resp := RecordResponse(agent.ServeHTTP, req)
+
+	FatalIfWrongResponseStatus(t, resp, http.StatusOK)
+
+	var result ProduceResult
+	b, _ := ioutil.ReadAll(resp.Body)
+	json.Unmarshal(b, &result)
+
+	fmt.Println(string(b))
+	fmt.Println(result)
+
+	FatalIf(t, result.Topic != "some_topic_logs", "wrong result.Topic")
 }
 
 func TestBaritoProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
