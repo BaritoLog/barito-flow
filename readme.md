@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.3
+- Lower metadata refresh frequency
+
 #### 0.11.2
 - Bugfix: Refresh metadata before creating new topic (see [here](https://github.com/Shopify/sarama/issues/1162))
 

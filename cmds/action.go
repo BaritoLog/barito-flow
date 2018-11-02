@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
@@ -51,6 +52,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = maxRetry
 	config.Producer.Return.Successes = true
+	config.Metadata.RefreshFrequency = 1 * time.Minute
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
