@@ -99,6 +99,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.2
+- Bugfix: Refresh metadata before creating new topic (see [here](https://github.com/Shopify/sarama/issues/1162))
+
 #### 0.11.1
 - Bugfix: Rate limiter on produce batch should count per request, not per log
 

@@ -94,6 +94,7 @@ func (a *kafkaAdmin) Close() {
 }
 
 func (a *kafkaAdmin) CreateTopic(topic string, numPartitions int32, replicationFactor int16) (err error) {
+	a.client.RefreshMetadata()
 	detail := &sarama.TopicDetail{NumPartitions: numPartitions, ReplicationFactor: replicationFactor}
 	err = a.clusterAdmin.CreateTopic(topic, detail, false)
 	if err != nil {
