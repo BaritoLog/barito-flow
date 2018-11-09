@@ -47,6 +47,27 @@ func TestRateLimiter(t *testing.T) {
 	FatalIf(t, limiter.IsStart(), "limiter should be stop")
 }
 
+func TestRateLimiter_Batch(t *testing.T) {
+	max := 5
+
+	limiter := NewRateLimiter(timekit.Duration("1ms"))
+	limiter.PutBucket("abc", NewLeakyBucket(max))
+	limiter.Start()
+
+	timekit.Sleep("1ns")
+	FatalIf(t, !limiter.IsStart(), "limiter should be start")
+
+	FatalIf(t, !limiter.IsHitLimit("abc", 6, max), "it should be hit limit at abc")
+
+	// wait until refill time
+	timekit.Sleep("2ms")
+	FatalIf(t, !limiter.Bucket("abc").IsFull(), "bucket must be full")
+
+	limiter.Stop()
+	timekit.Sleep("1ms")
+	FatalIf(t, limiter.IsStart(), "limiter should be stop")
+}
+
 func TestRateLimiter_IsHitLimit_UpdateMax(t *testing.T) {
 	max := 4
 	newMax := 6

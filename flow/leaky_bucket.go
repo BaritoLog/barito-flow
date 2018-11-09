@@ -44,7 +44,7 @@ func (l *LeakyBucket) Refill() {
 
 func (l *LeakyBucket) Take(count int) bool {
 
-	if l.token <= 0 {
+	if (l.token - count) < 0 {
 		return false
 	}
 
