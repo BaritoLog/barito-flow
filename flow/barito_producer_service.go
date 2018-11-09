@@ -106,7 +106,7 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		topic = timberCollection.Context.KafkaTopic + s.topicSuffix
 
 		maxTokenIfNotExist := timberCollection.Context.AppMaxTPS
-		if s.limiter.IsHitLimit(topic, maxTokenIfNotExist) {
+		if s.limiter.IsHitLimit(topic, len(timberCollection.Items), maxTokenIfNotExist) {
 			onLimitExceeded(rw)
 			return
 		}
@@ -135,7 +135,7 @@ func (s *baritoProducerService) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		topic = timber.Context().KafkaTopic + s.topicSuffix
 
 		maxTokenIfNotExist := timber.Context().AppMaxTPS
-		if s.limiter.IsHitLimit(topic, maxTokenIfNotExist) {
+		if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
 			onLimitExceeded(rw)
 			return
 		}

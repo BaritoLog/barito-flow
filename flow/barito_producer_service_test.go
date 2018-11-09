@@ -33,6 +33,24 @@ func TestBaritoProducerService_ServeHTTP_OnLimitExceed(t *testing.T) {
 	FatalIfWrongResponseStatus(t, resp, 509)
 }
 
+func TestBaritoProducerService_ServeHTTP_Batch_OnLimitExceed(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	limiter := NewDummyRateLimiter()
+	limiter.Expect_IsHitLimit_AlwaysTrue()
+
+	srv := &baritoProducerService{
+		limiter: limiter,
+	}
+
+	req, _ := http.NewRequest("POST", "/produce_batch", bytes.NewReader(sampleRawTimberCollection()))
+	resp := RecordResponse(srv.ServeHTTP, req)
+
+	FatalIfWrongResponseStatus(t, resp, 509)
+}
+
 func TestBaritoProducerService_ServeHTTP_OnBadRequest(t *testing.T) {
 
 	ctrl := gomock.NewController(t)

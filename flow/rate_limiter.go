@@ -5,7 +5,7 @@ import (
 )
 
 type RateLimiter interface {
-	IsHitLimit(topic string, maxTokenIfNotExist int) bool
+	IsHitLimit(topic string, count int, maxTokenIfNotExist int) bool
 	Start()
 	Stop()
 	IsStart() bool
@@ -28,7 +28,7 @@ func NewRateLimiter(duration time.Duration) RateLimiter {
 	}
 }
 
-func (l *rateLimiter) IsHitLimit(topic string, maxTokenIfNotExist int) bool {
+func (l *rateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int) bool {
 	bucket, ok := l.bucketMap[topic]
 	if !ok {
 		bucket = NewLeakyBucket(maxTokenIfNotExist)
@@ -37,7 +37,7 @@ func (l *rateLimiter) IsHitLimit(topic string, maxTokenIfNotExist int) bool {
 	if bucket.Max() != maxTokenIfNotExist {
 		bucket.UpdateMax(maxTokenIfNotExist)
 	}
-	return !bucket.Take(1)
+	return !bucket.Take(count)
 }
 
 func (l *rateLimiter) Start() {

@@ -12,7 +12,7 @@ func TestRateLimiter_IsHitMax_CreateNewBucketIfNotExist(t *testing.T) {
 		bucketMap: make(map[string]*LeakyBucket),
 	}
 
-	isHit := limiter.IsHitLimit("some-topic", 13)
+	isHit := limiter.IsHitLimit("some-topic", 1, 13)
 
 	_, ok := limiter.bucketMap["some-topic"]
 	FatalIf(t, !ok, "must be create new bucket with key some-topic")
@@ -31,11 +31,11 @@ func TestRateLimiter(t *testing.T) {
 	FatalIf(t, !limiter.IsStart(), "limiter should be start")
 
 	for i := 0; i < max; i++ {
-		FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", i)
+		FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", i)
 	}
 
-	FatalIf(t, !limiter.IsHitLimit("abc", max), "it should be hit limit at abc")
-	FatalIf(t, limiter.IsHitLimit("def", max), "it should be still have token at def")
+	FatalIf(t, !limiter.IsHitLimit("abc", 1, max), "it should be hit limit at abc")
+	FatalIf(t, limiter.IsHitLimit("def", 1, max), "it should be still have token at def")
 
 	// wait until refill time
 	timekit.Sleep("2ms")
@@ -55,10 +55,10 @@ func TestRateLimiter_IsHitLimit_UpdateMax(t *testing.T) {
 	limiter.Start()
 
 	timekit.Sleep("1ns")
-	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 0)
-	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 1)
-	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 2)
-	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 3)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 0)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 1)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 2)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 3)
 
-	FatalIf(t, limiter.IsHitLimit("abc", newMax), "it should be still have token at abc: %s", 4)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, newMax), "it should be still have token at abc: %s", 4)
 }
