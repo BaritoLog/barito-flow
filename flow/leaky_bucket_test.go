@@ -23,3 +23,13 @@ func TestLeakyBucket(t *testing.T) {
 	FatalIf(t, !bucket.IsFull(), "bucket must be full")
 	FatalIf(t, !bucket.Take(1), "bucket is refilled")
 }
+
+func TestUpdateMax(t *testing.T) {
+	max := 4
+	bucket := NewLeakyBucket(max)
+
+	bucket.Take(2)
+	bucket.UpdateMax(6)
+	bucket.Take(2)
+	FatalIf(t, !bucket.Take(1), "bucket is empty")
+}

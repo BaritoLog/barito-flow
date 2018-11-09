@@ -34,6 +34,9 @@ func (l *rateLimiter) IsHitLimit(topic string, maxTokenIfNotExist int) bool {
 		bucket = NewLeakyBucket(maxTokenIfNotExist)
 		l.bucketMap[topic] = bucket
 	}
+	if bucket.Max() != maxTokenIfNotExist {
+		bucket.UpdateMax(maxTokenIfNotExist)
+	}
 	return !bucket.Take(1)
 }
 

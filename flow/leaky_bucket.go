@@ -25,6 +25,15 @@ func (b *LeakyBucket) Max() int {
 	return b.max
 }
 
+func (b *LeakyBucket) UpdateMax(newMax int) {
+	b.lock.Lock()
+	if newMax > b.max {
+		b.token = b.token + (newMax - b.max)
+	}
+	b.max = newMax
+	b.lock.Unlock()
+}
+
 func (b *LeakyBucket) IsFull() bool {
 	return b.token == b.max
 }

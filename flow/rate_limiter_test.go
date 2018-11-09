@@ -46,3 +46,19 @@ func TestRateLimiter(t *testing.T) {
 	timekit.Sleep("1ms")
 	FatalIf(t, limiter.IsStart(), "limiter should be stop")
 }
+
+func TestRateLimiter_IsHitLimit_UpdateMax(t *testing.T) {
+	max := 4
+	newMax := 6
+	limiter := NewRateLimiter(timekit.Duration("1ms"))
+	limiter.PutBucket("abc", NewLeakyBucket(max))
+	limiter.Start()
+
+	timekit.Sleep("1ns")
+	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 0)
+	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 1)
+	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 2)
+	FatalIf(t, limiter.IsHitLimit("abc", max), "it should be still have token at abc: %s", 3)
+
+	FatalIf(t, limiter.IsHitLimit("abc", newMax), "it should be still have token at abc: %s", 4)
+}
