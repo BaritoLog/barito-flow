@@ -14,12 +14,12 @@ func TestLeakyBucket(t *testing.T) {
 	FatalIf(t, bucket.Token() != max, "bucket.Token() is wrong")
 
 	for i := 0; i < max; i++ {
-		FatalIf(t, !bucket.Take(), "bucket still have token")
+		FatalIf(t, !bucket.Take(1), "bucket still have token")
 	}
 
-	FatalIf(t, bucket.Take(), "bucket is empty")
+	FatalIf(t, bucket.Take(1), "bucket is empty")
 
 	bucket.Refill()
 	FatalIf(t, !bucket.IsFull(), "bucket must be full")
-	FatalIf(t, !bucket.Take(), "bucket is refilled")
+	FatalIf(t, !bucket.Take(1), "bucket is refilled")
 }

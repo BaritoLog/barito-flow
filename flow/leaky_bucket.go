@@ -33,14 +33,14 @@ func (l *LeakyBucket) Refill() {
 	l.token = l.max
 }
 
-func (l *LeakyBucket) Take() bool {
+func (l *LeakyBucket) Take(count int) bool {
 
 	if l.token <= 0 {
 		return false
 	}
 
 	l.lock.Lock()
-	l.token--
+	l.token = l.token - count
 	l.lock.Unlock()
 	return true
 }
