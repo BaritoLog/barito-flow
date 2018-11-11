@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
-	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 )
@@ -21,10 +20,11 @@ type BaritoProducerService interface {
 }
 
 type baritoProducerService struct {
-	factory       KafkaFactory
-	addr          string
-	topicSuffix   string
-	newEventTopic string
+	factory                KafkaFactory
+	addr                   string
+	rateLimitResetInterval int
+	topicSuffix            string
+	newEventTopic          string
 
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
@@ -32,12 +32,13 @@ type baritoProducerService struct {
 	limiter  RateLimiter
 }
 
-func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, topicSuffix string, newEventTopic string) BaritoProducerService {
+func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, newEventTopic string) BaritoProducerService {
 	return &baritoProducerService{
-		factory:       factory,
-		addr:          addr,
-		topicSuffix:   topicSuffix,
-		newEventTopic: newEventTopic,
+		factory: factory,
+		addr:    addr,
+		rateLimitResetInterval: rateLimitResetInterval,
+		topicSuffix:            topicSuffix,
+		newEventTopic:          newEventTopic,
 	}
 }
 
@@ -55,7 +56,7 @@ func (s *baritoProducerService) Start() (err error) {
 		return
 	}
 
-	s.limiter = NewRateLimiter(timekit.Duration("1s"))
+	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
 	s.limiter.Start()
 
 	server := s.initHttpServer()

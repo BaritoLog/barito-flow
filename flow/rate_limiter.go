@@ -1,7 +1,10 @@
 package flow
 
 import (
+	"strconv"
 	"time"
+
+	"github.com/BaritoLog/go-boilerplate/timekit"
 )
 
 type RateLimiter interface {
@@ -15,14 +18,16 @@ type RateLimiter interface {
 
 type rateLimiter struct {
 	isStart   bool
+	duration  int
 	tick      <-chan time.Time
 	stop      chan int
 	bucketMap map[string]*LeakyBucket
 }
 
-func NewRateLimiter(duration time.Duration) RateLimiter {
+func NewRateLimiter(duration int) RateLimiter {
 	return &rateLimiter{
-		tick:      time.Tick(duration),
+		duration:  duration,
+		tick:      time.Tick(timekit.Duration(strconv.Itoa(duration) + "s")),
 		stop:      make(chan int),
 		bucketMap: make(map[string]*LeakyBucket),
 	}
@@ -31,11 +36,11 @@ func NewRateLimiter(duration time.Duration) RateLimiter {
 func (l *rateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int) bool {
 	bucket, ok := l.bucketMap[topic]
 	if !ok {
-		bucket = NewLeakyBucket(maxTokenIfNotExist)
+		bucket = NewLeakyBucket(maxTokenIfNotExist * l.duration)
 		l.bucketMap[topic] = bucket
 	}
-	if bucket.Max() != maxTokenIfNotExist {
-		bucket.UpdateMax(maxTokenIfNotExist)
+	if bucket.Max() != (maxTokenIfNotExist * l.duration) {
+		bucket.UpdateMax(maxTokenIfNotExist * l.duration)
 	}
 	return !bucket.Take(count)
 }
