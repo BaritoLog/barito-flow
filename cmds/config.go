@@ -17,9 +17,10 @@ const (
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
 
-	EnvProducerAddress  = "BARITO_PRODUCER_ADDRESS" // TODO: rename to better name
-	EnvProducerMaxRetry = "BARITO_PRODUCER_MAX_RETRY"
-	EnvProducerMaxTPS   = "BARITO_PRODUCER_MAX_TPS"
+	EnvProducerAddress                = "BARITO_PRODUCER_ADDRESS" // TODO: rename to better name
+	EnvProducerMaxRetry               = "BARITO_PRODUCER_MAX_RETRY"
+	EnvProducerMaxTPS                 = "BARITO_PRODUCER_MAX_TPS"
+	EnvProducerRateLimitResetInterval = "BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL"
 
 	EnvConsulUrl               = "BARITO_CONSUL_URL"
 	EnvConsulKafkaName         = "BARITO_CONSUL_KAFKA_NAME"
@@ -42,9 +43,10 @@ var (
 	DefaultPushMetricUrl      = ""
 	DefaultPushMetricInterval = "30s"
 
-	DefaultProducerAddress  = ":8080"
-	DefaultProducerMaxRetry = 10
-	DefaultProducerMaxTPS   = 100
+	DefaultProducerAddress                = ":8080"
+	DefaultProducerMaxRetry               = 10
+	DefaultProducerMaxTPS                 = 100
+	DefaultProducerRateLimitResetInterval = 10
 
 	DefaultNewTopicEventName            = "new_topic_events"
 	DefaultElasticsearchRetrierInterval = "30s"
@@ -102,6 +104,10 @@ func configProducerMaxRetry() (i int) {
 
 func configProducerMaxTPS() (i int) {
 	return intEnvOrDefault(EnvProducerMaxTPS, DefaultProducerMaxTPS)
+}
+
+func configProducerRateLimitResetInterval() (i int) {
+	return intEnvOrDefault(EnvProducerRateLimitResetInterval, DefaultProducerRateLimitResetInterval)
 }
 
 func configConsulKafkaName() (s string) {

@@ -33,6 +33,24 @@ func TestBaritoProducerService_ServeHTTP_OnLimitExceed(t *testing.T) {
 	FatalIfWrongResponseStatus(t, resp, 509)
 }
 
+func TestBaritoProducerService_ServeHTTP_Batch_OnLimitExceed(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	limiter := NewDummyRateLimiter()
+	limiter.Expect_IsHitLimit_AlwaysTrue()
+
+	srv := &baritoProducerService{
+		limiter: limiter,
+	}
+
+	req, _ := http.NewRequest("POST", "/produce_batch", bytes.NewReader(sampleRawTimberCollection()))
+	resp := RecordResponse(srv.ServeHTTP, req)
+
+	FatalIfWrongResponseStatus(t, resp, 509)
+}
+
 func TestBaritoProducerService_ServeHTTP_OnBadRequest(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
@@ -185,7 +203,7 @@ func TestBaritoProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeSyncProducerFunc_AlwaysError("some-error")
 
-	service := NewBaritoProducerService(factory, "addr", 1, "_logs", "new_topic_events")
+	service := NewBaritoProducerService(factory, "addr", 1, 1, "_logs", "new_topic_events")
 	err := service.Start()
 
 	FatalIfWrongError(t, err, "Make sync producer failed: some-error")
@@ -195,7 +213,7 @@ func TestBaritoProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
 
-	service := NewBaritoProducerService(factory, "addr", 1, "_logs", "new_topic_events")
+	service := NewBaritoProducerService(factory, "addr", 1, 1, "_logs", "new_topic_events")
 	err := service.Start()
 
 	FatalIfWrongError(t, err, "Make kafka admin failed: some-error")

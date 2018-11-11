@@ -37,11 +37,6 @@ Run
 
 Environment Variables
 
-
-
-log.Infof("ProducerMaxTps: %d", producerMaxTps)
-
-
 | Name| Description | ENV | Default Value  |
 | ---|---|---|---|
 | KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul| BARITO_KAFKA_BROKERS| localhost:9092 |
@@ -51,7 +46,7 @@ log.Infof("ProducerMaxTps: %d", producerMaxTps)
 |KafkaProducerTopic| kafka topic| BARITO_KAFKA_PRODUCER_TOPIC | producer-topic |
 |ProducerMaxRetry| set kafka setting max retry| BARITO_PRODUCER_MAX_RETRY | 10 |
 |ProducerMaxTps| producer rate limit trx per second| BARITO_PRODUCER_MAX_TPS | 100 |
-
+|ProducerRateLimitResetInterval| producer rate limit reset interval (in seconds)| BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL | 10 |
 
 ## Consumer
 

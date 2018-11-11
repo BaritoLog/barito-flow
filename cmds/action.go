@@ -44,6 +44,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaBrokers := configKafkaBrokers()
 	maxRetry := configProducerMaxRetry()
 	maxTps := configProducerMaxTPS()
+	rateLimitResetInterval := configProducerRateLimitResetInterval()
 	topicSuffix := configKafkaTopicSuffix()
 	newTopicEventName := configNewTopicEvent()
 
@@ -61,6 +62,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		factory,
 		address,
 		maxTps,
+		rateLimitResetInterval,
 		topicSuffix,
 		newTopicEventName)
 
