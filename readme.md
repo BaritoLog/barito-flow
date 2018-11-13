@@ -94,6 +94,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.5
+- Recreate cluster admin whenever barito-flow needs to create a new topic
+
 #### 0.11.4
 - Update rate limiter behaviour for produce batch, now it counts rate per line in batch instead of per batch request
 
