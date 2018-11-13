@@ -94,6 +94,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.4
+- Update rate limiter behaviour for produce batch, now it counts rate per line in batch instead of per batch request
+
 #### 0.11.3
 - Lower metadata refresh frequency
 
