@@ -89,7 +89,7 @@ func (w *consumerWorker) loopMain() {
 			if ok {
 				w.consumer.MarkOffset(message, "")
 				w.fireSuccess(message)
-				log.Infof("Mark Offset, %s", message)
+				log.Infof("Mark Offset, %v", message)
 			}
 		case <-w.stop:
 			w.isStart = false
