@@ -19,8 +19,8 @@ type KafkaAdmin interface {
 
 type kafkaAdmin struct {
 	topics       []string
+	brokers      []string
 	client       sarama.Client
-	clusterAdmin sarama.ClusterAdmin
 	refreshMutex sync.Mutex
 }
 
@@ -30,14 +30,9 @@ func NewKafkaAdmin(client sarama.Client) (admin KafkaAdmin, err error) {
 		brokers = append(brokers, broker.Addr())
 	}
 
-	clusterAdmin, err := sarama.NewClusterAdmin(brokers, client.Config())
-	if err != nil {
-		return
-	}
-
 	return &kafkaAdmin{
-		client:       client,
-		clusterAdmin: clusterAdmin,
+		client:  client,
+		brokers: brokers,
 	}, nil
 }
 
@@ -96,7 +91,14 @@ func (a *kafkaAdmin) Close() {
 func (a *kafkaAdmin) CreateTopic(topic string, numPartitions int32, replicationFactor int16) (err error) {
 	a.client.RefreshMetadata()
 	detail := &sarama.TopicDetail{NumPartitions: numPartitions, ReplicationFactor: replicationFactor}
-	err = a.clusterAdmin.CreateTopic(topic, detail, false)
+	clusterAdmin, err := sarama.NewClusterAdmin(a.brokers, a.client.Config())
+
+	defer clusterAdmin.Close()
+	if err != nil {
+		return
+	}
+
+	err = clusterAdmin.CreateTopic(topic, detail, false)
 	if err != nil {
 		return
 	}

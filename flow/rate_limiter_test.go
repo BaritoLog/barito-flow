@@ -32,7 +32,7 @@ func TestRateLimiter(t *testing.T) {
 	FatalIf(t, !limiter.IsStart(), "limiter should be start")
 
 	for i := 0; i < max; i++ {
-		FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", i)
+		FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %d", i)
 	}
 
 	FatalIf(t, !limiter.IsHitLimit("abc", 1, max), "it should be hit limit at abc")
@@ -77,10 +77,10 @@ func TestRateLimiter_IsHitLimit_UpdateMax(t *testing.T) {
 	limiter.Start()
 
 	timekit.Sleep("1s")
-	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 0)
-	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 1)
-	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 2)
-	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %s", 3)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %d", 0)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %d", 1)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %d", 2)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %d", 3)
 
-	FatalIf(t, limiter.IsHitLimit("abc", 1, newMax), "it should be still have token at abc: %s", 4)
+	FatalIf(t, limiter.IsHitLimit("abc", 1, newMax), "it should be still have token at abc: %d", 4)
 }
