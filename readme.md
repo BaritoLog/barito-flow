@@ -94,6 +94,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.6
+- Set round robin strategy as default for consumer rebalancing, also allow it to be configured
+
 #### 0.11.5
 - Recreate cluster admin whenever barito-flow needs to create a new topic
 
