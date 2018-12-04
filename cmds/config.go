@@ -28,6 +28,7 @@ const (
 
 	EnvNewTopicEventName                    = "BARITO_NEW_TOPIC_EVENT"
 	EnvConsumerElasticsearchRetrierInterval = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_INTERVAL"
+	EnvConsumerRebalancingStrategy          = "BARITO_CONSUMER_REBALANCING_STRATEGY"
 )
 
 var (
@@ -50,6 +51,7 @@ var (
 
 	DefaultNewTopicEventName            = "new_topic_events"
 	DefaultElasticsearchRetrierInterval = "30s"
+	DefaultConsumerRebalancingStrategy  = "RoundRobin"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -129,6 +131,10 @@ func configNewTopicEvent() string {
 
 func configElasticsearchRetrierInterval() string {
 	return stringEnvOrDefault(EnvConsumerElasticsearchRetrierInterval, DefaultElasticsearchRetrierInterval)
+}
+
+func configConsumerRebalancingStrategy() string {
+	return stringEnvOrDefault(EnvConsumerRebalancingStrategy, DefaultConsumerRebalancingStrategy)
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {

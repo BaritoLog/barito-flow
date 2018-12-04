@@ -22,6 +22,11 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
+	if configConsumerRebalancingStrategy() == "RoundRobin" {
+		config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
+	} else if configConsumerRebalancingStrategy() == "Range" {
+		config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRange
+	}
 
 	factory := flow.NewKafkaFactory(brokers, config)
 
