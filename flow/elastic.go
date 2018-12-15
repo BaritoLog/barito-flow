@@ -45,7 +45,7 @@ func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 	exists, _ := e.client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
-		log.Infof("ES index '%s' is not exist", indexName)
+		log.Warnf("ES index '%s' is not exist", indexName)
 		index := elasticCreateIndex(indexPrefix)
 		_, err = e.client.CreateIndex(indexName).
 			BodyJson(index).

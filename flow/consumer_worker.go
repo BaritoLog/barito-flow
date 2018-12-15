@@ -41,7 +41,7 @@ func NewConsumerWorker(name string, consumer ClusterConsumer) ConsumerWorker {
 }
 
 func (w *consumerWorker) Start() {
-	log.Infof("Start worker '%s'", w.name)
+	log.Warnf("Start worker '%s'", w.name)
 
 	go w.loopErrors()
 	go w.loopNotification()

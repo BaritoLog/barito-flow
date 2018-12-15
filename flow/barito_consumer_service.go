@@ -164,7 +164,7 @@ func (s *baritoConsumerService) logTimber(timber Timber) {
 
 func (s *baritoConsumerService) logNewTopic(topic string) {
 	s.lastNewTopic = topic
-	log.Infof("New topic: %s", topic)
+	log.Warnf("New topic: %s", topic)
 }
 
 func (s *baritoConsumerService) onElasticRetry(err error) {

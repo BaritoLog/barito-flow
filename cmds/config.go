@@ -174,5 +174,5 @@ func sliceEnvOrDefault(key, separator string, defaultSlice []string) []string {
 }
 
 func logConfig(source, key string, val interface{}) {
-	log.WithField("config", source).Infof("%s = %v", key, val)
+	log.WithField("config", source).Warnf("%s = %v", key, val)
 }

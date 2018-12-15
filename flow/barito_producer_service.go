@@ -173,7 +173,7 @@ func (s *baritoProducerService) handleProduce(rw http.ResponseWriter, timber Tim
 		numPartitions := timber.Context().KafkaPartition
 		replicationFactor := timber.Context().KafkaReplicationFactor
 
-		log.Infof("%s is not exist. Creating topic with partition:%v replication_factor:%v", topic, numPartitions, replicationFactor)
+		log.Warnf("%s is not exist. Creating topic with partition:%v replication_factor:%v", topic, numPartitions, replicationFactor)
 
 		err = s.admin.CreateTopic(topic, numPartitions, replicationFactor)
 		if err != nil {
