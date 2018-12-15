@@ -94,6 +94,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.7
+- Enable toggle-able verbose mode
+
 #### 0.11.6
 - Set round robin strategy as default for consumer rebalancing, also allow it to be configured
 
