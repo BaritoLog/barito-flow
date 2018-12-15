@@ -19,6 +19,10 @@ var (
 	Build  string = "MANUAL"
 )
 
+func init() {
+	log.SetLevel(log.WarnLevel)
+}
+
 func main() {
 	app := cli.App{
 		Name:    Name,
@@ -30,12 +34,24 @@ func main() {
 				ShortName: "p",
 				Usage:     "start barito-flow as producer",
 				Action:    cmds.ActionBaritoProducerService,
+				Flags: []cli.Flag{
+					cli.BoolFlag{
+						Name:  "verbose, V",
+						Usage: "Enable verbose mode",
+					},
+				},
 			},
 			{
 				Name:      "consumer",
 				ShortName: "c",
 				Usage:     "start barito-flow as consumer",
 				Action:    cmds.ActionBaritoConsumerService,
+				Flags: []cli.Flag{
+					cli.BoolFlag{
+						Name:  "verbose, V",
+						Usage: "Enable verbose mode",
+					},
+				},
 			},
 		},
 		UsageText: "barito-flow [commands]",

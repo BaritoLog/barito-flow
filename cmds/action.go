@@ -9,10 +9,17 @@ import (
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/BaritoLog/instru"
 	"github.com/Shopify/sarama"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
 func ActionBaritoConsumerService(c *cli.Context) (err error) {
+	if c.Bool("verbose") == true {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.WarnLevel)
+	}
+
 	brokers := configKafkaBrokers()
 	groupID := configKafkaGroupId()
 	esUrl := configElasticsearchUrl()
@@ -44,6 +51,11 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 }
 
 func ActionBaritoProducerService(c *cli.Context) (err error) {
+	if c.Bool("verbose") == true {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.WarnLevel)
+	}
 
 	address := configProducerAddress()
 	kafkaBrokers := configKafkaBrokers()
