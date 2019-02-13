@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	ErrMakeSyncProducer = errkit.Error("Make sync producer failed")
+	ErrMakeSyncProducer       = errkit.Error("Make sync producer failed")
+	ErrKafkaRetryLimitReached = errkit.Error("Error connecting to kafka, retry limit reached")
 )
 
 type BaritoProducerService interface {
@@ -24,6 +25,8 @@ type baritoProducerService struct {
 	addr                   string
 	rateLimitResetInterval int
 	topicSuffix            string
+	kafkaMaxRetry          int
+	kafkaRetryInterval     int
 	newEventTopic          string
 
 	producer sarama.SyncProducer
@@ -32,25 +35,26 @@ type baritoProducerService struct {
 	limiter  RateLimiter
 }
 
-func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, newEventTopic string) BaritoProducerService {
+func NewBaritoProducerService(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newEventTopic string) BaritoProducerService {
 	return &baritoProducerService{
-		factory: factory,
-		addr:    addr,
+		factory:                factory,
+		addr:                   addr,
 		rateLimitResetInterval: rateLimitResetInterval,
 		topicSuffix:            topicSuffix,
+		kafkaMaxRetry:          kafkaMaxRetry,
+		kafkaRetryInterval:     kafkaRetryInterval,
 		newEventTopic:          newEventTopic,
 	}
 }
 
 func (s *baritoProducerService) Start() (err error) {
-
-	s.producer, err = s.factory.MakeSyncProducer()
+	err = s.initProducer()
 	if err != nil {
 		err = errkit.Concat(ErrMakeSyncProducer, err)
 		return
 	}
 
-	s.admin, err = s.factory.MakeKafkaAdmin()
+	err = s.initKafkaAdmin()
 	if err != nil {
 		err = errkit.Concat(ErrMakeKafkaAdmin, err)
 		return
@@ -61,6 +65,56 @@ func (s *baritoProducerService) Start() (err error) {
 
 	server := s.initHttpServer()
 	return server.ListenAndServe()
+}
+
+func (s *baritoProducerService) initProducer() (err error) {
+	finish := false
+	retry := 0
+	for !finish {
+		retry += 1
+		s.producer, err = s.factory.MakeSyncProducer()
+		if err == nil {
+			finish = true
+			if retry > 1 {
+				log.Infof("Retry kafka sync producer successful")
+			}
+		} else {
+			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
+				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
+				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
+			} else {
+				err = ErrKafkaRetryLimitReached
+				return
+			}
+		}
+	}
+
+	return
+}
+
+func (s *baritoProducerService) initKafkaAdmin() (err error) {
+	finish := false
+	retry := 0
+	for !finish {
+		retry += 1
+		s.admin, err = s.factory.MakeKafkaAdmin()
+		if err == nil {
+			finish = true
+			if retry > 1 {
+				log.Infof("Retry initialize kafka admin successful")
+			}
+		} else {
+			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
+				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
+				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
+			} else {
+				err = ErrKafkaRetryLimitReached
+				return
+			}
+		}
+	}
+
+	return
 }
 
 func (s *baritoProducerService) initHttpServer() (server *http.Server) {

@@ -9,9 +9,12 @@ import (
 )
 
 const (
-	EnvKafkaBrokers     = "BARITO_KAFKA_BROKERS"
-	EnvKafkaGroupID     = "BARITO_KAFKA_GROUP_ID"
-	EnvKafkaTopicSuffix = "BARITO_KAFKA_TOPIC_SUFFIX"
+	EnvKafkaBrokers       = "BARITO_KAFKA_BROKERS"
+	EnvKafkaGroupID       = "BARITO_KAFKA_GROUP_ID"
+	EnvKafkaTopicSuffix   = "BARITO_KAFKA_TOPIC_SUFFIX"
+	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
+	EnvKafkaRetryInterval = "BARITO_KAFKA_RETRY_INTERVAL"
+
 	EnvElasticsearchUrl = "BARITO_ELASTICSEARCH_URL"
 
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
@@ -35,9 +38,11 @@ var (
 	DefaultConsulKafkaName         = "kafka"
 	DefaultConsulElasticsearchName = "elasticsearch"
 
-	DefaultKafkaBrokers     = []string{"localhost:9092"}
-	DefaultKafkaTopicSuffix = "_logs"
-	DefaultKafkaGroupID     = "barito-group"
+	DefaultKafkaBrokers       = []string{"localhost:9092"}
+	DefaultKafkaTopicSuffix   = "_logs"
+	DefaultKafkaGroupID       = "barito-group"
+	DefaultKafkaMaxRetry      = 0
+	DefaultKafkaRetryInterval = 10
 
 	DefaultElasticsearchUrl = "http://localhost:9200"
 
@@ -86,6 +91,14 @@ func configConsulElasticsearchName() (s string) {
 
 func configKafkaGroupId() (s string) {
 	return stringEnvOrDefault(EnvKafkaGroupID, DefaultKafkaGroupID)
+}
+
+func configKafkaMaxRetry() (i int) {
+	return intEnvOrDefault(EnvKafkaMaxRetry, DefaultKafkaMaxRetry)
+}
+
+func configKafkaRetryInterval() (i int) {
+	return intEnvOrDefault(EnvKafkaRetryInterval, DefaultKafkaRetryInterval)
 }
 
 func configPushMetricUrl() (s string) {

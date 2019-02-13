@@ -24,6 +24,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	groupID := configKafkaGroupId()
 	esUrl := configElasticsearchUrl()
 	topicSuffix := configKafkaTopicSuffix()
+	kafkaMaxRetry := configKafkaMaxRetry()
+	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	elasticRetrierInterval := configElasticsearchRetrierInterval()
 
@@ -37,7 +39,16 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 
 	factory := flow.NewKafkaFactory(brokers, config)
 
-	service := flow.NewBaritoConsumerService(factory, groupID, esUrl, topicSuffix, newTopicEventName, elasticRetrierInterval)
+	service := flow.NewBaritoConsumerService(
+		factory,
+		groupID,
+		esUrl,
+		topicSuffix,
+		kafkaMaxRetry,
+		kafkaRetryInterval,
+		newTopicEventName,
+		elasticRetrierInterval,
+	)
 
 	callbackInstrumentation()
 
@@ -63,6 +74,8 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	maxTps := configProducerMaxTPS()
 	rateLimitResetInterval := configProducerRateLimitResetInterval()
 	topicSuffix := configKafkaTopicSuffix()
+	kafkaMaxRetry := configKafkaMaxRetry()
+	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 
 	// kafka producer config
@@ -81,6 +94,8 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		maxTps,
 		rateLimitResetInterval,
 		topicSuffix,
+		kafkaMaxRetry,
+		kafkaRetryInterval,
 		newTopicEventName)
 
 	err = srv.Start()

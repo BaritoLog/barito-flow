@@ -39,14 +39,15 @@ Environment Variables
 
 | Name| Description | ENV | Default Value  |
 | ---|---|---|---|
-| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul| BARITO_KAFKA_BROKERS| localhost:9092 |
-|   |   | BARITO_CONSUL_URL | |
-|   |   | BARITO_CONSUL_KAFKA_NAME | kafka |
+| ConsulUrl | Consul URL | BARITO_CONSUL_URL | |
+| ConsulKafkaName  | Kafka service name in consul | BARITO_CONSUL_KAFKA_NAME | kafka |
+| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul | BARITO_KAFKA_BROKERS | localhost:9092 |
+| KafkaMaxRetry | Number of retry to connect to kafka during startup | BARITO_KAFKA_MAX_RETRY | 0 (unlimited) |
+| KafkaRetryInterval | Interval between retry connecting to kafka (in seconds) | BARITO_KAFKA_RETRY_INTERVAL | 10 |
 | ProducerAddress | Http Server Address | BARITO_PRODUCER_ADDRESS| :8080 |
-|KafkaProducerTopic| kafka topic| BARITO_KAFKA_PRODUCER_TOPIC | producer-topic |
-|ProducerMaxRetry| set kafka setting max retry| BARITO_PRODUCER_MAX_RETRY | 10 |
-|ProducerMaxTps| producer rate limit trx per second| BARITO_PRODUCER_MAX_TPS | 100 |
-|ProducerRateLimitResetInterval| producer rate limit reset interval (in seconds)| BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL | 10 |
+| ProducerMaxRetry | Set kafka setting max retry | BARITO_PRODUCER_MAX_RETRY | 10 |
+| ProducerMaxTps | Producer rate limit trx per second | BARITO_PRODUCER_MAX_TPS | 100 |
+| ProducerRateLimitResetInterval | Producer rate limit reset interval (in seconds) | BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL | 10 |
 
 ## Consumer
 
@@ -66,17 +67,16 @@ Environment Variables
 
 | Name| Description | ENV | Default Value  |
 | ---|---|----|----|
-| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul| BARITO_KAFKA_BROKERS| localhost:9092 |
-|   |   | BARITO_CONSUL_URL | |
-|   |   | BARITO_CONSUL_KAFKA_NAME | kafka |
-| KafkaGroupID | kafka group id | BARITO_KAFKA_GROUP_ID | barito-group |
-| KafkaConsumerTopics | kafka consumer topics (CSV) | BARITO_KAFKA_CONSUMER_TOPICS| consumer-topic |
-| ElasticsearchUrl | elastisearch url | BARITO_ELASTICSEARCH_URL| http://localhost:9200 |
-|   |   | BARITO_CONSUL_URL | |
-|   |   | BARITO_CONSUL_ELASTICSEARCH_NAME | elasticsearch |
-| PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL| http://localhost:3000/api/increase_log_count |
-| PushMetricToken | push metric api token| BARITO_PUSH_METRIC_TOKEN |  |
-| PushMetricInterval | push metric interval| BARITO_PUSH_METRIC_INTERVAL | 30s |
+| ConsulUrl | Consul URL | BARITO_CONSUL_URL | |
+| ConsulKafkaName  | Kafka service name in consul | BARITO_CONSUL_KAFKA_NAME | kafka |
+| ConsulElasticsearchName | Elasticsearch service name in consul | BARITO_CONSUL_ELASTICSEARCH_NAME | elasticsearch |
+| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul | BARITO_KAFKA_BROKERS| localhost:9092 |
+| KafkaGroupID | kafka consumer group id | BARITO_KAFKA_GROUP_ID | barito-group |
+| KafkaMaxRetry | Number of retry to connect to kafka during startup | BARITO_KAFKA_MAX_RETRY | 0 (unlimited) |
+| KafkaRetryInterval | Interval between retry connecting to kafka (in seconds) | BARITO_KAFKA_RETRY_INTERVAL | 10 |
+| ElasticsearchUrl | Elastisearch url | BARITO_ELASTICSEARCH_URL | http://localhost:9200 |
+| PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL|   |
+| PushMetricInterval | push metric interval | BARITO_PUSH_METRIC_INTERVAL | 30s |
 
 ## Running Test Stack using Docker Compose
 
