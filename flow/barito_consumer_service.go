@@ -111,6 +111,9 @@ func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
 		if err == nil {
 			s.admin = admin
 			finish = true
+			if retry > 1 {
+				log.Infof("Retry initialize kafka admin successful")
+			}
 		} else {
 			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
 				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)

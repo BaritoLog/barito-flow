@@ -75,6 +75,9 @@ func (s *baritoProducerService) initProducer() (err error) {
 		s.producer, err = s.factory.MakeSyncProducer()
 		if err == nil {
 			finish = true
+			if retry > 1 {
+				log.Infof("Retry kafka sync producer successful")
+			}
 		} else {
 			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
 				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
@@ -97,6 +100,9 @@ func (s *baritoProducerService) initKafkaAdmin() (err error) {
 		s.admin, err = s.factory.MakeKafkaAdmin()
 		if err == nil {
 			finish = true
+			if retry > 1 {
+				log.Infof("Retry initialize kafka admin successful")
+			}
 		} else {
 			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
 				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
