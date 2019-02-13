@@ -206,7 +206,7 @@ func TestBaritoProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 	service := NewBaritoProducerService(factory, "addr", 1, 1, "_logs", 1, 10, "new_topic_events")
 	err := service.Start()
 
-	FatalIfWrongError(t, err, "Make sync producer failed: some-error")
+	FatalIfWrongError(t, err, "Make sync producer failed: Error connecting to kafka, retry limit reached")
 }
 
 func TestBaritoProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
@@ -216,7 +216,7 @@ func TestBaritoProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 	service := NewBaritoProducerService(factory, "addr", 1, 1, "_logs", 1, 10, "new_topic_events")
 	err := service.Start()
 
-	FatalIfWrongError(t, err, "Make kafka admin failed: some-error")
+	FatalIfWrongError(t, err, "Make kafka admin failed: Error connecting to kafka, retry limit reached")
 }
 
 func TestBaritoProducerService_Start(t *testing.T) {

@@ -24,7 +24,7 @@ func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 
 	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", 1, 10, "newTopicEventName", "")
 	err := service.Start()
-	FatalIfWrongError(t, err, "Make kafka admin failed: some-error")
+	FatalIfWrongError(t, err, "Make kafka admin failed: Error connecting to kafka, retry limit reached")
 }
 
 func TestBaritoConsumerService_MakeNewTopicWorkerError(t *testing.T) {

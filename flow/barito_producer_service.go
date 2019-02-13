@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	ErrMakeSyncProducer = errkit.Error("Make sync producer failed")
+	ErrMakeSyncProducer       = errkit.Error("Make sync producer failed")
+	ErrKafkaRetryLimitReached = errkit.Error("Error connecting to kafka, retry limit reached")
 )
 
 type BaritoProducerService interface {
@@ -76,9 +77,10 @@ func (s *baritoProducerService) initProducer() (err error) {
 			finish = true
 		} else {
 			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
-				log.Warnf("Cannot connect to kafka, retrying in %d seconds", s.kafkaRetryInterval)
+				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
 				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
 			} else {
+				err = ErrKafkaRetryLimitReached
 				return
 			}
 		}
@@ -97,9 +99,10 @@ func (s *baritoProducerService) initKafkaAdmin() (err error) {
 			finish = true
 		} else {
 			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
-				log.Warnf("Cannot connect to kafka, retrying in %d seconds", s.kafkaRetryInterval)
+				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
 				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
 			} else {
+				err = ErrKafkaRetryLimitReached
 				return
 			}
 		}
