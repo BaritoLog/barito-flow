@@ -94,6 +94,9 @@ are mapped as if they are running on local machine.
 
 ## Changes Log
 
+#### 0.11.8
+- Retry connecting to kafka during startup if kafka cluster is not available (configurable)
+
 #### 0.11.7
 - Enable toggle-able verbose mode
 
