@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
@@ -34,11 +35,13 @@ type BaritoConsumerService interface {
 }
 
 type baritoConsumerService struct {
-	factory           KafkaFactory
-	groupID           string
-	elasticUrl        string
-	topicSuffix       string
-	newTopicEventName string
+	factory            KafkaFactory
+	groupID            string
+	elasticUrl         string
+	topicSuffix        string
+	kafkaMaxRetry      int
+	kafkaRetryInterval int
+	newTopicEventName  string
 
 	workerMap           map[string]ConsumerWorker
 	admin               KafkaAdmin
@@ -52,13 +55,15 @@ type baritoConsumerService struct {
 	elasticRetrierInterval string
 }
 
-func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSuffix, newTopicEventName, elasticRetrierInterval string) BaritoConsumerService {
+func NewBaritoConsumerService(factory KafkaFactory, groupID string, elasticURL string, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newTopicEventName string, elasticRetrierInterval string) BaritoConsumerService {
 
 	return &baritoConsumerService{
 		factory:                factory,
 		groupID:                groupID,
 		elasticUrl:             elasticURL,
 		topicSuffix:            topicSuffix,
+		kafkaMaxRetry:          kafkaMaxRetry,
+		kafkaRetryInterval:     kafkaRetryInterval,
 		newTopicEventName:      newTopicEventName,
 		workerMap:              make(map[string]ConsumerWorker),
 		elasticRetrierInterval: elasticRetrierInterval,
@@ -68,9 +73,9 @@ func NewBaritoConsumerService(factory KafkaFactory, groupID, elasticURL, topicSu
 func (s *baritoConsumerService) Start() (err error) {
 
 	admin, err := s.initAdmin()
-
 	if err != nil {
-		return errkit.Concat(ErrMakeKafkaAdmin, err)
+		err = errkit.Concat(ErrMakeKafkaAdmin, err)
+		return
 	}
 
 	uuid, _ := uuid.NewV4()
@@ -79,7 +84,8 @@ func (s *baritoConsumerService) Start() (err error) {
 
 	worker, err := s.initNewTopicWorker(s.eventWorkerGroupID)
 	if err != nil {
-		return errkit.Concat(ErrMakeNewTopicWorker, err)
+		err = errkit.Concat(ErrMakeNewTopicWorker, err)
+		return
 	}
 
 	worker.Start()
@@ -97,8 +103,23 @@ func (s *baritoConsumerService) Start() (err error) {
 }
 
 func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
-	admin, err = s.factory.MakeKafkaAdmin()
-	s.admin = admin
+	finish := false
+	retry := 0
+	for !finish {
+		retry += 1
+		admin, err = s.factory.MakeKafkaAdmin()
+		if err == nil {
+			s.admin = admin
+			finish = true
+		} else {
+			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
+				log.Warnf("Cannot connect to kafka, retrying in %d seconds", s.kafkaRetryInterval)
+				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
+			} else {
+				return
+			}
+		}
+	}
 
 	return
 }
