@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/BaritoLog/barito-flow/flow"
+	"barito-flow/flow"
 	"github.com/BaritoLog/instru"
 )
 

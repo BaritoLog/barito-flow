@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/BaritoLog/barito-flow/cmds"
+	"barito-flow/cmds"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )

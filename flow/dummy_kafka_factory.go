@@ -3,7 +3,7 @@ package flow
 import (
 	"fmt"
 
-	"github.com/BaritoLog/barito-flow/mock"
+	"barito-flow/mock"
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
 )

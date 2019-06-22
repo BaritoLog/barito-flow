@@ -1,5 +1,5 @@
 # Barito Flow 
-![alt](https://travis-ci.org/BaritoLog/barito-flow.svg?branch=master)
+![alt](https://travis-ci.org/vwidjaya/barito-flow.svg?branch=master)
 
 Building flow of Barito river with provide kafka reciever or log forwarder 
 
@@ -7,8 +7,7 @@ Building flow of Barito river with provide kafka reciever or log forwarder
 
 Setup the project
 ```sh
-cd $GOPATH/src
-git clone git@github.com:BaritoLog/barito-flow.git 
+git clone https://github.com/vwidjaya/barito-flow
 
 cd barito-flow
 go build
