@@ -19,6 +19,7 @@ type Elastic interface {
 
 type elasticClient struct {
 	client        *elastic.Client
+	bulkProcessor *elastic.BulkProcessor
 	onFailureFunc func(*Timber)
 }
 
@@ -31,8 +32,13 @@ func NewElastic(retrierFunc *ElasticRetrier, urls ...string) (client elasticClie
 		elastic.SetRetrier(retrierFunc),
 	)
 
+	p, err := c.BulkProcessor().
+		BulkActions(500).
+		Do(context.Background())
+
 	return elasticClient{
 		client: c,
+		bulkProcessor: p,
 	}, err
 }
 
@@ -58,11 +64,11 @@ func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 
 	document := ConvertTimberToElasticDocument(timber)
 
-	_, err = e.client.Index().
+	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
 		Type(documentType).
-		BodyJson(document).
-		Do(ctx)
+		Doc(document)
+	e.bulkProcessor.Add(r)
 	instruESStore(appSecret, err)
 
 	return
@@ -79,10 +85,8 @@ func elasticCreateIndex(indexPrefix string) *es.Index {
 		Version:  60001,
 		Settings: map[string]interface{}{
 			"index.refresh_interval": "5s",
-			// "index.read_only_allow_delete": "false",
 		},
 		Doc: es.NewMappings().
-			// TODO: revisit this. @message not longer required
 			AddDynamicTemplate("message_field", es.MatchConditions{
 				PathMatch:        "@message",
 				MatchMappingType: "string",
@@ -99,7 +103,7 @@ func elasticCreateIndex(indexPrefix string) *es.Index {
 					Norms: false,
 					Fields: map[string]es.Field{
 						"keyword": es.Field{
-							Type:        "text",
+							Type:        "keyword",
 							IgnoreAbove: 256,
 						},
 					},
