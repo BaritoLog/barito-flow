@@ -12,6 +12,7 @@ import (
 )
 
 const BulkSize = 1000
+var counter int = 0
 
 type Elastic interface {
 	OnFailure(f func(*Timber))
@@ -37,6 +38,19 @@ func NewElastic(retrierFunc *ElasticRetrier, urls ...string) (client elasticClie
 	p, err := c.BulkProcessor().
 		BulkActions(BulkSize).
 		Do(context.Background())
+
+	t := time.NewTicker(1000 * time.Millisecond)
+
+	go func() {
+		for _ = range t.C {
+			fmt.Println()
+			fmt.Println("-------------------------------------")
+			fmt.Println("PROCESSED:   ", counter)
+			fmt.Println("-------------------------------------")
+			fmt.Println()
+			counter = 0
+		}
+	}()
 
 	return elasticClient{
 		client: c,
@@ -71,6 +85,7 @@ func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 		Type(documentType).
 		Doc(document)
 	e.bulkProcessor.Add(r)
+	counter++
 	instruESStore(appSecret, err)
 
 	return
