@@ -11,6 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const BulkSize = 1000
+
 type Elastic interface {
 	OnFailure(f func(*Timber))
 	Store(ctx context.Context, timber Timber)
@@ -33,7 +35,7 @@ func NewElastic(retrierFunc *ElasticRetrier, urls ...string) (client elasticClie
 	)
 
 	p, err := c.BulkProcessor().
-		BulkActions(500).
+		BulkActions(BulkSize).
 		Do(context.Background())
 
 	return elasticClient{
