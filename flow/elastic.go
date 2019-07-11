@@ -12,6 +12,7 @@ import (
 )
 
 const BulkSize = 1000
+const FlushIntervalMs = 500
 var counter int = 0
 
 type Elastic interface {
@@ -38,6 +39,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, urls ...strin
 
 	p, err := c.BulkProcessor().
 		BulkActions(BulkSize).
+		FlushInterval(FlushIntervalMs * time.Millisecond).
 		Do(context.Background())
 
 	t := time.NewTicker(1000 * time.Millisecond)
