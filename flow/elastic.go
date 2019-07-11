@@ -24,9 +24,10 @@ type elasticClient struct {
 	client        *elastic.Client
 	bulkProcessor *elastic.BulkProcessor
 	onFailureFunc func(*Timber)
+	onStoreFunc   func(indexName, documentType string, document map[string]interface{})
 }
 
-func NewElastic(retrierFunc *ElasticRetrier, urls ...string) (client elasticClient, err error) {
+func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, urls ...string) (client elasticClient, err error) {
 
 	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
@@ -52,10 +53,16 @@ func NewElastic(retrierFunc *ElasticRetrier, urls ...string) (client elasticClie
 		}
 	}()
 
-	return elasticClient{
+	client = elasticClient{
 		client: c,
 		bulkProcessor: p,
-	}, err
+	}
+
+	if esIndexMethod == "BulkProcessor" {
+		client.onStoreFunc = client.bulkInsert
+	}
+
+	return
 }
 
 func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {

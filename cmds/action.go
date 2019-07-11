@@ -28,6 +28,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	elasticRetrierInterval := configElasticsearchRetrierInterval()
+	esIndexMethod := configEsIndexMethod()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
@@ -48,6 +49,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		kafkaRetryInterval,
 		newTopicEventName,
 		elasticRetrierInterval,
+		esIndexMethod,
 	)
 
 	callbackInstrumentation()
