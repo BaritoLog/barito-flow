@@ -29,6 +29,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	newTopicEventName := configNewTopicEvent()
 	elasticRetrierInterval := configElasticsearchRetrierInterval()
 	esIndexMethod := configEsIndexMethod()
+	esBulkSize := configEsBulkSize()
+	esFlushIntervalMs := configEsFlushIntervalMs()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
@@ -50,6 +52,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		newTopicEventName,
 		elasticRetrierInterval,
 		esIndexMethod,
+		esBulkSize,
+		esFlushIntervalMs,
 	)
 
 	callbackInstrumentation()

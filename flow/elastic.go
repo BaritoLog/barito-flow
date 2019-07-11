@@ -11,8 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const BulkSize = 1000
-const FlushIntervalMs = 500
 var counter int = 0
 
 type Elastic interface {
@@ -28,7 +26,7 @@ type elasticClient struct {
 	onStoreFunc   func(indexName, documentType string, document map[string]interface{}) (err error)
 }
 
-func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, urls ...string) (client elasticClient, err error) {
+func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, esBulkSize int, esFlushIntervalMs int, urls ...string) (client elasticClient, err error) {
 
 	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
@@ -37,9 +35,11 @@ func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, urls ...strin
 		elastic.SetRetrier(retrierFunc),
 	)
 
+	flushMs := time.Duration(esFlushIntervalMs) * time.Millisecond
+
 	p, err := c.BulkProcessor().
-		BulkActions(BulkSize).
-		FlushInterval(FlushIntervalMs * time.Millisecond).
+		BulkActions(esBulkSize).
+		FlushInterval(flushMs).
 		Do(context.Background())
 
 	t := time.NewTicker(1000 * time.Millisecond)
