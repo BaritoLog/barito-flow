@@ -3,6 +3,9 @@ language: go
 notifications:
   email: false
 
+go:
+  - "1.12.5"
+
 env:
   - GO111MODULE=on
 
