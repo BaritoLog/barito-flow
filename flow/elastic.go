@@ -80,11 +80,7 @@ func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 
 	document := ConvertTimberToElasticDocument(timber)
 
-	r := elastic.NewBulkIndexRequest().
-		Index(indexName).
-		Type(documentType).
-		Doc(document)
-	e.bulkProcessor.Add(r)
+	e.bulkInsert(indexName, documentType, document)
 	counter++
 	instruESStore(appSecret, err)
 
@@ -93,6 +89,15 @@ func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 
 func (e *elasticClient) OnFailure(f func(*Timber)) {
 	e.onFailureFunc = f
+}
+
+func (e *elasticClient) bulkInsert(indexName, documentType string, document map[string]interface{}) {
+	r := elastic.NewBulkIndexRequest().
+		Index(indexName).
+		Type(documentType).
+		Doc(document)
+	e.bulkProcessor.Add(r)
+	return
 }
 
 func elasticCreateIndex(indexPrefix string) *es.Index {
