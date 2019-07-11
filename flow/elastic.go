@@ -26,7 +26,22 @@ type elasticClient struct {
 	onStoreFunc   func(indexName, documentType string, document map[string]interface{}) (err error)
 }
 
-func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, esBulkSize int, esFlushIntervalMs int, urls ...string) (client elasticClient, err error) {
+type esConfig struct {
+	indexMethod   string
+	bulkSize      int
+	flushMs       time.Duration
+}
+
+func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration) esConfig {
+
+	return esConfig{
+		indexMethod:  indexMethod,
+		bulkSize:     bulkSize,
+		flushMs:      flushMs,
+	}
+}
+
+func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls ...string) (client elasticClient, err error) {
 
 	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
@@ -35,11 +50,9 @@ func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, esBulkSize in
 		elastic.SetRetrier(retrierFunc),
 	)
 
-	flushMs := time.Duration(esFlushIntervalMs) * time.Millisecond
-
 	p, err := c.BulkProcessor().
-		BulkActions(esBulkSize).
-		FlushInterval(flushMs).
+		BulkActions(esConfig.bulkSize).
+		FlushInterval(esConfig.flushMs * time.Millisecond).
 		Do(context.Background())
 
 	t := time.NewTicker(1000 * time.Millisecond)
@@ -60,9 +73,9 @@ func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, esBulkSize in
 		bulkProcessor: p,
 	}
 
-	if esIndexMethod == "BulkProcessor" {
+	if esConfig.indexMethod == "BulkProcessor" {
 		client.onStoreFunc = client.bulkInsert
-	} else if esIndexMethod == "SingleInsert" {
+	} else if esConfig.indexMethod == "SingleInsert" {
 		client.onStoreFunc = client.singleInsert
 	}
 

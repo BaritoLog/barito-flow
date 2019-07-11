@@ -42,6 +42,12 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 
 	factory := flow.NewKafkaFactory(brokers, config)
 
+	esConfig := flow.NewEsConfig(
+		esIndexMethod,
+		esBulkSize,
+		time.Duration(esFlushIntervalMs),
+	)
+
 	service := flow.NewBaritoConsumerService(
 		factory,
 		groupID,
@@ -51,9 +57,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		kafkaRetryInterval,
 		newTopicEventName,
 		elasticRetrierInterval,
-		esIndexMethod,
-		esBulkSize,
-		esFlushIntervalMs,
+		esConfig,
 	)
 
 	callbackInstrumentation()
