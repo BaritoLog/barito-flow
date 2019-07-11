@@ -24,7 +24,7 @@ type elasticClient struct {
 	client        *elastic.Client
 	bulkProcessor *elastic.BulkProcessor
 	onFailureFunc func(*Timber)
-	onStoreFunc   func(indexName, documentType string, document map[string]interface{})
+	onStoreFunc   func(indexName, documentType string, document map[string]interface{}) (err error)
 }
 
 func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, urls ...string) (client elasticClient, err error) {
@@ -60,6 +60,8 @@ func NewElastic(retrierFunc *ElasticRetrier, esIndexMethod string, urls ...strin
 
 	if esIndexMethod == "BulkProcessor" {
 		client.onStoreFunc = client.bulkInsert
+	} else if esIndexMethod == "SingleInsert" {
+		client.onStoreFunc = client.singleInsert
 	}
 
 	return
@@ -87,7 +89,7 @@ func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 
 	document := ConvertTimberToElasticDocument(timber)
 
-	e.bulkInsert(indexName, documentType, document)
+	err = e.onStoreFunc(indexName, documentType, document)
 	counter++
 	instruESStore(appSecret, err)
 
@@ -98,12 +100,21 @@ func (e *elasticClient) OnFailure(f func(*Timber)) {
 	e.onFailureFunc = f
 }
 
-func (e *elasticClient) bulkInsert(indexName, documentType string, document map[string]interface{}) {
+func (e *elasticClient) bulkInsert(indexName, documentType string, document map[string]interface{}) (err error) {
 	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
 		Type(documentType).
 		Doc(document)
 	e.bulkProcessor.Add(r)
+	return
+}
+
+func (e *elasticClient) singleInsert(indexName, documentType string, document map[string]interface{}) (err error) {
+	_, err = e.client.Index().
+		Index(indexName).
+		Type(documentType).
+		BodyJson(document).
+		Do(context.Background())
 	return
 }
 
