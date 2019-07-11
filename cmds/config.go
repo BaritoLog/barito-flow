@@ -33,6 +33,8 @@ const (
 	EnvConsumerElasticsearchRetrierInterval = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_INTERVAL"
 	EnvConsumerRebalancingStrategy          = "BARITO_CONSUMER_REBALANCING_STRATEGY"
 	EnvEsIndexMethod                        = "BARITO_ES_INDEX_METHOD"
+	EnvEsBulkSize                           = "BARITO_ES_BULK_SIZE"
+	EnvEsFlushIntervalMs                    = "BARITO_ES_FLUSH_INTERVAL_MS"
 )
 
 var (
@@ -59,6 +61,8 @@ var (
 	DefaultElasticsearchRetrierInterval = "30s"
 	DefaultConsumerRebalancingStrategy  = "RoundRobin"
 	DefaultEsIndexMethod                = "BulkProcessor"
+	DefaultEsBulkSize                   = 100
+	DefaultEsFlushIntervalMs            = 500
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -89,6 +93,14 @@ func configElasticsearchUrl() (url string) {
 
 func configEsIndexMethod() (m string) {
 	return stringEnvOrDefault(EnvEsIndexMethod, DefaultEsIndexMethod)
+}
+
+func configEsBulkSize() (i int) {
+	return intEnvOrDefault(EnvEsBulkSize, DefaultEsBulkSize)
+}
+
+func configEsFlushIntervalMs() (i int) {
+	return intEnvOrDefault(EnvEsFlushIntervalMs, DefaultEsFlushIntervalMs)
 }
 
 func configConsulElasticsearchName() (s string) {
