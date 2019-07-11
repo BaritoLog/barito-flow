@@ -91,7 +91,7 @@ func configElasticsearchUrl() (url string) {
 	return
 }
 
-func configEsIndexMethod() (m string) {
+func configEsIndexMethod() (s string) {
 	return stringEnvOrDefault(EnvEsIndexMethod, DefaultEsIndexMethod)
 }
 
