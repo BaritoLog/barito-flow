@@ -31,6 +31,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	esIndexMethod := configEsIndexMethod()
 	esBulkSize := configEsBulkSize()
 	esFlushIntervalMs := configEsFlushIntervalMs()
+	printTPS := configPrintTPS()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
@@ -46,6 +47,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		esIndexMethod,
 		esBulkSize,
 		time.Duration(esFlushIntervalMs),
+		printTPS,
 	)
 
 	service := flow.NewBaritoConsumerService(

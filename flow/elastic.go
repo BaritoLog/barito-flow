@@ -30,14 +30,16 @@ type esConfig struct {
 	indexMethod   string
 	bulkSize      int
 	flushMs       time.Duration
+	printTPS	  bool
 }
 
-func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration) esConfig {
+func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printTPS bool) esConfig {
 
 	return esConfig{
 		indexMethod:  indexMethod,
 		bulkSize:     bulkSize,
 		flushMs:      flushMs,
+		printTPS:	  printTPS,
 	}
 }
 
@@ -55,18 +57,9 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls ...string) 
 		FlushInterval(esConfig.flushMs * time.Millisecond).
 		Do(context.Background())
 
-	t := time.NewTicker(1000 * time.Millisecond)
-
-	go func() {
-		for _ = range t.C {
-			fmt.Println()
-			fmt.Println("-------------------------------------")
-			fmt.Println("PROCESSED:   ", counter)
-			fmt.Println("-------------------------------------")
-			fmt.Println()
-			counter = 0
-		}
-	}()
+	if esConfig.printTPS {
+		printThroughputPerSecond()
+	}
 
 	client = elasticClient{
 		client: c,
@@ -80,6 +73,21 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls ...string) 
 	}
 
 	return
+}
+
+func printThroughputPerSecond() {
+	t := time.NewTicker(1000 * time.Millisecond)
+
+	go func() {
+		for _ = range t.C {
+			fmt.Println()
+			fmt.Println("-------------------------------------")
+			fmt.Println("PROCESSED:   ", counter)
+			fmt.Println("-------------------------------------")
+			fmt.Println()
+			counter = 0
+		}
+	}()
 }
 
 func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {

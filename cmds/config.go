@@ -35,6 +35,8 @@ const (
 	EnvEsIndexMethod                        = "BARITO_ES_INDEX_METHOD"
 	EnvEsBulkSize                           = "BARITO_ES_BULK_SIZE"
 	EnvEsFlushIntervalMs                    = "BARITO_ES_FLUSH_INTERVAL_MS"
+
+	EnvPrintTPS								= "BARITO_PRINT_TPS"
 )
 
 var (
@@ -63,6 +65,8 @@ var (
 	DefaultEsIndexMethod                = "BulkProcessor"
 	DefaultEsBulkSize                   = 100
 	DefaultEsFlushIntervalMs            = 500
+
+	DefaultPrintTPS						= "off"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -166,6 +170,10 @@ func configElasticsearchRetrierInterval() string {
 
 func configConsumerRebalancingStrategy() string {
 	return stringEnvOrDefault(EnvConsumerRebalancingStrategy, DefaultConsumerRebalancingStrategy)
+}
+
+func configPrintTPS() bool {
+	return (stringEnvOrDefault(EnvPrintTPS, DefaultPrintTPS) == "on")
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {

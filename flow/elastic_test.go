@@ -26,7 +26,7 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000))
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
 	client, err := NewElastic(retrier, esConfig, ts.URL)
 	FatalIfError(t, err)
 
@@ -49,7 +49,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000))
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
 	client, err := NewElastic(retrier, esConfig, ts.URL)
 	FatalIfError(t, err)
 
@@ -75,7 +75,7 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000))
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
 	client, err := NewElastic(retrier, esConfig, ts.URL)
 	FatalIfError(t, err)
 
