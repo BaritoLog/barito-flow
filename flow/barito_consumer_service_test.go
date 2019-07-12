@@ -96,13 +96,6 @@ func TestBaritoConsumerService_SpawnWorkerError(t *testing.T) {
 	FatalIfWrongError(t, service.lastError, string(ErrSpawnWorker))
 }
 
-func TestBaritoConsumerService_onStoreTimber_ErrorElasticsearchClient(t *testing.T) {
-	service := &baritoConsumerService{}
-
-	service.onStoreTimber(&sarama.ConsumerMessage{})
-	FatalIfWrongError(t, service.lastError, string(ErrElasticsearchClient))
-}
-
 func TestBaritoConsumerService_onStoreTimber_ErrorConvertKafkaMessage(t *testing.T) {
 	ts := NewTestServer(http.StatusOK, []byte(`{}`))
 	defer ts.Close()
@@ -127,6 +120,11 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 		elasticUrl: ts.URL,
 	}
 
+	retrier := service.elasticRetrier()
+	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000))
+	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
+	service.esClient = &elastic
+
 	service.onStoreTimber(&sarama.ConsumerMessage{
 		Value: sampleRawTimber(),
 	})
@@ -140,6 +138,11 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	service := &baritoConsumerService{
 		elasticUrl: ts.URL,
 	}
+
+	retrier := service.elasticRetrier()
+	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000))
+	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
+	service.esClient = &elastic
 
 	service.onStoreTimber(&sarama.ConsumerMessage{
 		Value: sampleRawTimber(),
