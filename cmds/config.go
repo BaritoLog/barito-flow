@@ -36,7 +36,7 @@ const (
 	EnvEsBulkSize                           = "BARITO_ES_BULK_SIZE"
 	EnvEsFlushIntervalMs                    = "BARITO_ES_FLUSH_INTERVAL_MS"
 
-	EnvPrintTPS								= "BARITO_PRINT_TPS"
+	EnvPrintTPS                             = "BARITO_PRINT_TPS"
 )
 
 var (
@@ -66,7 +66,7 @@ var (
 	DefaultEsBulkSize                   = 100
 	DefaultEsFlushIntervalMs            = 500
 
-	DefaultPrintTPS						= "off"
+	DefaultPrintTPS                     = "off"
 )
 
 func configKafkaBrokers() (brokers []string) {
