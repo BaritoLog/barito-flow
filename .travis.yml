@@ -25,5 +25,5 @@ deploy:
     - barito-flow-darwin
   on:
     tags: true
-    repo: vwidjaya/barito-flow
+    repo: BaritoLog/barito-flow
     all_branches: true
