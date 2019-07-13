@@ -76,6 +76,10 @@ Environment Variables
 | ElasticsearchUrl | Elastisearch url | BARITO_ELASTICSEARCH_URL | http://localhost:9200 |
 | PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL|   |
 | PushMetricInterval | push metric interval | BARITO_PUSH_METRIC_INTERVAL | 30s |
+| EsIndexMethod | BulkProcessor / SingleInsert | BARITO_ES_INDEX_METHOD | BulkProcessor |
+| EsBulkSize | BulkProcessor bulk size | BARITO_ES_BULK_SIZE | 100 |
+| EsFlushIntervalMs | BulkProcessor flush interval (ms) | BARITO_ES_FLUSH_INTERVAL_MS | 500 |
+| PrintTPS | print estimated consumed every second | BARITO_PRINT_TPS | off |
 
 ## Running Test Stack using Docker Compose
 
