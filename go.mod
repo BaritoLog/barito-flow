@@ -1,4 +1,4 @@
-module barito-flow
+module github.com/BaritoLog/barito-flow
 
 go 1.12
 

@@ -6,7 +6,7 @@ import (
 
 	"time"
 
-	"barito-flow/es"
+	"github.com/BaritoLog/barito-flow/es"
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
 )

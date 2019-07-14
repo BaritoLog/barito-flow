@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"barito-flow/mock"
+	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/golang/mock/gomock"

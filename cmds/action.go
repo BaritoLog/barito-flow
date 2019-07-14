@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"barito-flow/flow"
+	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/BaritoLog/instru"
