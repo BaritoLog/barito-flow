@@ -81,10 +81,11 @@ Environment Variables
 | PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL|   |
 | PushMetricInterval | push metric interval | BARITO_PUSH_METRIC_INTERVAL | 30s |
 
-**NOTE:** The following environment variables will not be used if BARITO_ELASTICSEARCH_INDEX_METHOD is set to "SingleInsert"
+**NOTE** 
+The following will not be used if BARITO_ELASTICSEARCH_INDEX_METHOD is set to "SingleInsert"
 
-BARITO_ELASTICSEARCH_BULK_SIZE
-BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS
+- BARITO_ELASTICSEARCH_BULK_SIZE. 
+- BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS
 
 ## Running Test Stack using Docker Compose
 
