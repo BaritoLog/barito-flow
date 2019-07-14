@@ -27,19 +27,19 @@ type elasticClient struct {
 }
 
 type esConfig struct {
-	indexMethod   string
-	bulkSize      int
-	flushMs       time.Duration
-	printTPS	  bool
+	indexMethod string
+	bulkSize    int
+	flushMs     time.Duration
+	printTPS    bool
 }
 
 func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printTPS bool) esConfig {
 
 	return esConfig{
-		indexMethod:  indexMethod,
-		bulkSize:     bulkSize,
-		flushMs:      flushMs,
-		printTPS:	  printTPS,
+		indexMethod: indexMethod,
+		bulkSize:    bulkSize,
+		flushMs:     flushMs,
+		printTPS:    printTPS,
 	}
 }
 
@@ -62,7 +62,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls ...string) 
 	}
 
 	client = elasticClient{
-		client: c,
+		client:        c,
 		bulkProcessor: p,
 	}
 

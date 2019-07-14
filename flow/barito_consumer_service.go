@@ -69,7 +69,7 @@ func NewBaritoConsumerService(factory KafkaFactory, groupID string, elasticURL s
 		workerMap:              make(map[string]ConsumerWorker),
 		elasticRetrierInterval: elasticRetrierInterval,
 	}
-	
+
 	retrier := s.elasticRetrier()
 	elastic, err := NewElastic(retrier, esConfig, s.elasticUrl)
 	s.esClient = &elastic
