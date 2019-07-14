@@ -74,17 +74,17 @@ Environment Variables
 | KafkaMaxRetry | Number of retry to connect to kafka during startup | BARITO_KAFKA_MAX_RETRY | 0 (unlimited) |
 | KafkaRetryInterval | Interval between retry connecting to kafka (in seconds) | BARITO_KAFKA_RETRY_INTERVAL | 10 |
 | ElasticsearchUrl | Elastisearch url | BARITO_ELASTICSEARCH_URL | http://localhost:9200 |
-| EsIndexMethod | BulkProcessor / SingleInsert | BARITO_ES_INDEX_METHOD | BulkProcessor |
-| EsBulkSize | BulkProcessor bulk size | BARITO_ES_BULK_SIZE | 100 |
-| EsFlushIntervalMs | BulkProcessor flush interval (ms) | BARITO_ES_FLUSH_INTERVAL_MS | 500 |
+| EsIndexMethod | BulkProcessor / SingleInsert | BARITO_ELASTICSEARCH_INDEX_METHOD | BulkProcessor |
+| EsBulkSize | BulkProcessor bulk size | BARITO_ELASTICSEARCH_BULK_SIZE | 100 |
+| EsFlushIntervalMs | BulkProcessor flush interval (ms) | BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS | 500 |
 | PrintTPS | print estimated consumed every second | BARITO_PRINT_TPS | off |
 | PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL|   |
 | PushMetricInterval | push metric interval | BARITO_PUSH_METRIC_INTERVAL | 30s |
 
-**NOTE:** The following environment variables will not be used if BARITO_ES_INDEX_METHOD is set to "SingleInsert"
+**NOTE:** The following environment variables will not be used if BARITO_ELASTICSEARCH_INDEX_METHOD is set to "SingleInsert"
 
-BARITO_ES_BULK_SIZE
-BARITO_ES_FLUSH_INTERVAL_MS
+BARITO_ELASTICSEARCH_BULK_SIZE
+BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS
 
 ## Running Test Stack using Docker Compose
 

@@ -15,7 +15,10 @@ const (
 	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
 	EnvKafkaRetryInterval = "BARITO_KAFKA_RETRY_INTERVAL"
 
-	EnvElasticsearchUrl = "BARITO_ELASTICSEARCH_URL"
+	EnvElasticsearchUrl  = "BARITO_ELASTICSEARCH_URL"
+	EnvEsIndexMethod     = "BARITO_ELASTICSEARCH_INDEX_METHOD"
+	EnvEsBulkSize        = "BARITO_ELASTICSEARCH_BULK_SIZE"
+	EnvEsFlushIntervalMs = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
 
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
@@ -32,11 +35,8 @@ const (
 	EnvNewTopicEventName                    = "BARITO_NEW_TOPIC_EVENT"
 	EnvConsumerElasticsearchRetrierInterval = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_INTERVAL"
 	EnvConsumerRebalancingStrategy          = "BARITO_CONSUMER_REBALANCING_STRATEGY"
-	EnvEsIndexMethod                        = "BARITO_ES_INDEX_METHOD"
-	EnvEsBulkSize                           = "BARITO_ES_BULK_SIZE"
-	EnvEsFlushIntervalMs                    = "BARITO_ES_FLUSH_INTERVAL_MS"
 
-	EnvPrintTPS                             = "BARITO_PRINT_TPS"
+	EnvPrintTPS = "BARITO_PRINT_TPS"
 )
 
 var (
@@ -66,7 +66,7 @@ var (
 	DefaultEsBulkSize                   = 100
 	DefaultEsFlushIntervalMs            = 500
 
-	DefaultPrintTPS                     = "off"
+	DefaultPrintTPS = "false"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -173,7 +173,7 @@ func configConsumerRebalancingStrategy() string {
 }
 
 func configPrintTPS() bool {
-	return (stringEnvOrDefault(EnvPrintTPS, DefaultPrintTPS) == "on")
+	return (stringEnvOrDefault(EnvPrintTPS, DefaultPrintTPS) == "true")
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {
