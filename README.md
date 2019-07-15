@@ -1,40 +1,53 @@
-# Barito Flow 
-![alt](https://travis-ci.org/BaritoLog/barito-flow.svg?branch=master)
+# Barito Flow
 
-Building flow of Barito river with provide kafka reciever or log forwarder 
+![Build Status](https://travis-ci.org/BaritoLog/barito-flow.svg?branch=master)
 
-## Setup 
+Component for handling flow of logs within a cluster. Support 2 modes:
+- **Producer**, for receiving logs and forwarding it to Kafka
+- **Consumer**, for consuming from kafka and forwarding it to Elasticsearch
 
-Setup the project
+## Development Setup 
+
+Fetch and build the project.
 ```sh
 git clone https://github.com/BaritoLog/barito-flow
-
 cd barito-flow
 go build
 ```
 
-Generate mock class
+Generate mock classes.
 ```sh
 mockgen -source=flow/leaky_bucket.go -destination=mock/leaky_bucket.go -package=mock
 mockgen -source=flow/kafka_admin.go -destination=mock/kafka_admin.go -package=mock
 mockgen -source=flow/Vendor/github.com/sarama/sync_producer.go -destination=mock/sync_producer.go -package=mock
 ```
 
-## Producer
+### Running Test Stack using Docker Compose
 
-Responsible to:
-- expose a http end point
-- produce message to kafka broker
+First, you need to install Docker on your local machine. Then you can run `docker-compose`:
 
-Run
+```sh
+$ docker-compose -f docker/docker-compose.yml up -d
+```
+
+This will pull Elasticsearch, Kafka, and build producer and consumer image. The ports
+are mapped as if they are running on local machine.
+
+## Producer Mode
+
+Responsible for:
+- Receive logs by exposing an HTTP endpoint
+- Produce message to kafka cluster
+
+After the project is built, run:
 ```sh
 ./barito-agent producer
 
-#or
+# or
 ./barito-agent p
 ```
 
-Environment Variables
+These environment variables can be modified to customize its behaviour.
 
 | Name| Description | ENV | Default Value  |
 | ---|---|---|---|
@@ -50,11 +63,11 @@ Environment Variables
 
 ## Consumer
 
-Responsible to:
-- consume message from kafka
-- commit message to elasticsearch
+Responsible for:
+- Consume logs from kafka
+- Commit logs to elasticsearch
 
-Run
+After the project is built, run:
 ```sh
 ./barito-agent Consumer
 
@@ -62,7 +75,7 @@ Run
 ./barito-agent c
 ```
 
-Environment Variables
+These environment variables can be modified to customize its behaviour.
 
 | Name| Description | ENV | Default Value  |
 | ---|---|----|----|
@@ -81,93 +94,20 @@ Environment Variables
 | PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL|   |
 | PushMetricInterval | push metric interval | BARITO_PUSH_METRIC_INTERVAL | 30s |
 
-**NOTE** 
-The following will not be used if BARITO_ELASTICSEARCH_INDEX_METHOD is set to "SingleInsert"
+**NOTE**  
+These following variables will be ignored if `BARITO_ELASTICSEARCH_INDEX_METHOD` is set to `SingleInsert`
 
-- BARITO_ELASTICSEARCH_BULK_SIZE. 
-- BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS
+- `BARITO_ELASTICSEARCH_BULK_SIZE`
+- `BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS`
 
-## Running Test Stack using Docker Compose
+### Changelog
 
-First you'd need to Install [Docker for Windows](https://www.docker.com/docker-windows) or [Docker
-for Mac](https://www.docker.com/docker-mac) if you're using Windows or Linux.
+See [CHANGELOG.md](CHANGELOG.md)
 
-Run `docker-compose`:
+### Contributing
 
-```sh
-$ docker-compose -f docker/docker-compose.yml up -d
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md)
 
-This will pull Elastic Search, Kafka, and build image for produces as well as consumer. The ports
-are mapped as if they are running on local machine.
+### License
 
-## Changes Log
-
-#### 0.11.8
-- Retry connecting to kafka during startup if kafka cluster is not available (configurable)
-
-#### 0.11.7
-- Enable toggle-able verbose mode
-
-#### 0.11.6
-- Set round robin strategy as default for consumer rebalancing, also allow it to be configured
-
-#### 0.11.5
-- Recreate cluster admin whenever barito-flow needs to create a new topic
-
-#### 0.11.4
-- Update rate limiter behaviour for produce batch, now it counts rate per line in batch instead of per batch request
-
-#### 0.11.3
-- Lower metadata refresh frequency
-
-#### 0.11.2
-- Bugfix: Refresh metadata before creating new topic (see [here](https://github.com/Shopify/sarama/issues/1162))
-
-#### 0.11.1
-- Bugfix: Rate limiter on produce batch should count per request, not per log
-
-#### 0.11
-- New feature: Ability to process batch logs
-
-#### 0.10.1
-- Use updated instru that avoid race condition problem on counter
-
-#### 0.10.0
-- Implement Elasticsearch backoff functionality
-
-#### 0.9.0
-- Upgrade sarama to 1.19.0
-- Use sarama ClusterAdmin for creating topic
-
-#### 0.8.5
-- Produce logs if flow has to return 5xx errors
-
-#### 0.8.4
-- Use updated instru that avoid race condition problem
-
-#### 0.8.3
-- Also send application secret from context when sending metrics
-
-#### 0.8.2
-- Send metrics to market
-
-#### 0.8.1
-- Fix bug when checking for new events
-
-#### 0.8.0
-- Support for multiple topics and indexes
-
-#### 0.7.0 
-- Graceful Shutdown
-
-#### 0.6.0 
-- Using consul to get kafka brokers, if consul not available then using environment variable
-- Using consul to get elasticsearch url, if url not available then using environment variable
-
-#### 0.5.0 
-- Rate limit trx per second (by default 100)
-
-#### 0.4.0 
-- Rename receiver to producer
-- Rename forwarder to consumer
+MIT License, See [LICENSE](LICENSE).
