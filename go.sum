@@ -4,6 +4,8 @@ github.com/BaritoLog/go-boilerplate v0.0.0-20190116075340-b95aeda121e9 h1:49HgJ3
 github.com/BaritoLog/go-boilerplate v0.0.0-20190116075340-b95aeda121e9/go.mod h1:fQHMqhO3+jUzzmpUHHqWSj9jXMipfr+lbFeZtlDYhbw=
 github.com/BaritoLog/instru v0.0.0-20181016145132-4e45d44070be h1:4ImY9cI0YGOmK5Z6prSoSi9cChcvxRdTN6SLIaDAYhc=
 github.com/BaritoLog/instru v0.0.0-20181016145132-4e45d44070be/go.mod h1:Is+yLbnoOco32MLUU6PeWChrHlyvYRJh6MO1RZ5IvMs=
+github.com/BaritoLog/instru v0.0.0-20190715232619-ef001fffe4f0 h1:k7RE9b0BB3Oeq0AMHA/s7TbiVl1TUHet3EQm9/eEoO0=
+github.com/BaritoLog/instru v0.0.0-20190715232619-ef001fffe4f0/go.mod h1:Is+yLbnoOco32MLUU6PeWChrHlyvYRJh6MO1RZ5IvMs=
 github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798 h1:2T/jmrHeTezcCM58lvEQXs0UpQJCo5SoGAcg+mbSTIg=
 github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
 github.com/Shopify/sarama v1.19.0 h1:9oksLxC6uxVPHPVYUmq6xhr1BOF/hHobWH2UzO67z1s=

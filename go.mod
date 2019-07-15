@@ -5,7 +5,7 @@ go 1.12
 require (
 	bou.ke/monkey v1.0.1 // indirect
 	github.com/BaritoLog/go-boilerplate v0.0.0-20190116075340-b95aeda121e9
-	github.com/BaritoLog/instru v0.0.0-20181016145132-4e45d44070be
+	github.com/BaritoLog/instru v0.0.0-20190715232619-ef001fffe4f0
 	github.com/Shopify/sarama v1.19.0
 	github.com/bouk/monkey v1.0.1 // indirect
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
