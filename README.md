@@ -41,10 +41,10 @@ Responsible for:
 
 After the project is built, run:
 ```sh
-./barito-agent producer
+./barito-flow producer
 
 # or
-./barito-agent p
+./barito-flow p
 ```
 
 These environment variables can be modified to customize its behaviour.
@@ -61,7 +61,7 @@ These environment variables can be modified to customize its behaviour.
 | ProducerMaxTps | Producer rate limit trx per second | BARITO_PRODUCER_MAX_TPS | 100 |
 | ProducerRateLimitResetInterval | Producer rate limit reset interval (in seconds) | BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL | 10 |
 
-## Consumer
+## Consumer Mode
 
 Responsible for:
 - Consume logs from kafka
@@ -69,10 +69,10 @@ Responsible for:
 
 After the project is built, run:
 ```sh
-./barito-agent Consumer
+./barito-flow Consumer
 
 # or
-./barito-agent c
+./barito-flow c
 ```
 
 These environment variables can be modified to customize its behaviour.
