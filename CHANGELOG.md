@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 
+## [0.12.0]
+### Added
+- Add the ability to use bulk indexing when committing logs to Elasticsearch
+### Changed
+- Only create Elasticsearch client once, instead of recreating it before every commit
+
 ## [0.11.8]
 ### Changed
 - Retry connecting to kafka during startup if kafka cluster is not available (configurable)
