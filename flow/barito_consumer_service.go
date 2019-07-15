@@ -38,6 +38,7 @@ type baritoConsumerService struct {
 	factory            KafkaFactory
 	groupID            string
 	elasticUrl         string
+	esClient           *elasticClient
 	topicSuffix        string
 	kafkaMaxRetry      int
 	kafkaRetryInterval int
@@ -55,9 +56,9 @@ type baritoConsumerService struct {
 	elasticRetrierInterval string
 }
 
-func NewBaritoConsumerService(factory KafkaFactory, groupID string, elasticURL string, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newTopicEventName string, elasticRetrierInterval string) BaritoConsumerService {
+func NewBaritoConsumerService(factory KafkaFactory, groupID string, elasticURL string, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newTopicEventName string, elasticRetrierInterval string, esConfig esConfig) BaritoConsumerService {
 
-	return &baritoConsumerService{
+	s := &baritoConsumerService{
 		factory:                factory,
 		groupID:                groupID,
 		elasticUrl:             elasticURL,
@@ -68,6 +69,15 @@ func NewBaritoConsumerService(factory KafkaFactory, groupID string, elasticURL s
 		workerMap:              make(map[string]ConsumerWorker),
 		elasticRetrierInterval: elasticRetrierInterval,
 	}
+
+	retrier := s.elasticRetrier()
+	elastic, err := NewElastic(retrier, esConfig, s.elasticUrl)
+	s.esClient = &elastic
+	if err != nil {
+		s.logError(errkit.Concat(ErrElasticsearchClient, err))
+	}
+
+	return s
 }
 
 func (s *baritoConsumerService) Start() (err error) {
@@ -198,15 +208,6 @@ func (s *baritoConsumerService) onElasticRetry(err error) {
 }
 
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
-
-	// create elastic client
-	retrier := s.elasticRetrier()
-	elastic, err := NewElastic(retrier, s.elasticUrl)
-	if err != nil {
-		s.logError(errkit.Concat(ErrElasticsearchClient, err))
-		return
-	}
-
 	// convert kafka message
 	timber, err := ConvertKafkaMessageToTimber(message)
 	if err != nil {
@@ -216,7 +217,7 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
 	// store to elasticsearch
 	ctx := context.Background()
-	err = elastic.Store(ctx, timber)
+	err = s.esClient.Store(ctx, timber)
 	if err != nil {
 		s.logError(errkit.Concat(ErrStore, err))
 		return

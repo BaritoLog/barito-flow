@@ -15,7 +15,10 @@ const (
 	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
 	EnvKafkaRetryInterval = "BARITO_KAFKA_RETRY_INTERVAL"
 
-	EnvElasticsearchUrl = "BARITO_ELASTICSEARCH_URL"
+	EnvElasticsearchUrl  = "BARITO_ELASTICSEARCH_URL"
+	EnvEsIndexMethod     = "BARITO_ELASTICSEARCH_INDEX_METHOD"
+	EnvEsBulkSize        = "BARITO_ELASTICSEARCH_BULK_SIZE"
+	EnvEsFlushIntervalMs = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
 
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
@@ -32,6 +35,8 @@ const (
 	EnvNewTopicEventName                    = "BARITO_NEW_TOPIC_EVENT"
 	EnvConsumerElasticsearchRetrierInterval = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_INTERVAL"
 	EnvConsumerRebalancingStrategy          = "BARITO_CONSUMER_REBALANCING_STRATEGY"
+
+	EnvPrintTPS = "BARITO_PRINT_TPS"
 )
 
 var (
@@ -57,6 +62,11 @@ var (
 	DefaultNewTopicEventName            = "new_topic_events"
 	DefaultElasticsearchRetrierInterval = "30s"
 	DefaultConsumerRebalancingStrategy  = "RoundRobin"
+	DefaultEsIndexMethod                = "BulkProcessor"
+	DefaultEsBulkSize                   = 100
+	DefaultEsFlushIntervalMs            = 500
+
+	DefaultPrintTPS = "false"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -83,6 +93,18 @@ func configElasticsearchUrl() (url string) {
 
 	logConfig("consul", EnvElasticsearchUrl, url)
 	return
+}
+
+func configEsIndexMethod() (s string) {
+	return stringEnvOrDefault(EnvEsIndexMethod, DefaultEsIndexMethod)
+}
+
+func configEsBulkSize() (i int) {
+	return intEnvOrDefault(EnvEsBulkSize, DefaultEsBulkSize)
+}
+
+func configEsFlushIntervalMs() (i int) {
+	return intEnvOrDefault(EnvEsFlushIntervalMs, DefaultEsFlushIntervalMs)
 }
 
 func configConsulElasticsearchName() (s string) {
@@ -148,6 +170,10 @@ func configElasticsearchRetrierInterval() string {
 
 func configConsumerRebalancingStrategy() string {
 	return stringEnvOrDefault(EnvConsumerRebalancingStrategy, DefaultConsumerRebalancingStrategy)
+}
+
+func configPrintTPS() bool {
+	return (stringEnvOrDefault(EnvPrintTPS, DefaultPrintTPS) == "true")
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {

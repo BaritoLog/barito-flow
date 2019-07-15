@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/instru"
@@ -25,7 +26,8 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	client, err := NewElastic(retrier, ts.URL)
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
+	client, err := NewElastic(retrier, esConfig, ts.URL)
 	FatalIfError(t, err)
 
 	err = client.Store(context.Background(), timber)
@@ -47,7 +49,8 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	client, err := NewElastic(retrier, ts.URL)
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
+	client, err := NewElastic(retrier, esConfig, ts.URL)
 	FatalIfError(t, err)
 
 	appSecret := timber.Context().AppSecret
@@ -72,7 +75,8 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	client, err := NewElastic(retrier, ts.URL)
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
+	client, err := NewElastic(retrier, esConfig, ts.URL)
 	FatalIfError(t, err)
 
 	appSecret := timber.Context().AppSecret

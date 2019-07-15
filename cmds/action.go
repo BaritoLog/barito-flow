@@ -28,6 +28,10 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	elasticRetrierInterval := configElasticsearchRetrierInterval()
+	esIndexMethod := configEsIndexMethod()
+	esBulkSize := configEsBulkSize()
+	esFlushIntervalMs := configEsFlushIntervalMs()
+	printTPS := configPrintTPS()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
@@ -39,6 +43,13 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 
 	factory := flow.NewKafkaFactory(brokers, config)
 
+	esConfig := flow.NewEsConfig(
+		esIndexMethod,
+		esBulkSize,
+		time.Duration(esFlushIntervalMs),
+		printTPS,
+	)
+
 	service := flow.NewBaritoConsumerService(
 		factory,
 		groupID,
@@ -48,6 +59,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		kafkaRetryInterval,
 		newTopicEventName,
 		elasticRetrierInterval,
+		esConfig,
 	)
 
 	callbackInstrumentation()
