@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"time"
 
 	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/Shopify/sarama"
@@ -39,6 +40,31 @@ func NewProducerService(factory KafkaFactory, addr string, maxTps int, rateLimit
 		kafkaRetryInterval:     kafkaRetryInterval,
 		newEventTopic:          newEventTopic,
 	}
+}
+
+func (s *producerService) initProducer() (err error) {
+	finish := false
+	retry := 0
+	for !finish {
+		retry += 1
+		s.producer, err = s.factory.MakeSyncProducer()
+		if err == nil {
+			finish = true
+			if retry > 1 {
+				log.Infof("Retry kafka sync producer successful")
+			}
+		} else {
+			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
+				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
+				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
+			} else {
+				err = ErrKafkaRetryLimitReached
+				return
+			}
+		}
+	}
+
+	return
 }
 
 func (s *producerService) Start() (err error) {
