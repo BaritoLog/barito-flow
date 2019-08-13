@@ -8,7 +8,6 @@ import (
 	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
-	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -156,7 +155,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 		return
 	}
 
-	timber.Timestamp = ptypes.TimestampNow()
+	timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
 	err = s.handleProduce(timber, topic)
 	if err != nil {
 		return
@@ -179,7 +178,7 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 	for _, timber := range timberCollection.GetItems() {
 		timber.Context = timberCollection.GetContext()
-		timber.Timestamp = ptypes.TimestampNow()
+		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
 
 		err = s.handleProduce(timber, topic)
 		if err != nil {
