@@ -30,7 +30,7 @@ message ProduceResult {
     string topic = 1;
 }
 
-service BaritoProducer {
+service ProducerService {
     rpc Produce(Timber) returns (ProduceResult);
     rpc ProduceBatch(TimberCollection) returns (ProduceResult);
 }

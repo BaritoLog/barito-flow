@@ -14,7 +14,7 @@ import (
 )
 
 type ProducerService interface {
-	pb.BaritoProducerServer
+	pb.ProducerServiceServer
 	Start() error
 	Close()
 }
@@ -103,7 +103,7 @@ func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server) 
 	}
 
 	srv = grpc.NewServer()
-	pb.RegisterBaritoProducerServer(srv, s)
+	pb.RegisterProducerServiceServer(srv, s)
 
 	s.server = srv
 	return
