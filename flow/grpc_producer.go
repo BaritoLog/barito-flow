@@ -5,6 +5,7 @@ import (
 
 	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/Shopify/sarama"
+	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,7 +36,6 @@ func NewBaritoProducerServer(factory KafkaFactory, addr string, maxTps int, rate
 }
 
 func (s *baritoProducerServer) Produce(_ context.Context, timber *pb.Timber) (resp *pb.ProduceResult, err error) {
-
 	topic := timber.GetContext().GetKafkaTopic() + s.topicSuffix
 
 	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
@@ -44,6 +44,7 @@ func (s *baritoProducerServer) Produce(_ context.Context, timber *pb.Timber) (re
 		return
 	}
 
+	timber.Timestamp = ptypes.TimestampNow()
 	err = s.handleProduce(timber, topic)
 	if err != nil {
 		return nil, err
