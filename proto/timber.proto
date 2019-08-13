@@ -24,11 +24,11 @@ message TimberContext {
     string app_secret = 7;
 }
 
-message ProduceResponse {
+message ProduceResult {
     string topic = 1;
 }
 
 service BaritoProducer {
-    rpc Produce(Timber) returns (ProduceResponse);
-    rpc ProduceBatch(TimberCollection) returns (ProduceResponse);
+    rpc Produce(Timber) returns (ProduceResult);
+    rpc ProduceBatch(TimberCollection) returns (ProduceResult);
 }
