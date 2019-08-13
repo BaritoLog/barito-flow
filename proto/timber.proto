@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package timber;
+
+import "google/protobuf/any.proto";
+
+message Timber {
+    TimberContext context = 1;
+    map<string, google.protobuf.Any> content = 2;
+}
+
+message TimberCollection {
+    TimberContext context = 1;
+    repeated Timber items = 2;
+}
+
+message TimberContext {
+    string kafka_topic = 1;
+    int32  kafka_partition = 2;
+    int32  kafka_replication_factor = 3;
+    string es_index_prefix = 4;
+    string es_document_type = 5;
+    int32  app_max_tps = 6;
+    string app_secret = 7;
+}
+
+message ProduceResponse {
+    string topic = 1;
+}
+
+service BaritoProducer {
+    rpc Produce(Timber) returns (ProduceResponse);
+    rpc ProduceBatch(TimberCollection) returns (ProduceResponse);
+}
