@@ -39,6 +39,11 @@ func TestConvertBytesToTimber_InvalidContext(t *testing.T) {
 	FatalIfWrongError(t, err, "Invalid Context Error: kafka_topic is missing")
 }
 
+func TestConvertBytesToTimberProto_ProtoParseError(t *testing.T) {
+	_, err := ConvertBytesToTimberProto([]byte(`invalid_proto`))
+	FatalIfWrongError(t, err, string(ProtoParseError))
+}
+
 func TestConvertRequestToTimber(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "/", bytes.NewReader(sampleRawTimber()))

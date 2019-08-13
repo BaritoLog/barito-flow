@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	JsonParseError = errkit.Error("JSON Parse Error")
+	JsonParseError  = errkit.Error("JSON Parse Error")
+	ProtoParseError = errkit.Error("Protobuf Parse Error")
 )
 
 func ConvertBytesToTimber(data []byte) (timber Timber, err error) {
@@ -30,6 +31,16 @@ func ConvertBytesToTimber(data []byte) (timber Timber, err error) {
 
 	if timber.Timestamp() == "" {
 		timber.SetTimestamp(time.Now().UTC().Format(time.RFC3339))
+	}
+
+	return
+}
+
+func ConvertBytesToTimberProto(data []byte) (timber pb.Timber, err error) {
+	err = proto.Unmarshal(data, &timber)
+	if err != nil {
+		err = errkit.Concat(ProtoParseError, err)
+		return
 	}
 
 	return
