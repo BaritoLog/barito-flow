@@ -8,6 +8,7 @@ import (
 	"github.com/BaritoLog/barito-flow/mock"
 	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
+	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/golang/mock/gomock"
 )
 
@@ -144,6 +145,52 @@ func TestProducerService_ProduceBatch_OnSuccess(t *testing.T) {
 	resp, err := srv.ProduceBatch(nil, pb.SampleTimberCollectionProto())
 	FatalIfError(t, err)
 	FatalIf(t, resp.GetTopic() != "some_topic_logs", "wrong result.Topic")
+}
+
+func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeSyncProducerFunc_AlwaysError("some-error")
+
+	service := NewProducerService(factory, "addr", 1, 1, "_logs", 1, 10, "new_topic_events")
+	err := service.Start()
+
+	FatalIfWrongError(t, err, "Make sync producer failed: Error connecting to kafka, retry limit reached")
+}
+
+func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
+
+	service := NewProducerService(factory, "addr", 1, 1, "_logs", 1, 10, "new_topic_events")
+	err := service.Start()
+
+	FatalIfWrongError(t, err, "Make kafka admin failed: Error connecting to kafka, retry limit reached")
+}
+
+func TestProducerService_Start(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeKafkaAdmin_ProducerServiceSuccess(ctrl, []string{})
+
+	service := &producerService{
+		factory:       factory,
+		addr:          ":24400",
+		topicSuffix:   "_logs",
+		newEventTopic: "new_topic_event",
+	}
+
+	var err error
+	go func() {
+		err = service.Start()
+	}()
+	defer service.Close()
+
+	FatalIfError(t, err)
+
+	timekit.Sleep("1ms")
+	FatalIf(t, !service.limiter.IsStart(), "rate limiter must be start")
 }
 
 func FatalIfWrongGrpcError(t *testing.T, expected error, actual error) {

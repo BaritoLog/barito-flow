@@ -6,6 +6,7 @@ import (
 	"time"
 
 	pb "github.com/BaritoLog/barito-flow/proto"
+	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
@@ -109,10 +110,42 @@ func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server) 
 }
 
 func (s *producerService) Start() (err error) {
-	return
+	err = s.initProducer()
+	if err != nil {
+		err = errkit.Concat(ErrMakeSyncProducer, err)
+		return
+	}
+
+	err = s.initKafkaAdmin()
+	if err != nil {
+		err = errkit.Concat(ErrMakeKafkaAdmin, err)
+		return
+	}
+
+	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
+	s.limiter.Start()
+
+	lis, srv := s.initGrpcServer()
+	return srv.Serve(lis)
 }
 
-func (a *producerService) Close() {}
+func (a *producerService) Close() {
+	if a.server != nil {
+		a.server.GracefulStop()
+	}
+
+	if a.limiter != nil {
+		a.limiter.Stop()
+	}
+
+	if a.admin != nil {
+		a.admin.Close()
+	}
+
+	if a.producer != nil {
+		a.producer.Close()
+	}
+}
 
 func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *pb.ProduceResult, err error) {
 	topic := timber.GetContext().GetKafkaTopic() + s.topicSuffix
