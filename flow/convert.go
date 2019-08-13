@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -64,8 +66,15 @@ func ConvertKafkaMessageToTimber(message *sarama.ConsumerMessage) (timber Timber
 }
 
 // ConvertToKafkaMessage will convert timber to sarama producer message for kafka
-func ConvertTimberToKafkaMessage(timber Timber, topic string) *sarama.ProducerMessage {
-	b, _ := json.Marshal(timber)
+func ConvertTimberToKafkaMessage(timber interface{}, topic string) *sarama.ProducerMessage {
+	var b []byte
+
+	switch timber.(type) {
+	case Timber:
+		b, _ = json.Marshal(timber.(Timber))
+	case *pb.Timber:
+		b, _ = proto.Marshal(timber.(*pb.Timber))
+	}
 
 	return &sarama.ProducerMessage{
 		Topic: topic,
