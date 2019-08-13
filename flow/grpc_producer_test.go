@@ -11,14 +11,14 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func TestBaritoProducerServer_Produce_OnLimitExceeded(t *testing.T) {
+func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	limiter := NewDummyRateLimiter()
 	limiter.Expect_IsHitLimit_AlwaysTrue()
 
-	srv := &baritoProducerServer{
+	srv := &producerService{
 		limiter: limiter,
 	}
 
@@ -26,14 +26,14 @@ func TestBaritoProducerServer_Produce_OnLimitExceeded(t *testing.T) {
 	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
 }
 
-func TestBaritoProducerServer_ProduceBatch_OnLimitExceeded(t *testing.T) {
+func TestProducerService_ProduceBatch_OnLimitExceeded(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	limiter := NewDummyRateLimiter()
 	limiter.Expect_IsHitLimit_AlwaysTrue()
 
-	srv := &baritoProducerServer{
+	srv := &producerService{
 		limiter: limiter,
 	}
 
@@ -41,7 +41,7 @@ func TestBaritoProducerServer_ProduceBatch_OnLimitExceeded(t *testing.T) {
 	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
 }
 
-func TestBaritoProducerServer_Produce_OnCreateTopicError(t *testing.T) {
+func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -53,7 +53,7 @@ func TestBaritoProducerServer_Produce_OnCreateTopicError(t *testing.T) {
 	producer := mock.NewMockSyncProducer(ctrl)
 	limiter := NewDummyRateLimiter()
 
-	srv := &baritoProducerServer{
+	srv := &producerService{
 		producer:    producer,
 		topicSuffix: "_logs",
 		admin:       admin,
@@ -64,7 +64,7 @@ func TestBaritoProducerServer_Produce_OnCreateTopicError(t *testing.T) {
 	FatalIfWrongGrpcError(t, onCreateTopicErrorGrpc(fmt.Errorf("")), err)
 }
 
-func TestBaritoProducerServer_Produce_OnStoreError(t *testing.T) {
+func TestProducerService_Produce_OnStoreError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -77,7 +77,7 @@ func TestBaritoProducerServer_Produce_OnStoreError(t *testing.T) {
 
 	limiter := NewDummyRateLimiter()
 
-	srv := &baritoProducerServer{
+	srv := &producerService{
 		producer:    producer,
 		topicSuffix: "_logs",
 		admin:       admin,
@@ -88,7 +88,7 @@ func TestBaritoProducerServer_Produce_OnStoreError(t *testing.T) {
 	FatalIfWrongGrpcError(t, onStoreErrorGrpc(fmt.Errorf("")), err)
 }
 
-func TestBaritoProducerServer_Produce_OnSuccess(t *testing.T) {
+func TestProducerService_Produce_OnSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -103,7 +103,7 @@ func TestBaritoProducerServer_Produce_OnSuccess(t *testing.T) {
 
 	limiter := NewDummyRateLimiter()
 
-	srv := &baritoProducerServer{
+	srv := &producerService{
 		producer:    producer,
 		topicSuffix: "_logs",
 		admin:       admin,
@@ -115,7 +115,7 @@ func TestBaritoProducerServer_Produce_OnSuccess(t *testing.T) {
 	FatalIf(t, resp.GetTopic() != "some_topic_logs", "wrong result.Topic")
 }
 
-func TestBaritoProducerServer_ProduceBatch_OnSuccess(t *testing.T) {
+func TestProducerService_ProduceBatch_OnSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -134,7 +134,7 @@ func TestBaritoProducerServer_ProduceBatch_OnSuccess(t *testing.T) {
 
 	limiter := NewDummyRateLimiter()
 
-	srv := &baritoProducerServer{
+	srv := &producerService{
 		producer:    producer,
 		topicSuffix: "_logs",
 		admin:       admin,

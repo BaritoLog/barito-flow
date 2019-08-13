@@ -9,7 +9,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type baritoProducerServer struct {
+type ProducerService interface {
+	pb.BaritoProducerServer
+	Start() error
+	Close()
+}
+
+type producerService struct {
 	factory                KafkaFactory
 	addr                   string
 	rateLimitResetInterval int
@@ -23,8 +29,8 @@ type baritoProducerServer struct {
 	limiter  RateLimiter
 }
 
-func NewBaritoProducerServer(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newEventTopic string) pb.BaritoProducerServer {
-	return &baritoProducerServer{
+func NewProducerService(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newEventTopic string) ProducerService {
+	return &producerService{
 		factory:                factory,
 		addr:                   addr,
 		rateLimitResetInterval: rateLimitResetInterval,
@@ -35,7 +41,13 @@ func NewBaritoProducerServer(factory KafkaFactory, addr string, maxTps int, rate
 	}
 }
 
-func (s *baritoProducerServer) Produce(_ context.Context, timber *pb.Timber) (resp *pb.ProduceResult, err error) {
+func (s *producerService) Start() (err error) {
+	return
+}
+
+func (a *producerService) Close() {}
+
+func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *pb.ProduceResult, err error) {
 	topic := timber.GetContext().GetKafkaTopic() + s.topicSuffix
 
 	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
@@ -56,7 +68,7 @@ func (s *baritoProducerServer) Produce(_ context.Context, timber *pb.Timber) (re
 	return
 }
 
-func (s *baritoProducerServer) ProduceBatch(_ context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
+func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
 	topic := timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
 
 	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
@@ -81,13 +93,13 @@ func (s *baritoProducerServer) ProduceBatch(_ context.Context, timberCollection 
 	return
 }
 
-func (s *baritoProducerServer) sendLogs(topic string, timber *pb.Timber) (err error) {
+func (s *producerService) sendLogs(topic string, timber *pb.Timber) (err error) {
 	message := ConvertTimberToKafkaMessage(timber, topic)
 	_, _, err = s.producer.SendMessage(message)
 	return
 }
 
-func (s *baritoProducerServer) sendCreateTopicEvents(topic string) (err error) {
+func (s *producerService) sendCreateTopicEvents(topic string) (err error) {
 	message := &sarama.ProducerMessage{
 		Topic: s.newEventTopic,
 		Value: sarama.ByteEncoder(topic),
@@ -96,7 +108,7 @@ func (s *baritoProducerServer) sendCreateTopicEvents(topic string) (err error) {
 	return
 }
 
-func (s *baritoProducerServer) handleProduce(timber *pb.Timber, topic string) (err error) {
+func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err error) {
 	if !s.admin.Exist(topic) {
 		numPartitions := timber.GetContext().GetKafkaPartition()
 		replicationFactor := timber.GetContext().GetKafkaReplicationFactor()
