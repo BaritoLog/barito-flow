@@ -67,6 +67,31 @@ func (s *producerService) initProducer() (err error) {
 	return
 }
 
+func (s *producerService) initKafkaAdmin() (err error) {
+	finish := false
+	retry := 0
+	for !finish {
+		retry += 1
+		s.admin, err = s.factory.MakeKafkaAdmin()
+		if err == nil {
+			finish = true
+			if retry > 1 {
+				log.Infof("Retry initialize kafka admin successful")
+			}
+		} else {
+			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
+				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
+				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
+			} else {
+				err = ErrKafkaRetryLimitReached
+				return
+			}
+		}
+	}
+
+	return
+}
+
 func (s *producerService) Start() (err error) {
 	return
 }
