@@ -26,6 +26,21 @@ func TestBaritoProducerServer_Produce_OnLimitExceeded(t *testing.T) {
 	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
 }
 
+func TestBaritoProducerServer_ProduceBatch_OnLimitExceeded(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	limiter := NewDummyRateLimiter()
+	limiter.Expect_IsHitLimit_AlwaysTrue()
+
+	srv := &baritoProducerServer{
+		limiter: limiter,
+	}
+
+	_, err := srv.ProduceBatch(nil, pb.SampleTimberCollectionProto())
+	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
+}
+
 func TestBaritoProducerServer_Produce_OnCreateTopicError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -96,6 +111,37 @@ func TestBaritoProducerServer_Produce_OnSuccess(t *testing.T) {
 	}
 
 	resp, err := srv.Produce(nil, pb.SampleTimberProto())
+	FatalIfError(t, err)
+	FatalIf(t, resp.GetTopic() != "some_topic_logs", "wrong result.Topic")
+}
+
+func TestBaritoProducerServer_ProduceBatch_OnSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	admin := mock.NewMockKafkaAdmin(ctrl)
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+
+	producer := mock.NewMockSyncProducer(ctrl)
+	producer.EXPECT().SendMessage(gomock.Any()).AnyTimes()
+
+	limiter := NewDummyRateLimiter()
+
+	srv := &baritoProducerServer{
+		producer:    producer,
+		topicSuffix: "_logs",
+		admin:       admin,
+		limiter:     limiter,
+	}
+
+	resp, err := srv.ProduceBatch(nil, pb.SampleTimberCollectionProto())
 	FatalIfError(t, err)
 	FatalIf(t, resp.GetTopic() != "some_topic_logs", "wrong result.Topic")
 }

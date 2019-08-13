@@ -47,16 +47,38 @@ func (s *baritoProducerServer) Produce(_ context.Context, timber *pb.Timber) (re
 	timber.Timestamp = ptypes.TimestampNow()
 	err = s.handleProduce(timber, topic)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &pb.ProduceResult{
+	resp = &pb.ProduceResult{
 		Topic: topic,
-	}, nil
+	}
+	return
 }
 
-func (s *baritoProducerServer) ProduceBatch(ctx context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
-	return nil, nil
+func (s *baritoProducerServer) ProduceBatch(_ context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
+	topic := timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
+
+	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
+	if s.limiter.IsHitLimit(topic, len(timberCollection.GetItems()), maxTokenIfNotExist) {
+		err = onLimitExceededGrpc()
+		return
+	}
+
+	for _, timber := range timberCollection.GetItems() {
+		timber.Context = timberCollection.GetContext()
+		timber.Timestamp = ptypes.TimestampNow()
+
+		err = s.handleProduce(timber, topic)
+		if err != nil {
+			return
+		}
+	}
+
+	resp = &pb.ProduceResult{
+		Topic: topic,
+	}
+	return
 }
 
 func (s *baritoProducerServer) sendLogs(topic string, timber *pb.Timber) (err error) {
