@@ -2,12 +2,14 @@ package flow
 
 import (
 	"context"
+	"net"
 	"time"
 
 	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 type ProducerService interface {
@@ -28,6 +30,7 @@ type producerService struct {
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
 	limiter  RateLimiter
+	server   *grpc.Server
 }
 
 func NewProducerService(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newEventTopic string) ProducerService {
@@ -89,6 +92,19 @@ func (s *producerService) initKafkaAdmin() (err error) {
 		}
 	}
 
+	return
+}
+
+func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server) {
+	lis, err := net.Listen("tcp", s.addr)
+	if err != nil {
+		log.Warnf("Failed to listen: %v", err)
+	}
+
+	srv = grpc.NewServer()
+	pb.RegisterBaritoProducerServer(srv, s)
+
+	s.server = srv
 	return
 }
 
