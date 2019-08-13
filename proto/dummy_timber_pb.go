@@ -1,6 +1,6 @@
 package timber
 
-import "github.com/golang/protobuf/ptypes/any"
+import "github.com/golang/protobuf/ptypes/struct"
 
 func SampleTimberContextProto() *TimberContext {
 	return &TimberContext{
@@ -17,9 +17,19 @@ func SampleTimberContextProto() *TimberContext {
 func SampleTimberProto() *Timber {
 	return &Timber{
 		Context: SampleTimberContextProto(),
-		Content: map[string]*any.Any{
-			"location": &any.Any{Value: []byte(`some-location`)},
-			"message":  &any.Any{Value: []byte(`some-message`)},
+		Content: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"location": &structpb.Value{
+					Kind: &structpb.Value_StringValue{
+						StringValue: "some-location",
+					},
+				},
+				"message": &structpb.Value{
+					Kind: &structpb.Value_StringValue{
+						StringValue: "some-message",
+					},
+				},
+			},
 		},
 	}
 }

@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package timber;
 
-import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
 
 message Timber {
     TimberContext context = 1;
     string timestamp = 2;
-    map<string, google.protobuf.Any> content = 3;
+    google.protobuf.Struct content = 3;
 }
 
 message TimberCollection {
