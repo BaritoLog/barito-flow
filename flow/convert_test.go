@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"testing"
 
+	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
+	"github.com/golang/protobuf/proto"
 )
 
 func TestConvertBytesToTimber_GenerateTimestamp(t *testing.T) {
@@ -78,7 +80,7 @@ func TestNewTimberFromKafka(t *testing.T) {
 	FatalIf(t, timber["message"] != "some-message", "Wrong timber[message]")
 }
 
-func TestConvertToKafkaMessage(t *testing.T) {
+func TestConvertToKafkaMessage_Timber(t *testing.T) {
 	topic := "some-topic"
 
 	timber := Timber{}
@@ -89,6 +91,21 @@ func TestConvertToKafkaMessage(t *testing.T) {
 
 	get, _ := message.Value.Encode()
 	expected, _ := json.Marshal(timber)
+	FatalIf(t, string(get) != string(expected), "Wrong message value")
+}
+
+func TestConvertToKafkaMessage_TimberProto(t *testing.T) {
+	topic := "some-topic"
+
+	timber := &pb.Timber{
+		Timestamp: "2018-03-10T23:00:00Z",
+	}
+
+	message := ConvertTimberToKafkaMessage(timber, topic)
+	FatalIf(t, message.Topic != topic, "%s != %s", message.Topic, topic)
+
+	get, _ := message.Value.Encode()
+	expected, _ := proto.Marshal(timber)
 	FatalIf(t, string(get) != string(expected), "Wrong message value")
 }
 
