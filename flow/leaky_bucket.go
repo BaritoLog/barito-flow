@@ -5,27 +5,27 @@ import (
 )
 
 type LeakyBucket struct {
-	max   int
-	token int
+	max   int32
+	token int32
 	lock  sync.Mutex
 }
 
-func NewLeakyBucket(max int) *LeakyBucket {
+func NewLeakyBucket(max int32) *LeakyBucket {
 	return &LeakyBucket{
 		max:   max,
 		token: max,
 	}
 }
 
-func (b *LeakyBucket) Token() int {
+func (b *LeakyBucket) Token() int32 {
 	return b.token
 }
 
-func (b *LeakyBucket) Max() int {
+func (b *LeakyBucket) Max() int32 {
 	return b.max
 }
 
-func (b *LeakyBucket) UpdateMax(newMax int) {
+func (b *LeakyBucket) UpdateMax(newMax int32) {
 	b.lock.Lock()
 	if newMax > b.max {
 		b.token = b.token + (newMax - b.max)
@@ -44,12 +44,12 @@ func (l *LeakyBucket) Refill() {
 
 func (l *LeakyBucket) Take(count int) bool {
 
-	if (l.token - count) < 0 {
+	if (l.token - int32(count)) < 0 {
 		return false
 	}
 
 	l.lock.Lock()
-	l.token = l.token - count
+	l.token = l.token - int32(count)
 	l.lock.Unlock()
 	return true
 }

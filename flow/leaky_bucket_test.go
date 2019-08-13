@@ -7,13 +7,13 @@ import (
 )
 
 func TestLeakyBucket(t *testing.T) {
-	max := 4
+	max := int32(4)
 
 	bucket := NewLeakyBucket(max)
 	FatalIf(t, bucket.Max() != max, "bucket.Max() is wrong")
 	FatalIf(t, bucket.Token() != max, "bucket.Token() is wrong")
 
-	for i := 0; i < max; i++ {
+	for i := int32(0); i < max; i++ {
 		FatalIf(t, !bucket.Take(1), "bucket still have token")
 	}
 
@@ -25,7 +25,7 @@ func TestLeakyBucket(t *testing.T) {
 }
 
 func TestUpdateMax(t *testing.T) {
-	max := 4
+	max := int32(4)
 	bucket := NewLeakyBucket(max)
 
 	bucket.Take(2)
