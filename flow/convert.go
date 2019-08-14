@@ -9,7 +9,9 @@ import (
 	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	stpb "github.com/golang/protobuf/ptypes/struct"
 )
 
 const (
@@ -102,4 +104,18 @@ func ConvertTimberToElasticDocument(timber Timber) map[string]interface{} {
 	delete(doc, "_ctx")
 
 	return doc
+}
+
+func ConvertTimberProtoToEsDocumentString(timber *pb.Timber, m *jsonpb.Marshaler) string {
+	doc := timber.GetContent()
+
+	ts := &stpb.Value{
+		Kind: &stpb.Value_StringValue{
+			StringValue: timber.GetTimestamp(),
+		},
+	}
+	doc.Fields["@timestamp"] = ts
+
+	docStr, _ := m.MarshalToString(doc)
+	return docStr
 }

@@ -10,7 +10,9 @@ import (
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/struct"
 )
 
 func TestConvertBytesToTimber_GenerateTimestamp(t *testing.T) {
@@ -121,6 +123,17 @@ func TestConvertTimberToElasticDocument(t *testing.T) {
 	document := ConvertTimberToElasticDocument(timber)
 	FatalIf(t, len(document) != 1, "wrong document size")
 	FatalIf(t, timber["hello"] != "world", "wrong document.hello")
+}
+
+func TestConvertTimberProtoToEsDocumentString(t *testing.T) {
+	timber := &pb.Timber{
+		Content: &structpb.Struct{
+			Fields: make(map[string]*structpb.Value),
+		},
+	}
+	document := ConvertTimberProtoToEsDocumentString(timber, &jsonpb.Marshaler{})
+	expected := "{\"@timestamp\":\"\"}"
+	FatalIf(t, expected != document, "expected %s, received %s", expected, document)
 }
 
 func sampleRawTimber() []byte {
