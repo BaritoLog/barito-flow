@@ -23,7 +23,8 @@ const (
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
 
-	EnvProducerAddress                = "BARITO_PRODUCER_ADDRESS" // TODO: rename to better name
+	EnvProducerAddressGrpc            = "BARITO_PRODUCER_GRPC" // TODO: rename to better name
+	EnvProducerAddressRest            = "BARITO_PRODUCER_REST" // TODO: rename to better name
 	EnvProducerMaxRetry               = "BARITO_PRODUCER_MAX_RETRY"
 	EnvProducerMaxTPS                 = "BARITO_PRODUCER_MAX_TPS"
 	EnvProducerRateLimitResetInterval = "BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL"
@@ -54,7 +55,8 @@ var (
 	DefaultPushMetricUrl      = ""
 	DefaultPushMetricInterval = "30s"
 
-	DefaultProducerAddress                = ":8080"
+	DefaultProducerAddressGrpc            = ":8082"
+	DefaultProducerAddressRest            = ":8080"
 	DefaultProducerMaxRetry               = 10
 	DefaultProducerMaxTPS                 = 100
 	DefaultProducerRateLimitResetInterval = 10
@@ -131,8 +133,12 @@ func configPushMetricInterval() (s string) {
 	return stringEnvOrDefault(EnvPushMetricInterval, DefaultPushMetricInterval)
 }
 
-func configProducerAddress() (s string) {
-	return stringEnvOrDefault(EnvProducerAddress, DefaultProducerAddress)
+func configProducerAddressGrpc() (s string) {
+	return stringEnvOrDefault(EnvProducerAddressGrpc, DefaultProducerAddressGrpc)
+}
+
+func configProducerAddressRest() (s string) {
+	return stringEnvOrDefault(EnvProducerAddressRest, DefaultProducerAddressRest)
 }
 
 func configProducerMaxRetry() (i int) {

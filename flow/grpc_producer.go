@@ -44,11 +44,11 @@ type producerService struct {
 	reverseProxy *http.Server
 }
 
-func NewProducerService(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newEventTopic string) ProducerService {
+func NewProducerService(factory KafkaFactory, grpcAddr string, restAddr string, maxTps int, rateLimitResetInterval int, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newEventTopic string) ProducerService {
 	return &producerService{
 		factory:                factory,
-		grpcAddr:               ":8070",
-		restAddr:               addr,
+		grpcAddr:               grpcAddr,
+		restAddr:               restAddr,
 		rateLimitResetInterval: rateLimitResetInterval,
 		topicSuffix:            topicSuffix,
 		kafkaMaxRetry:          kafkaMaxRetry,

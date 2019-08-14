@@ -61,12 +61,20 @@ func TestGetPushMetricInterval(t *testing.T) {
 	FatalIf(t, configPushMetricInterval() != "22s", "should get from env variable")
 }
 
-func TestGetProducerAddress(t *testing.T) {
-	FatalIf(t, configProducerAddress() != DefaultProducerAddress, "should return default ")
+func TestGetProducerAddressGrpc(t *testing.T) {
+	FatalIf(t, configProducerAddressGrpc() != DefaultProducerAddressGrpc, "should return default ")
 
-	os.Setenv(EnvProducerAddress, ":12345")
+	os.Setenv(EnvProducerAddressGrpc, ":12345")
 	defer os.Clearenv()
-	FatalIf(t, configProducerAddress() != ":12345", "should get from env variable")
+	FatalIf(t, configProducerAddressGrpc() != ":12345", "should get from env variable")
+}
+
+func TestGetProducerAddressRest(t *testing.T) {
+	FatalIf(t, configProducerAddressRest() != DefaultProducerAddressRest, "should return default ")
+
+	os.Setenv(EnvProducerAddressRest, ":12345")
+	defer os.Clearenv()
+	FatalIf(t, configProducerAddressRest() != ":12345", "should get from env variable")
 }
 
 func TestGetProducerMaxRetry(t *testing.T) {
