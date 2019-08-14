@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	ErrServeGrpc    = errkit.Error("Failed to serve gRPC")
+	ErrInitGrpc     = errkit.Error("Failed to listen to gRPC address")
 	ErrRegisterGrpc = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
 	ErrReverseProxy = errkit.Error("Error serving REST reverse proxy")
 )
@@ -23,6 +23,7 @@ const (
 type ProducerService interface {
 	pb.ProducerServiceServer
 	Start() error
+	LaunchREST() error
 	Close()
 }
 
@@ -107,37 +108,16 @@ func (s *producerService) initKafkaAdmin() (err error) {
 	return
 }
 
-func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server) {
-	lis, err := net.Listen("tcp", s.grpcAddr)
+func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server, err error) {
+	lis, err = net.Listen("tcp", s.grpcAddr)
 	if err != nil {
-		log.Warnf("Failed to listen: %v", err)
+		return
 	}
 
 	srv = grpc.NewServer()
 	pb.RegisterProducerServiceServer(srv, s)
 
 	s.grpcServer = srv
-	return
-}
-
-func (s *producerService) initReverseProxy() (srv *http.Server, cancel context.CancelFunc, err error) {
-	ctx := context.Background()
-	ctx, cancel = context.WithCancel(ctx)
-
-	mux := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err = pb.RegisterProducerServiceHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
-	if err != nil {
-		err = errkit.Concat(ErrRegisterGrpc, err)
-		return
-	}
-
-	srv = &http.Server{
-		Addr:    s.restAddr,
-		Handler: mux,
-	}
-	s.reverseProxy = srv
-
 	return
 }
 
@@ -157,21 +137,37 @@ func (s *producerService) Start() (err error) {
 	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
 	s.limiter.Start()
 
-	lis, grpcSrv := s.initGrpcServer()
-	err = grpcSrv.Serve(lis)
+	lis, grpcSrv, err := s.initGrpcServer()
 	if err != nil {
-		err = errkit.Concat(ErrServeGrpc, err)
+		err = errkit.Concat(ErrInitGrpc, err)
 		return
 	}
 
-	restSrv, cancel, err := s.initReverseProxy()
+	return grpcSrv.Serve(lis)
+}
+
+func (s *producerService) LaunchREST() (err error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	err = restSrv.ListenAndServe()
+	mux := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+	err = pb.RegisterProducerServiceHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
+	if err != nil {
+		err = errkit.Concat(ErrRegisterGrpc, err)
+		return
+	}
+
+	s.reverseProxy = &http.Server{
+		Addr:    s.restAddr,
+		Handler: mux,
+	}
+
+	err = s.reverseProxy.ListenAndServe()
 	if err != nil {
 		err = errkit.Concat(ErrReverseProxy, err)
 	}
-
 	return
 }
 
