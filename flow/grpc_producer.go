@@ -3,13 +3,21 @@ package flow
 import (
 	"context"
 	"net"
+	"net/http"
 	"time"
 
 	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+)
+
+const (
+	ErrServeGrpc    = errkit.Error("Failed to serve gRPC")
+	ErrRegisterGrpc = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
+	ErrReverseProxy = errkit.Error("Error serving REST reverse proxy")
 )
 
 type ProducerService interface {
@@ -20,7 +28,8 @@ type ProducerService interface {
 
 type producerService struct {
 	factory                KafkaFactory
-	addr                   string
+	grpcAddr               string
+	restAddr               string
 	rateLimitResetInterval int
 	topicSuffix            string
 	kafkaMaxRetry          int
@@ -30,13 +39,16 @@ type producerService struct {
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
 	limiter  RateLimiter
-	server   *grpc.Server
+
+	grpcServer   *grpc.Server
+	reverseProxy *http.Server
 }
 
 func NewProducerService(factory KafkaFactory, addr string, maxTps int, rateLimitResetInterval int, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newEventTopic string) ProducerService {
 	return &producerService{
 		factory:                factory,
-		addr:                   addr,
+		grpcAddr:               ":8070",
+		restAddr:               addr,
 		rateLimitResetInterval: rateLimitResetInterval,
 		topicSuffix:            topicSuffix,
 		kafkaMaxRetry:          kafkaMaxRetry,
@@ -96,7 +108,7 @@ func (s *producerService) initKafkaAdmin() (err error) {
 }
 
 func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server) {
-	lis, err := net.Listen("tcp", s.addr)
+	lis, err := net.Listen("tcp", s.grpcAddr)
 	if err != nil {
 		log.Warnf("Failed to listen: %v", err)
 	}
@@ -104,7 +116,28 @@ func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server) 
 	srv = grpc.NewServer()
 	pb.RegisterProducerServiceServer(srv, s)
 
-	s.server = srv
+	s.grpcServer = srv
+	return
+}
+
+func (s *producerService) initReverseProxy() (srv *http.Server, cancel context.CancelFunc, err error) {
+	ctx := context.Background()
+	ctx, cancel = context.WithCancel(ctx)
+
+	mux := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+	err = pb.RegisterProducerServiceHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
+	if err != nil {
+		err = errkit.Concat(ErrRegisterGrpc, err)
+		return
+	}
+
+	srv = &http.Server{
+		Addr:    s.restAddr,
+		Handler: mux,
+	}
+	s.reverseProxy = srv
+
 	return
 }
 
@@ -124,25 +157,43 @@ func (s *producerService) Start() (err error) {
 	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
 	s.limiter.Start()
 
-	lis, srv := s.initGrpcServer()
-	return srv.Serve(lis)
+	lis, grpcSrv := s.initGrpcServer()
+	err = grpcSrv.Serve(lis)
+	if err != nil {
+		err = errkit.Concat(ErrServeGrpc, err)
+		return
+	}
+
+	restSrv, cancel, err := s.initReverseProxy()
+	defer cancel()
+
+	err = restSrv.ListenAndServe()
+	if err != nil {
+		err = errkit.Concat(ErrReverseProxy, err)
+	}
+
+	return
 }
 
-func (a *producerService) Close() {
-	if a.server != nil {
-		a.server.GracefulStop()
+func (s *producerService) Close() {
+	if s.reverseProxy != nil {
+		s.reverseProxy.Close()
 	}
 
-	if a.limiter != nil {
-		a.limiter.Stop()
+	if s.grpcServer != nil {
+		s.grpcServer.GracefulStop()
 	}
 
-	if a.admin != nil {
-		a.admin.Close()
+	if s.limiter != nil {
+		s.limiter.Stop()
 	}
 
-	if a.producer != nil {
-		a.producer.Close()
+	if s.admin != nil {
+		s.admin.Close()
+	}
+
+	if s.producer != nil {
+		s.producer.Close()
 	}
 }
 

@@ -176,7 +176,7 @@ func TestProducerService_Start(t *testing.T) {
 
 	service := &producerService{
 		factory:       factory,
-		addr:          ":24400",
+		grpcAddr:      ":24400",
 		topicSuffix:   "_logs",
 		newEventTopic: "new_topic_event",
 	}
