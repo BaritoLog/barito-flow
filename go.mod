@@ -28,5 +28,6 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.20.0
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
+	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 	google.golang.org/grpc v1.22.1
 )
