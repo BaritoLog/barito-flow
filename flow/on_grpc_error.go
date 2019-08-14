@@ -6,7 +6,7 @@ import (
 )
 
 func onLimitExceededGrpc() error {
-	return status.Errorf(codes.ResourceExhausted, "Bandwith Limit Exceeded")
+	return status.Errorf(codes.ResourceExhausted, "Bandwidth Limit Exceeded")
 }
 
 func onBadRequestGrpc(err error) error {
