@@ -38,16 +38,6 @@ func ConvertBytesToTimber(data []byte) (timber Timber, err error) {
 	return
 }
 
-func ConvertBytesToTimberProto(data []byte) (timber pb.Timber, err error) {
-	err = proto.Unmarshal(data, &timber)
-	if err != nil {
-		err = errkit.Concat(ProtoParseError, err)
-		return
-	}
-
-	return
-}
-
 func ConvertBytesToTimberCollection(data []byte) (timberCollection TimberCollection, err error) {
 	err = json.Unmarshal(data, &timberCollection)
 	if err != nil {
@@ -76,6 +66,16 @@ func ConvertBatchRequestToTimberCollection(req *http.Request) (TimberCollection,
 // NewTimberFromKafkaMessage create timber instance from kafka message
 func ConvertKafkaMessageToTimber(message *sarama.ConsumerMessage) (timber Timber, err error) {
 	return ConvertBytesToTimber(message.Value)
+}
+
+func ConvertKafkaMessageToTimberProto(message *sarama.ConsumerMessage) (timber pb.Timber, err error) {
+	err = proto.Unmarshal(message.Value, &timber)
+	if err != nil {
+		err = errkit.Concat(ProtoParseError, err)
+		return
+	}
+
+	return
 }
 
 // ConvertToKafkaMessage will convert timber to sarama producer message for kafka

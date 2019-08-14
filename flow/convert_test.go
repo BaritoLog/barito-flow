@@ -43,11 +43,6 @@ func TestConvertBytesToTimber_InvalidContext(t *testing.T) {
 	FatalIfWrongError(t, err, "Invalid Context Error: kafka_topic is missing")
 }
 
-func TestConvertBytesToTimberProto_ProtoParseError(t *testing.T) {
-	_, err := ConvertBytesToTimberProto([]byte(`invalid_proto`))
-	FatalIfWrongError(t, err, string(ProtoParseError))
-}
-
 func TestConvertRequestToTimber(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "/", bytes.NewReader(sampleRawTimber()))
@@ -80,6 +75,29 @@ func TestNewTimberFromKafka(t *testing.T) {
 	timber, err := ConvertKafkaMessageToTimber(message)
 	FatalIfError(t, err)
 	FatalIf(t, timber["message"] != "some-message", "Wrong timber[message]")
+}
+
+func TestNewTimberProtoFromKafka_ProtoParseError(t *testing.T) {
+	message := &sarama.ConsumerMessage{
+		Topic: "some-topic",
+		Value: []byte(`invalid_proto`),
+	}
+
+	_, err := ConvertKafkaMessageToTimberProto(message)
+	FatalIfWrongError(t, err, string(ProtoParseError))
+}
+
+func TestNewTimberProtoFromKafka(t *testing.T) {
+	b, _ := proto.Marshal(&pb.Timber{})
+
+	message := &sarama.ConsumerMessage{
+		Topic: "some-topic",
+		Value: b,
+	}
+
+	timber, err := ConvertKafkaMessageToTimberProto(message)
+	FatalIfError(t, err)
+	FatalIf(t, timber.GetContent() != nil, "Wrong timber[message]")
 }
 
 func TestConvertToKafkaMessage_Timber(t *testing.T) {
