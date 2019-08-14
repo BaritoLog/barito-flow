@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/instru"
 )
@@ -82,6 +83,31 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 	appSecret := timber.Context().AppSecret
 
 	err = client.Store(context.Background(), timber)
+	FatalIfWrongError(t, err, "elastic: Error 400 (Bad Request)")
+	FatalIf(t, instru.GetEventCount(fmt.Sprintf("%s_es_store", appSecret), "fail") != 1, "wrong total fail event")
+}
+
+func TestElasticStoreman_storeProto_SaveError(t *testing.T) {
+	defer instru.Flush()
+
+	timber := *pb.SampleTimberProto()
+
+	ts := httptest.NewServer(&ELasticTestHandler{
+		ExistAPIStatus:  http.StatusOK,
+		CreateAPIStatus: http.StatusOK,
+		PostAPIStatus:   http.StatusBadRequest,
+	})
+	defer ts.Close()
+
+	retrier := mockElasticRetrier()
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
+	client, err := NewElastic(retrier, esConfig, ts.URL)
+	client.onProtoStoreFunc = client.singleInsertJsonString
+	FatalIfError(t, err)
+
+	appSecret := timber.GetContext().GetAppSecret()
+
+	err = client.StoreProto(context.Background(), timber)
 	FatalIfWrongError(t, err, "elastic: Error 400 (Bad Request)")
 	FatalIf(t, instru.GetEventCount(fmt.Sprintf("%s_es_store", appSecret), "fail") != 1, "wrong total fail event")
 }

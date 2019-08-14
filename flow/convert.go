@@ -106,7 +106,7 @@ func ConvertTimberToElasticDocument(timber Timber) map[string]interface{} {
 	return doc
 }
 
-func ConvertTimberProtoToEsDocumentString(timber *pb.Timber, m *jsonpb.Marshaler) string {
+func ConvertTimberProtoToEsDocumentString(timber pb.Timber, m *jsonpb.Marshaler) string {
 	doc := timber.GetContent()
 
 	ts := &stpb.Value{

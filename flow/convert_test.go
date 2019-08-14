@@ -144,7 +144,7 @@ func TestConvertTimberToElasticDocument(t *testing.T) {
 }
 
 func TestConvertTimberProtoToEsDocumentString(t *testing.T) {
-	timber := &pb.Timber{
+	timber := pb.Timber{
 		Content: &structpb.Struct{
 			Fields: make(map[string]*structpb.Value),
 		},
