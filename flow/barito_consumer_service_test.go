@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/mock"
+	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -104,7 +106,11 @@ func TestBaritoConsumerService_onStoreTimber_ErrorConvertKafkaMessage(t *testing
 		elasticUrl: ts.URL,
 	}
 
-	service.onStoreTimber(&sarama.ConsumerMessage{})
+	invalidKafkaMessage := &sarama.ConsumerMessage{
+		Value: []byte(`invalid_proto`),
+	}
+
+	service.onStoreTimber(invalidKafkaMessage)
 	FatalIfWrongError(t, service.lastError, string(ErrConvertKafkaMessage))
 }
 
@@ -125,8 +131,10 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
 	service.esClient = &elastic
 
+	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
+
 	service.onStoreTimber(&sarama.ConsumerMessage{
-		Value: sampleRawTimber(),
+		Value: timberBytes,
 	})
 	FatalIfWrongError(t, service.lastError, string(ErrStore))
 }
@@ -144,11 +152,17 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
 	service.esClient = &elastic
 
+	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
+
 	service.onStoreTimber(&sarama.ConsumerMessage{
-		Value: sampleRawTimber(),
+		Value: timberBytes,
 	})
 	FatalIfError(t, service.lastError)
-	FatalIf(t, service.lastTimber == nil, "lastTimber can't be nil")
+
+	nilTimber := pb.Timber{}
+	lastTimberContextIsNil := (service.lastTimber.GetContext() == nilTimber.GetContext())
+	lastTimberContentIsNil := (service.lastTimber.GetContent() == nilTimber.GetContent())
+	FatalIf(t, lastTimberContextIsNil && lastTimberContentIsNil, "lastTimber can't be nil")
 }
 
 func TestBaritoConsumerService_onNewTopicEvent(t *testing.T) {

@@ -16,8 +16,7 @@ import (
 func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber(sampleRawTimber())
-	FatalIfError(t, err)
+	timber := *pb.SampleTimberProto()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusNotFound,
@@ -39,8 +38,7 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber(sampleRawTimber())
-	FatalIfError(t, err)
+	timber := *pb.SampleTimberProto()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusNotFound,
@@ -54,7 +52,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	client, err := NewElastic(retrier, esConfig, ts.URL)
 	FatalIfError(t, err)
 
-	appSecret := timber.Context().AppSecret
+	appSecret := timber.GetContext().GetAppSecret()
 
 	err = client.Store(context.Background(), timber)
 	FatalIfError(t, err)
@@ -63,31 +61,6 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 }
 
 func TestElasticStoreman_store_SaveError(t *testing.T) {
-	defer instru.Flush()
-
-	timber, err := ConvertBytesToTimber(sampleRawTimber())
-	FatalIfError(t, err)
-
-	ts := httptest.NewServer(&ELasticTestHandler{
-		ExistAPIStatus:  http.StatusOK,
-		CreateAPIStatus: http.StatusOK,
-		PostAPIStatus:   http.StatusBadRequest,
-	})
-	defer ts.Close()
-
-	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
-	client, err := NewElastic(retrier, esConfig, ts.URL)
-	FatalIfError(t, err)
-
-	appSecret := timber.Context().AppSecret
-
-	err = client.Store(context.Background(), timber)
-	FatalIfWrongError(t, err, "elastic: Error 400 (Bad Request)")
-	FatalIf(t, instru.GetEventCount(fmt.Sprintf("%s_es_store", appSecret), "fail") != 1, "wrong total fail event")
-}
-
-func TestElasticStoreman_storeProto_SaveError(t *testing.T) {
 	defer instru.Flush()
 
 	timber := *pb.SampleTimberProto()
@@ -102,12 +75,11 @@ func TestElasticStoreman_storeProto_SaveError(t *testing.T) {
 	retrier := mockElasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
 	client, err := NewElastic(retrier, esConfig, ts.URL)
-	client.onProtoStoreFunc = client.singleInsertJsonString
 	FatalIfError(t, err)
 
 	appSecret := timber.GetContext().GetAppSecret()
 
-	err = client.StoreProto(context.Background(), timber)
+	err = client.Store(context.Background(), timber)
 	FatalIfWrongError(t, err, "elastic: Error 400 (Bad Request)")
 	FatalIf(t, instru.GetEventCount(fmt.Sprintf("%s_es_store", appSecret), "fail") != 1, "wrong total fail event")
 }

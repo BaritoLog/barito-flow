@@ -80,10 +80,10 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		log.SetLevel(log.WarnLevel)
 	}
 
-	address := configProducerAddressRest()
+	grpcAddr := configProducerAddressGrpc()
+	restAddr := configProducerAddressRest()
 	kafkaBrokers := configKafkaBrokers()
 	maxRetry := configProducerMaxRetry()
-	maxTps := configProducerMaxTPS()
 	rateLimitResetInterval := configProducerRateLimitResetInterval()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
@@ -100,21 +100,26 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
-	service := flow.NewBaritoProducerService(
-		factory,
-		address,
-		maxTps,
-		rateLimitResetInterval,
-		topicSuffix,
-		kafkaMaxRetry,
-		kafkaRetryInterval,
-		newTopicEventName)
+	producerParams := map[string]interface{}{
+		"factory":                factory,
+		"grpcAddr":               grpcAddr,
+		"restAddr":               restAddr,
+		"rateLimitResetInterval": rateLimitResetInterval,
+		"topicSuffix":            topicSuffix,
+		"kafkaMaxRetry":          kafkaMaxRetry,
+		"kafkaRetryInterval":     kafkaRetryInterval,
+		"newEventTopic":          newTopicEventName,
+	}
 
-	if err = service.Start(); err != nil {
+	service := flow.NewProducerService(producerParams)
+
+	go service.Start()
+
+	if err = service.LaunchREST(); err != nil {
 		return
 	}
-	srvkit.AsyncGracefulShutdown(service.Close)
 
+	srvkit.AsyncGracefulShutdown(service.Close)
 	return
 }
 

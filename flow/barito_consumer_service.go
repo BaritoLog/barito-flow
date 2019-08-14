@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
@@ -50,7 +51,7 @@ type baritoConsumerService struct {
 	eventWorkerGroupID  string
 
 	lastError              error
-	lastTimber             Timber
+	lastTimber             pb.Timber
 	lastNewTopic           string
 	isHalt                 bool
 	elasticRetrierInterval string
@@ -192,7 +193,7 @@ func (s *baritoConsumerService) logError(err error) {
 	log.Warn(err.Error())
 }
 
-func (s *baritoConsumerService) logTimber(timber Timber) {
+func (s *baritoConsumerService) logTimber(timber pb.Timber) {
 	s.lastTimber = timber
 	log.Infof("Timber: %v", timber)
 }

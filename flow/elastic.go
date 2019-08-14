@@ -16,18 +16,17 @@ import (
 var counter int = 0
 
 type Elastic interface {
-	OnFailure(f func(*Timber))
-	Store(ctx context.Context, timber Timber)
+	OnFailure(f func(*pb.Timber))
+	Store(ctx context.Context, timber pb.Timber) error
 	NewClient()
 }
 
 type elasticClient struct {
-	client           *elastic.Client
-	bulkProcessor    *elastic.BulkProcessor
-	onFailureFunc    func(*Timber)
-	onStoreFunc      func(indexName, documentType string, document map[string]interface{}) (err error)
-	onProtoStoreFunc func(ctx context.Context, indexName, documentType, document string) (err error)
-	jspbMarshaler    *jsonpb.Marshaler
+	client        *elastic.Client
+	bulkProcessor *elastic.BulkProcessor
+	onFailureFunc func(*pb.Timber)
+	onStoreFunc   func(ctx context.Context, indexName, documentType, document string) (err error)
+	jspbMarshaler *jsonpb.Marshaler
 }
 
 type esConfig struct {
@@ -95,36 +94,7 @@ func printThroughputPerSecond() {
 	}()
 }
 
-func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
-	indexPrefix := timber.Context().ESIndexPrefix
-	documentType := timber.Context().ESDocumentType
-	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
-	appSecret := timber.Context().AppSecret
-
-	exists, _ := e.client.IndexExists(indexName).Do(ctx)
-
-	if !exists {
-		log.Warnf("ES index '%s' is not exist", indexName)
-		index := elasticCreateIndex(indexPrefix)
-		_, err = e.client.CreateIndex(indexName).
-			BodyJson(index).
-			Do(ctx)
-		instruESCreateIndex(err)
-		if err != nil {
-			return
-		}
-	}
-
-	document := ConvertTimberToElasticDocument(timber)
-
-	err = e.onStoreFunc(indexName, documentType, document)
-	counter++
-	instruESStore(appSecret, err)
-
-	return
-}
-
-func (e *elasticClient) StoreProto(ctx context.Context, timber pb.Timber) (err error) {
+func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 	documentType := timber.GetContext().GetEsDocumentType()
@@ -144,20 +114,20 @@ func (e *elasticClient) StoreProto(ctx context.Context, timber pb.Timber) (err e
 		}
 	}
 
-	document := ConvertTimberProtoToEsDocumentString(timber, e.jspbMarshaler)
+	document := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 
-	err = e.onProtoStoreFunc(ctx, indexName, documentType, document)
+	err = e.onStoreFunc(ctx, indexName, documentType, document)
 	counter++
 	instruESStore(appSecret, err)
 
 	return
 }
 
-func (e *elasticClient) OnFailure(f func(*Timber)) {
+func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
 	e.onFailureFunc = f
 }
 
-func (e *elasticClient) bulkInsert(indexName, documentType string, document map[string]interface{}) (err error) {
+func (e *elasticClient) bulkInsert(_ context.Context, indexName, documentType, document string) (err error) {
 	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
 		Type(documentType).
@@ -166,25 +136,7 @@ func (e *elasticClient) bulkInsert(indexName, documentType string, document map[
 	return
 }
 
-func (e *elasticClient) singleInsert(indexName, documentType string, document map[string]interface{}) (err error) {
-	_, err = e.client.Index().
-		Index(indexName).
-		Type(documentType).
-		BodyJson(document).
-		Do(context.Background())
-	return
-}
-
-func (e *elasticClient) bulkInsertJsonString(_ context.Context, indexName, documentType, document string) (err error) {
-	r := elastic.NewBulkIndexRequest().
-		Index(indexName).
-		Type(documentType).
-		Doc(document)
-	e.bulkProcessor.Add(r)
-	return
-}
-
-func (e *elasticClient) singleInsertJsonString(ctx context.Context, indexName, documentType, document string) (err error) {
+func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentType, document string) (err error) {
 	_, err = e.client.Index().
 		Index(indexName).
 		Type(documentType).
