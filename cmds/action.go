@@ -114,15 +114,11 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	service := flow.NewProducerService(producerParams)
 
 	go service.Start()
-
 	if configServeRestApi() {
-		err = service.LaunchREST()
-		if err != nil {
-			return
-		}
+		go service.LaunchREST()
 	}
 
-	srvkit.AsyncGracefulShutdown(service.Close)
+	srvkit.GracefullShutdown(service.Close)
 	return
 }
 
