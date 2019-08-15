@@ -115,8 +115,11 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 	go service.Start()
 
-	if err = service.LaunchREST(); err != nil {
-		return
+	if configServeRestApi() {
+		err = service.LaunchREST()
+		if err != nil {
+			return
+		}
 	}
 
 	srvkit.AsyncGracefulShutdown(service.Close)
