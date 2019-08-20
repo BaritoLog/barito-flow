@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/es"
-	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 var counter int = 0

@@ -1,12 +1,12 @@
 package flow
 
 import (
-	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	stpb "github.com/golang/protobuf/ptypes/struct"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (

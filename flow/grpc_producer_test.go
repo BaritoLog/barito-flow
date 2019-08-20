@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/BaritoLog/barito-flow/mock"
-	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/golang/mock/gomock"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/instru"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func TestElasticStore_CreateIndexError(t *testing.T) {

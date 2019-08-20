@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	uuid "github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (

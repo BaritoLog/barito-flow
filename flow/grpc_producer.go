@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/BaritoLog/barito-flow/proto"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/vwidjaya/barito-proto/producer"
 	"google.golang.org/grpc"
 )
 
@@ -23,7 +23,7 @@ const (
 )
 
 type ProducerService interface {
-	pb.ProducerServiceServer
+	pb.ProducerServer
 	Start() error
 	LaunchREST() error
 	Close()
@@ -117,7 +117,7 @@ func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server, 
 	}
 
 	srv = grpc.NewServer()
-	pb.RegisterProducerServiceServer(srv, s)
+	pb.RegisterProducerServer(srv, s)
 
 	s.grpcServer = srv
 	return
@@ -155,7 +155,7 @@ func (s *producerService) LaunchREST() (err error) {
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err = pb.RegisterProducerServiceHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
+	err = pb.RegisterProducerHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
 	if err != nil {
 		err = errkit.Concat(ErrRegisterGrpc, err)
 		return

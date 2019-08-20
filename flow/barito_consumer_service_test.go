@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/mock"
-	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func init() {

@@ -3,12 +3,12 @@ package flow
 import (
 	"testing"
 
-	pb "github.com/BaritoLog/barito-flow/proto"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/struct"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func TestConvertTimberToKafkaMessage(t *testing.T) {
