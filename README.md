@@ -56,7 +56,9 @@ These environment variables can be modified to customize its behaviour.
 | KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul | BARITO_KAFKA_BROKERS | localhost:9092 |
 | KafkaMaxRetry | Number of retry to connect to kafka during startup | BARITO_KAFKA_MAX_RETRY | 0 (unlimited) |
 | KafkaRetryInterval | Interval between retry connecting to kafka (in seconds) | BARITO_KAFKA_RETRY_INTERVAL | 10 |
-| ProducerAddress | Http Server Address | BARITO_PRODUCER_ADDRESS| :8080 |
+| ServeRestApi | Toggle for REST gateway | BARITO_PRODUCER_REST_API | true |
+| ProducerAddressGrpc | gRPC Server Address | BARITO_PRODUCER_GRPC| :8082 |
+| ProducerAddressRest | REST Server Address | BARITO_PRODUCER_REST| :8080 |
 | ProducerMaxRetry | Set kafka setting max retry | BARITO_PRODUCER_MAX_RETRY | 10 |
 | ProducerMaxTps | Producer rate limit trx per second | BARITO_PRODUCER_MAX_TPS | 100 |
 | ProducerRateLimitResetInterval | Producer rate limit reset interval (in seconds) | BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL | 10 |
