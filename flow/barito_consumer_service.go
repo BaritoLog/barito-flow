@@ -57,21 +57,21 @@ type baritoConsumerService struct {
 	elasticRetrierInterval string
 }
 
-func NewBaritoConsumerService(factory KafkaFactory, groupID string, elasticURL string, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newTopicEventName string, elasticRetrierInterval string, esConfig esConfig) BaritoConsumerService {
-
+func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerService {
 	s := &baritoConsumerService{
-		factory:                factory,
-		groupID:                groupID,
-		elasticUrl:             elasticURL,
-		topicSuffix:            topicSuffix,
-		kafkaMaxRetry:          kafkaMaxRetry,
-		kafkaRetryInterval:     kafkaRetryInterval,
-		newTopicEventName:      newTopicEventName,
+		factory:                params["factory"].(KafkaFactory),
+		groupID:                params["groupID"].(string),
+		elasticUrl:             params["elasticURL"].(string),
+		topicSuffix:            params["topicSuffix"].(string),
+		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
+		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
+		newTopicEventName:      params["newTopicEventName"].(string),
 		workerMap:              make(map[string]ConsumerWorker),
-		elasticRetrierInterval: elasticRetrierInterval,
+		elasticRetrierInterval: params["elasticRetrierInterval"].(string),
 	}
 
 	retrier := s.elasticRetrier()
+	esConfig := params["esConfig"].(esConfig)
 	elastic, err := NewElastic(retrier, esConfig, s.elasticUrl)
 	s.esClient = &elastic
 	if err != nil {

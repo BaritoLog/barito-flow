@@ -24,9 +24,9 @@ func init() {
 func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", 1, 10, "newTopicEventName", "", esConfig)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams)
 	err := service.Start()
 	FatalIfWrongError(t, err, "Make kafka admin failed: Error connecting to kafka, retry limit reached")
 }
@@ -34,9 +34,9 @@ func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 func TestBaritoConsumerService_MakeNewTopicWorkerError(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeClusterConsumer_AlwaysError("some-error")
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", 0, 10, "newTopicEventName", "", esConfig)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams)
 	err := service.Start()
 
 	FatalIfWrongError(t, err, "Make new topic worker failed: some-error")
@@ -50,10 +50,9 @@ func TestBaritoConsumerService(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", 0, 10, "", "", esConfig)
-	service := v.(*baritoConsumerService)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
 
 	err := service.Start()
 	FatalIfError(t, err)
@@ -239,10 +238,9 @@ func TestHaltAllWorker(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", 0, 10, "", "", esConfig)
-	service := v.(*baritoConsumerService)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
 
 	err := service.Start()
 	FatalIfError(t, err)
@@ -272,10 +270,9 @@ func TestResumeWorker(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", 0, 10, "", "", esConfig)
-	service := v.(*baritoConsumerService)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
 
 	err := service.ResumeWorker()
 	FatalIfError(t, err)
@@ -283,4 +280,18 @@ func TestResumeWorker(t *testing.T) {
 	// service.Start() execute goroutine, so wait 1ms to make sure it come in to mainLoop
 	timekit.Sleep("1ms")
 	defer service.Close()
+}
+
+func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
+	return map[string]interface{}{
+		"factory":                factory,
+		"groupID":                "",
+		"elasticURL":             "",
+		"topicSuffix":            "_logs",
+		"kafkaMaxRetry":          1,
+		"kafkaRetryInterval":     10,
+		"newTopicEventName":      "",
+		"elasticRetrierInterval": "",
+		"esConfig":               NewEsConfig("SingleInsert", 1, time.Duration(1000), false),
+	}
 }

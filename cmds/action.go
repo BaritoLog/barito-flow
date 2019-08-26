@@ -50,17 +50,19 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		printTPS,
 	)
 
-	service := flow.NewBaritoConsumerService(
-		factory,
-		groupID,
-		esUrl,
-		topicSuffix,
-		kafkaMaxRetry,
-		kafkaRetryInterval,
-		newTopicEventName,
-		elasticRetrierInterval,
-		esConfig,
-	)
+	consumerParams := map[string]interface{}{
+		"factory":                factory,
+		"groupID":                groupID,
+		"elasticURL":             esUrl,
+		"topicSuffix":            topicSuffix,
+		"kafkaMaxRetry":          kafkaMaxRetry,
+		"kafkaRetryInterval":     kafkaRetryInterval,
+		"newTopicEventName":      newTopicEventName,
+		"elasticRetrierInterval": elasticRetrierInterval,
+		"esConfig":               esConfig,
+	}
+
+	service := flow.NewBaritoConsumerService(consumerParams)
 
 	callbackInstrumentation()
 
