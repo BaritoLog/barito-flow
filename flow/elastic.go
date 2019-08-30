@@ -43,7 +43,7 @@ func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printT
 	}
 }
 
-func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls ...string) (client elasticClient, err error) {
+func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string) (client elasticClient, err error) {
 
 	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
