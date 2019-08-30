@@ -22,7 +22,7 @@ func consulKafkaBroker(address, name string) (brokers []string, err error) {
 	return
 }
 
-func consulElasticsearchUrl(address, name string) (url string, err error) {
+func consulElasticsearchUrl(address, name string) (urls []string, err error) {
 	client, err := consulClient(address)
 	if err != nil {
 		return
@@ -37,14 +37,15 @@ func consulElasticsearchUrl(address, name string) (url string, err error) {
 		return
 	}
 
-	srvAddress := services[0].ServiceAddress
-	srvPort := services[0].ServicePort
-	srvSchema, ok := services[0].ServiceMeta["http_schema"]
-	if !ok {
-		srvSchema = "http"
+	for _, service := range services {
+		srvAddress := service.ServiceAddress
+		srvPort := service.ServicePort
+		srvSchema, ok := service.ServiceMeta["http_schema"]
+		if !ok {
+			srvSchema = "http"
+		}
+		urls = append(urls, fmt.Sprintf("%s://%s:%d", srvSchema, srvAddress, srvPort))
 	}
-
-	url = fmt.Sprintf("%s://%s:%d", srvSchema, srvAddress, srvPort)
 	return
 }
 
