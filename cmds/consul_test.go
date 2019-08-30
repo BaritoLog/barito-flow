@@ -11,8 +11,22 @@ import (
 func TestConsulElasticsearch(t *testing.T) {
 	ts := NewTestServer(http.StatusOK, []byte(`[
 	{
-		"ServiceAddress": "172.17.0.3",
+		"ServiceAddress": "172.17.0.1",
 		"ServicePort": 5000,
+		"ServiceMeta": {
+        "http_schema": "https"
+    }
+	},
+	{
+		"ServiceAddress": "172.17.0.2",
+		"ServicePort": 5001,
+		"ServiceMeta": {
+        "http_schema": "https"
+    }
+	},
+	{
+		"ServiceAddress": "172.17.0.3",
+		"ServicePort": 5002,
 		"ServiceMeta": {
         "http_schema": "https"
     }
@@ -20,9 +34,12 @@ func TestConsulElasticsearch(t *testing.T) {
 ]`))
 	defer ts.Close()
 
-	url, err := consulElasticsearchUrl(ts.URL, "name")
+	urls, err := consulElasticsearchUrl(ts.URL, "name")
 	FatalIfError(t, err)
-	FatalIf(t, url != "https://172.17.0.3:5000", "wrong url")
+	FatalIf(t, len(urls) != 3, "return wrong urls")
+	FatalIf(t, urls[0] != "https://172.17.0.1:5000", "return wrong urls[0]")
+	FatalIf(t, urls[1] != "https://172.17.0.2:5001", "return wrong urls[1]")
+	FatalIf(t, urls[2] != "https://172.17.0.3:5002", "return wrong urls[2]")
 }
 
 func TestConsulElasticsearch_NoHttpSchema(t *testing.T) {
@@ -34,9 +51,9 @@ func TestConsulElasticsearch_NoHttpSchema(t *testing.T) {
 ]`))
 	defer ts.Close()
 
-	url, err := consulElasticsearchUrl(ts.URL, "name")
+	urls, err := consulElasticsearchUrl(ts.URL, "name")
 	FatalIfError(t, err)
-	FatalIf(t, url != "http://172.17.0.3:5000", "wrong url")
+	FatalIf(t, urls[0] != "http://172.17.0.3:5000", "wrong url[0]")
 }
 
 func TestConsulElasticsearch_NoService(t *testing.T) {
