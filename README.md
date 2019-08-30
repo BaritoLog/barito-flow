@@ -6,6 +6,20 @@ Component for handling flow of logs within a cluster. Support 2 modes:
 - **Producer**, for receiving logs and forwarding it to Kafka
 - **Consumer**, for consuming from kafka and forwarding it to Elasticsearch
 
+Compatible with both gRPC and REST API. The use of REST API is optional and is implemented by using 
+[gRPC-gateway](https://github.com/grpc-ecosystem/grpc-gateway) which work like a reverse-proxy server 
+to translate RESTful HTTP API into gRPC. Barito flow infrastructure consists of producer and consumer.
+
+Barito flow producer will turn on gRPC server and optionally REST gateway reverse proxy server.
+It will automatically create Kafka topic for the log if not exist yet.
+gRPC messages and services are declared in [barito-proto](https://github.com/vwidjaya/barito-proto) repository.
+
+Barito flow consumer will firstly create a topic event and generates the workers. Then based on the logs send, 
+each topic inside this event topic will be created a cluster consumer separately. This cluster consumer will 
+store the logs to Elasticsearch by calling a single store or bulk store Elasticsearch API. If the process has 
+failed, Elasticsearch will halt all the workers and retry again after some backoff period. The halted workers 
+only continue when the failed process success on the retry attempt.
+
 ## Development Setup 
 
 Fetch and build the project.
@@ -52,11 +66,11 @@ These environment variables can be modified to customize its behaviour.
 | Name| Description | ENV | Default Value  |
 | ---|---|---|---|
 | ConsulUrl | Consul URL | BARITO_CONSUL_URL | |
-| ConsulKafkaName  | Kafka service name in consul | BARITO_CONSUL_KAFKA_NAME | kafka |
+| ConsulKafkaName | Kafka service name in consul | BARITO_CONSUL_KAFKA_NAME | kafka |
 | KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul | BARITO_KAFKA_BROKERS | localhost:9092 |
 | KafkaMaxRetry | Number of retry to connect to kafka during startup | BARITO_KAFKA_MAX_RETRY | 0 (unlimited) |
 | KafkaRetryInterval | Interval between retry connecting to kafka (in seconds) | BARITO_KAFKA_RETRY_INTERVAL | 10 |
-| ServeRestApi | Toggle for REST gateway | BARITO_PRODUCER_REST_API | true |
+| ServeRestApi | Toggle for REST gateway api | BARITO_PRODUCER_REST_API | true |
 | ProducerAddressGrpc | gRPC Server Address | BARITO_PRODUCER_GRPC| :8082 |
 | ProducerAddressRest | REST Server Address | BARITO_PRODUCER_REST| :8080 |
 | ProducerMaxRetry | Set kafka setting max retry | BARITO_PRODUCER_MAX_RETRY | 10 |
