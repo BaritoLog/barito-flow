@@ -24,7 +24,7 @@ func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
 	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", 1, 10, "newTopicEventName", "", esConfig)
+	service := NewBaritoConsumerService(factory, "groupID", []string{"elasticURL-1", "elasticURL-2"}, "topicSuffix", 1, 10, "newTopicEventName", "", esConfig)
 	err := service.Start()
 	FatalIfWrongError(t, err, "Make kafka admin failed: Error connecting to kafka, retry limit reached")
 }
@@ -34,7 +34,7 @@ func TestBaritoConsumerService_MakeNewTopicWorkerError(t *testing.T) {
 	factory.Expect_MakeClusterConsumer_AlwaysError("some-error")
 	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	service := NewBaritoConsumerService(factory, "groupID", "elasticURL", "topicSuffix", 0, 10, "newTopicEventName", "", esConfig)
+	service := NewBaritoConsumerService(factory, "groupID", []string{"elasticURL-1", "elasticURL-2"}, "topicSuffix", 0, 10, "newTopicEventName", "", esConfig)
 	err := service.Start()
 
 	FatalIfWrongError(t, err, "Make new topic worker failed: some-error")
@@ -50,7 +50,7 @@ func TestBaritoConsumerService(t *testing.T) {
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
 	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", 0, 10, "", "", esConfig)
+	var v interface{} = NewBaritoConsumerService(factory, "", []string{""}, "_logs", 0, 10, "", "", esConfig)
 	service := v.(*baritoConsumerService)
 
 	err := service.Start()
@@ -101,7 +101,7 @@ func TestBaritoConsumerService_onStoreTimber_ErrorConvertKafkaMessage(t *testing
 	defer ts.Close()
 
 	service := &baritoConsumerService{
-		elasticUrl: ts.URL,
+		elasticUrls: []string{ts.URL},
 	}
 
 	service.onStoreTimber(&sarama.ConsumerMessage{})
@@ -116,13 +116,14 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 	})
 	defer ts.Close()
 
+	elasticUrls := []string{ts.URL}
 	service := &baritoConsumerService{
-		elasticUrl: ts.URL,
+		elasticUrls: elasticUrls,
 	}
 
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
 	service.esClient = &elastic
 
 	service.onStoreTimber(&sarama.ConsumerMessage{
@@ -135,13 +136,14 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	ts := NewTestServer(http.StatusOK, []byte(`{}`))
 	defer ts.Close()
 
+	elasticUrls := []string{ts.URL}
 	service := &baritoConsumerService{
-		elasticUrl: ts.URL,
+		elasticUrls: elasticUrls,
 	}
 
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
 	service.esClient = &elastic
 
 	service.onStoreTimber(&sarama.ConsumerMessage{
@@ -227,7 +229,7 @@ func TestHaltAllWorker(t *testing.T) {
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
 	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", 0, 10, "", "", esConfig)
+	var v interface{} = NewBaritoConsumerService(factory, "", []string{""}, "_logs", 0, 10, "", "", esConfig)
 	service := v.(*baritoConsumerService)
 
 	err := service.Start()
@@ -260,7 +262,7 @@ func TestResumeWorker(t *testing.T) {
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
 	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", "", "_logs", 0, 10, "", "", esConfig)
+	var v interface{} = NewBaritoConsumerService(factory, "", []string{""}, "_logs", 0, 10, "", "", esConfig)
 	service := v.(*baritoConsumerService)
 
 	err := service.ResumeWorker()
