@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 
+## [0.12.2]
+### Changed
+- Enable consul to get multi elasticsearch urls, if urls not available then using environment variable
+
 ## [0.12.1]
 ### Fixed
 - Update instru to the latest version, to avoid race condition

@@ -82,11 +82,11 @@ These environment variables can be modified to customize its behaviour.
 | ConsulUrl | Consul URL | BARITO_CONSUL_URL | |
 | ConsulKafkaName  | Kafka service name in consul | BARITO_CONSUL_KAFKA_NAME | kafka |
 | ConsulElasticsearchName | Elasticsearch service name in consul | BARITO_CONSUL_ELASTICSEARCH_NAME | elasticsearch |
-| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul | BARITO_KAFKA_BROKERS| localhost:9092 |
+| KafkaBrokers | Kafka broker addresses (CSV). Get from env is not available in consul | BARITO_KAFKA_BROKERS| "127.0.0.1:9092,192.168.10.11:9092" |
 | KafkaGroupID | kafka consumer group id | BARITO_KAFKA_GROUP_ID | barito-group |
 | KafkaMaxRetry | Number of retry to connect to kafka during startup | BARITO_KAFKA_MAX_RETRY | 0 (unlimited) |
 | KafkaRetryInterval | Interval between retry connecting to kafka (in seconds) | BARITO_KAFKA_RETRY_INTERVAL | 10 |
-| ElasticsearchUrl | Elastisearch url | BARITO_ELASTICSEARCH_URL | http://localhost:9200 |
+| ElasticsearchUrls | Elastisearch addresses. Get from env is not available in consul | BARITO_ELASTICSEARCH_URLS | "http://127.0.0.1:9200,http://192.168.10.11:9200" |
 | EsIndexMethod | BulkProcessor / SingleInsert | BARITO_ELASTICSEARCH_INDEX_METHOD | BulkProcessor |
 | EsBulkSize | BulkProcessor bulk size | BARITO_ELASTICSEARCH_BULK_SIZE | 100 |
 | EsFlushIntervalMs | BulkProcessor flush interval (ms) | BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS | 500 |
