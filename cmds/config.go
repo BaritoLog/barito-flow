@@ -15,7 +15,7 @@ const (
 	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
 	EnvKafkaRetryInterval = "BARITO_KAFKA_RETRY_INTERVAL"
 
-	EnvElasticsearchUrl  = "BARITO_ELASTICSEARCH_URL"
+	EnvElasticsearchUrls = "BARITO_ELASTICSEARCH_URLS"
 	EnvEsIndexMethod     = "BARITO_ELASTICSEARCH_INDEX_METHOD"
 	EnvEsBulkSize        = "BARITO_ELASTICSEARCH_BULK_SIZE"
 	EnvEsFlushIntervalMs = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
@@ -51,7 +51,7 @@ var (
 	DefaultKafkaMaxRetry      = 0
 	DefaultKafkaRetryInterval = 10
 
-	DefaultElasticsearchUrl = "http://localhost:9200"
+	DefaultElasticsearchUrls = []string{"http://localhost:9200"}
 
 	DefaultPushMetricUrl      = ""
 	DefaultPushMetricInterval = "30s"
@@ -86,16 +86,17 @@ func configKafkaBrokers() (brokers []string) {
 	return
 }
 
-func configElasticsearchUrl() (url string) {
+func configElasticsearchUrls() (urls []string) {
 	consulUrl := configConsulUrl()
 	name := configConsulElasticsearchName()
-	url, err := consulElasticsearchUrl(consulUrl, name)
+	urls, err := consulElasticsearchUrl(consulUrl, name)
+
 	if err != nil {
-		url = stringEnvOrDefault(EnvElasticsearchUrl, DefaultElasticsearchUrl)
+		urls = sliceEnvOrDefault(EnvElasticsearchUrls, ",", DefaultElasticsearchUrls)
 		return
 	}
 
-	logConfig("consul", EnvElasticsearchUrl, url)
+	logConfig("consul", EnvElasticsearchUrls, urls)
 	return
 }
 

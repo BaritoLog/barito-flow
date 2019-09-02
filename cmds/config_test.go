@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/BaritoLog/go-boilerplate/slicekit"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	log "github.com/sirupsen/logrus"
 )
@@ -12,14 +13,15 @@ func init() {
 	log.SetLevel(log.ErrorLevel)
 }
 
-// func TestGetKafkaBrokers(t *testing.T) {
-// 	FatalIf(t, !slicekit.StringSliceEqual(getKafkaBrokers(), DefaultKafkaBrokers), "should return default ")
-//
-// 	os.Setenv(EnvKafkaBrokers, "kafka-broker-1:1278,kafka-broker-2:1288")
-// 	defer os.Clearenv()
-//
-// 	FatalIf(t, !slicekit.StringSliceEqual(getKafkaBrokers(), []string{"kafka-broker-1:1278", "kafka-broker-2:1288"}), "should return default ")
-// }
+func TestGetKafkaBrokers(t *testing.T) {
+	FatalIf(t, !slicekit.StringSliceEqual(configKafkaBrokers(), DefaultKafkaBrokers), "should return default")
+
+	os.Setenv(EnvKafkaBrokers, "some-kafka-01:9092, some-kafka-02:9092")
+	defer os.Clearenv()
+
+	envKafkaBrokers := sliceEnvOrDefault(EnvKafkaBrokers, ",", DefaultKafkaBrokers)
+	FatalIf(t, !slicekit.StringSliceEqual(configKafkaBrokers(), envKafkaBrokers), "should get from env variable")
+}
 
 func TestGetConsulElastisearchName(t *testing.T) {
 	FatalIf(t, configConsulElasticsearchName() != DefaultConsulElasticsearchName, "should return default ")
@@ -29,12 +31,14 @@ func TestGetConsulElastisearchName(t *testing.T) {
 	FatalIf(t, configConsulElasticsearchName() != "elastic11", "should get from env variable")
 }
 
-func TestGetElasticsearchUrl(t *testing.T) {
-	FatalIf(t, configElasticsearchUrl() != DefaultElasticsearchUrl, "should return default ")
+func TestGetElasticsearchUrls(t *testing.T) {
+	FatalIf(t, !slicekit.StringSliceEqual(configElasticsearchUrls(), DefaultElasticsearchUrls), "should return default")
 
-	os.Setenv(EnvElasticsearchUrl, "http://some-elasticsearch")
+	os.Setenv(EnvElasticsearchUrls, "http://some-elasticsearch-01:9200, http://some-elasticsearch-02:9200")
 	defer os.Clearenv()
-	FatalIf(t, configElasticsearchUrl() != "http://some-elasticsearch", "should get from env variable")
+
+	envEsUrls := sliceEnvOrDefault(EnvElasticsearchUrls, ",", DefaultElasticsearchUrls)
+	FatalIf(t, !slicekit.StringSliceEqual(configElasticsearchUrls(), envEsUrls), "should get from env variable")
 }
 
 func TestGetKafkaGroupID(t *testing.T) {

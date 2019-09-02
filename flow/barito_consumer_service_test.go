@@ -102,7 +102,7 @@ func TestBaritoConsumerService_onStoreTimber_ErrorConvertKafkaMessage(t *testing
 	defer ts.Close()
 
 	service := &baritoConsumerService{
-		elasticUrl: ts.URL,
+		elasticUrls: []string{ts.URL},
 	}
 
 	invalidKafkaMessage := &sarama.ConsumerMessage{
@@ -121,13 +121,14 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 	})
 	defer ts.Close()
 
+	elasticUrls := []string{ts.URL}
 	service := &baritoConsumerService{
-		elasticUrl: ts.URL,
+		elasticUrls: elasticUrls,
 	}
 
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
 	service.esClient = &elastic
 
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
@@ -142,13 +143,14 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	ts := NewTestServer(http.StatusOK, []byte(`{}`))
 	defer ts.Close()
 
+	elasticUrls := []string{ts.URL}
 	service := &baritoConsumerService{
-		elasticUrl: ts.URL,
+		elasticUrls: elasticUrls,
 	}
 
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, ts.URL)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
 	service.esClient = &elastic
 
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
@@ -286,7 +288,7 @@ func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
 	return map[string]interface{}{
 		"factory":                factory,
 		"groupID":                "",
-		"elasticURL":             "",
+		"elasticUrls":            []string{""},
 		"topicSuffix":            "_logs",
 		"kafkaMaxRetry":          1,
 		"kafkaRetryInterval":     10,

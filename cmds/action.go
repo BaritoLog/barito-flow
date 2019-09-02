@@ -22,7 +22,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 
 	brokers := configKafkaBrokers()
 	groupID := configKafkaGroupId()
-	esUrl := configElasticsearchUrl()
+	esUrls := configElasticsearchUrls()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
 	kafkaRetryInterval := configKafkaRetryInterval()
@@ -53,7 +53,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	consumerParams := map[string]interface{}{
 		"factory":                factory,
 		"groupID":                groupID,
-		"elasticURL":             esUrl,
+		"elasticUrls":            esUrls,
 		"topicSuffix":            topicSuffix,
 		"kafkaMaxRetry":          kafkaMaxRetry,
 		"kafkaRetryInterval":     kafkaRetryInterval,
