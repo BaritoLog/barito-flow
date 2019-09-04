@@ -61,6 +61,56 @@ After the project is built, run:
 ./barito-flow p
 ```
 
+Endpoints using REST gateway:
+
+POST /produce
+```json
+  {
+    "context": {
+        "kafka_topic": "kafka_topic",
+        "kafka_partition": 1,
+        "kafka_replication_factor": 1,
+        "es_index_prefix": "es_index_prefix",
+        "es_document_type": "es_document_type",
+        "app_max_tps": 100,
+        "app_secret": "app_secret"
+    },
+    "timestamp": "optional timestamp here",
+    "content": {
+        "hello": "world",
+        "key": "value",
+        "num": 100
+    },
+  }
+```
+
+POST /produce_batch
+```json
+  {
+    "context": {
+        "kafka_topic": "kafka_topic",
+        "kafka_partition": 1,
+        "kafka_replication_factor": 1,
+        "es_index_prefix": "es_index_prefix",
+        "es_document_type": "es_document_type",
+        "app_max_tps": 100,
+        "app_secret": "app_secret"
+    },
+    "items": [
+        {
+            "content": {
+                "timber_num": 1
+            }
+        },
+        {
+            "content": {
+                "timber_num": 2
+            }
+        }
+    ]
+  }
+```
+
 These environment variables can be modified to customize its behaviour.
 
 | Name| Description | ENV | Default Value  |
