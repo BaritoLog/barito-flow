@@ -50,17 +50,19 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		printTPS,
 	)
 
-	service := flow.NewBaritoConsumerService(
-		factory,
-		groupID,
-		esUrls,
-		topicSuffix,
-		kafkaMaxRetry,
-		kafkaRetryInterval,
-		newTopicEventName,
-		elasticRetrierInterval,
-		esConfig,
-	)
+	consumerParams := map[string]interface{}{
+		"factory":                factory,
+		"groupID":                groupID,
+		"elasticUrls":            esUrls,
+		"topicSuffix":            topicSuffix,
+		"kafkaMaxRetry":          kafkaMaxRetry,
+		"kafkaRetryInterval":     kafkaRetryInterval,
+		"newTopicEventName":      newTopicEventName,
+		"elasticRetrierInterval": elasticRetrierInterval,
+		"esConfig":               esConfig,
+	}
+
+	service := flow.NewBaritoConsumerService(consumerParams)
 
 	callbackInstrumentation()
 
@@ -80,10 +82,10 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		log.SetLevel(log.WarnLevel)
 	}
 
-	address := configProducerAddress()
+	grpcAddr := configProducerAddressGrpc()
+	restAddr := configProducerAddressRest()
 	kafkaBrokers := configKafkaBrokers()
 	maxRetry := configProducerMaxRetry()
-	maxTps := configProducerMaxTPS()
 	rateLimitResetInterval := configProducerRateLimitResetInterval()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
@@ -100,22 +102,25 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
-	srv := flow.NewBaritoProducerService(
-		factory,
-		address,
-		maxTps,
-		rateLimitResetInterval,
-		topicSuffix,
-		kafkaMaxRetry,
-		kafkaRetryInterval,
-		newTopicEventName)
-
-	err = srv.Start()
-	if err != nil {
-		return
+	producerParams := map[string]interface{}{
+		"factory":                factory,
+		"grpcAddr":               grpcAddr,
+		"restAddr":               restAddr,
+		"rateLimitResetInterval": rateLimitResetInterval,
+		"topicSuffix":            topicSuffix,
+		"kafkaMaxRetry":          kafkaMaxRetry,
+		"kafkaRetryInterval":     kafkaRetryInterval,
+		"newEventTopic":          newTopicEventName,
 	}
-	srvkit.AsyncGracefulShutdown(srv.Close)
 
+	service := flow.NewProducerService(producerParams)
+
+	go service.Start()
+	if configServeRestApi() {
+		go service.LaunchREST()
+	}
+
+	srvkit.GracefullShutdown(service.Close)
 	return
 }
 

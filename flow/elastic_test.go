@@ -10,13 +10,13 @@ import (
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/instru"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber(sampleRawTimber())
-	FatalIfError(t, err)
+	timber := *pb.SampleTimberProto()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusNotFound,
@@ -38,8 +38,7 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber(sampleRawTimber())
-	FatalIfError(t, err)
+	timber := *pb.SampleTimberProto()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusNotFound,
@@ -53,7 +52,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	client, err := NewElastic(retrier, esConfig, []string{ts.URL})
 	FatalIfError(t, err)
 
-	appSecret := timber.Context().AppSecret
+	appSecret := timber.GetContext().GetAppSecret()
 
 	err = client.Store(context.Background(), timber)
 	FatalIfError(t, err)
@@ -64,8 +63,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 func TestElasticStoreman_store_SaveError(t *testing.T) {
 	defer instru.Flush()
 
-	timber, err := ConvertBytesToTimber(sampleRawTimber())
-	FatalIfError(t, err)
+	timber := *pb.SampleTimberProto()
 
 	ts := httptest.NewServer(&ELasticTestHandler{
 		ExistAPIStatus:  http.StatusOK,
@@ -79,7 +77,7 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 	client, err := NewElastic(retrier, esConfig, []string{ts.URL})
 	FatalIfError(t, err)
 
-	appSecret := timber.Context().AppSecret
+	appSecret := timber.GetContext().GetAppSecret()
 
 	err = client.Store(context.Background(), timber)
 	FatalIfWrongError(t, err, "elastic: Error 400 (Bad Request)")

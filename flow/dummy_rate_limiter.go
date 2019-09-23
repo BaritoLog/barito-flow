@@ -1,7 +1,7 @@
 package flow
 
 type dummyRateLimiter struct {
-	IsHitLimitFunc func(topic string, count int, maxTokenIfNotExist int) bool
+	IsHitLimitFunc func(topic string, count int, maxTokenIfNotExist int32) bool
 	StartFunc      func()
 	StopFunc       func()
 	IsStartFunc    func() bool
@@ -11,7 +11,7 @@ type dummyRateLimiter struct {
 
 func NewDummyRateLimiter() *dummyRateLimiter {
 	return &dummyRateLimiter{
-		IsHitLimitFunc: func(topic string, count int, maxTokenIfNotExist int) bool { return false },
+		IsHitLimitFunc: func(topic string, count int, maxTokenIfNotExist int32) bool { return false },
 		StartFunc:      func() {},
 		StopFunc:       func() {},
 		IsStartFunc:    func() bool { return false },
@@ -21,7 +21,7 @@ func NewDummyRateLimiter() *dummyRateLimiter {
 
 }
 
-func (l *dummyRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int) bool {
+func (l *dummyRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool {
 	return l.IsHitLimitFunc(topic, count, maxTokenIfNotExist)
 }
 func (l *dummyRateLimiter) Start() {
@@ -41,7 +41,7 @@ func (l *dummyRateLimiter) Bucket(topic string) *LeakyBucket {
 }
 
 func (l *dummyRateLimiter) Expect_IsHitLimit_AlwaysTrue() {
-	l.IsHitLimitFunc = func(topic string, count int, maxTokenIfNotExist int) bool {
+	l.IsHitLimitFunc = func(topic string, count int, maxTokenIfNotExist int32) bool {
 		return true
 	}
 }

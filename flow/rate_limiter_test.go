@@ -21,7 +21,7 @@ func TestRateLimiter_IsHitMax_CreateNewBucketIfNotExist(t *testing.T) {
 }
 
 func TestRateLimiter(t *testing.T) {
-	max := 5
+	max := int32(5)
 
 	limiter := NewRateLimiter(1)
 	limiter.PutBucket("abc", NewLeakyBucket(max))
@@ -31,7 +31,7 @@ func TestRateLimiter(t *testing.T) {
 	timekit.Sleep("1ms")
 	FatalIf(t, !limiter.IsStart(), "limiter should be start")
 
-	for i := 0; i < max; i++ {
+	for i := int32(0); i < max; i++ {
 		FatalIf(t, limiter.IsHitLimit("abc", 1, max), "it should be still have token at abc: %d", i)
 	}
 
@@ -49,7 +49,7 @@ func TestRateLimiter(t *testing.T) {
 }
 
 func TestRateLimiter_Batch(t *testing.T) {
-	max := 5
+	max := int32(5)
 
 	limiter := NewRateLimiter(1)
 	limiter.PutBucket("abc", NewLeakyBucket(max))
@@ -70,8 +70,8 @@ func TestRateLimiter_Batch(t *testing.T) {
 }
 
 func TestRateLimiter_IsHitLimit_UpdateMax(t *testing.T) {
-	max := 4
-	newMax := 6
+	max := int32(4)
+	newMax := int32(6)
 	limiter := NewRateLimiter(1)
 	limiter.PutBucket("abc", NewLeakyBucket(max))
 	limiter.Start()

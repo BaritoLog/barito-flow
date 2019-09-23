@@ -7,23 +7,26 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/es"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 var counter int = 0
 
 type Elastic interface {
-	OnFailure(f func(*Timber))
-	Store(ctx context.Context, timber Timber)
+	OnFailure(f func(*pb.Timber))
+	Store(ctx context.Context, timber pb.Timber) error
 	NewClient()
 }
 
 type elasticClient struct {
 	client        *elastic.Client
 	bulkProcessor *elastic.BulkProcessor
-	onFailureFunc func(*Timber)
-	onStoreFunc   func(indexName, documentType string, document map[string]interface{}) (err error)
+	onFailureFunc func(*pb.Timber)
+	onStoreFunc   func(ctx context.Context, indexName, documentType, document string) (err error)
+	jspbMarshaler *jsonpb.Marshaler
 }
 
 type esConfig struct {
@@ -64,6 +67,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string) (
 	client = elasticClient{
 		client:        c,
 		bulkProcessor: p,
+		jspbMarshaler: &jsonpb.Marshaler{},
 	}
 
 	if esConfig.indexMethod == "BulkProcessor" {
@@ -90,11 +94,11 @@ func printThroughputPerSecond() {
 	}()
 }
 
-func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
-	indexPrefix := timber.Context().ESIndexPrefix
-	documentType := timber.Context().ESDocumentType
+func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
+	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
-	appSecret := timber.Context().AppSecret
+	documentType := timber.GetContext().GetEsDocumentType()
+	appSecret := timber.GetContext().GetAppSecret()
 
 	exists, _ := e.client.IndexExists(indexName).Do(ctx)
 
@@ -110,20 +114,20 @@ func (e *elasticClient) Store(ctx context.Context, timber Timber) (err error) {
 		}
 	}
 
-	document := ConvertTimberToElasticDocument(timber)
+	document := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 
-	err = e.onStoreFunc(indexName, documentType, document)
+	err = e.onStoreFunc(ctx, indexName, documentType, document)
 	counter++
 	instruESStore(appSecret, err)
 
 	return
 }
 
-func (e *elasticClient) OnFailure(f func(*Timber)) {
+func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
 	e.onFailureFunc = f
 }
 
-func (e *elasticClient) bulkInsert(indexName, documentType string, document map[string]interface{}) (err error) {
+func (e *elasticClient) bulkInsert(_ context.Context, indexName, documentType, document string) (err error) {
 	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
 		Type(documentType).
@@ -132,12 +136,12 @@ func (e *elasticClient) bulkInsert(indexName, documentType string, document map[
 	return
 }
 
-func (e *elasticClient) singleInsert(indexName, documentType string, document map[string]interface{}) (err error) {
+func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentType, document string) (err error) {
 	_, err = e.client.Index().
 		Index(indexName).
 		Type(documentType).
-		BodyJson(document).
-		Do(context.Background())
+		BodyString(document).
+		Do(ctx)
 	return
 }
 

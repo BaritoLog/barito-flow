@@ -12,7 +12,9 @@ import (
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func init() {
@@ -22,9 +24,9 @@ func init() {
 func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	service := NewBaritoConsumerService(factory, "groupID", []string{"elasticURL-1", "elasticURL-2"}, "topicSuffix", 1, 10, "newTopicEventName", "", esConfig)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams)
 	err := service.Start()
 	FatalIfWrongError(t, err, "Make kafka admin failed: Error connecting to kafka, retry limit reached")
 }
@@ -32,9 +34,9 @@ func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
 func TestBaritoConsumerService_MakeNewTopicWorkerError(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeClusterConsumer_AlwaysError("some-error")
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	service := NewBaritoConsumerService(factory, "groupID", []string{"elasticURL-1", "elasticURL-2"}, "topicSuffix", 0, 10, "newTopicEventName", "", esConfig)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams)
 	err := service.Start()
 
 	FatalIfWrongError(t, err, "Make new topic worker failed: some-error")
@@ -48,10 +50,9 @@ func TestBaritoConsumerService(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", []string{""}, "_logs", 0, 10, "", "", esConfig)
-	service := v.(*baritoConsumerService)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
 
 	err := service.Start()
 	FatalIfError(t, err)
@@ -104,7 +105,11 @@ func TestBaritoConsumerService_onStoreTimber_ErrorConvertKafkaMessage(t *testing
 		elasticUrls: []string{ts.URL},
 	}
 
-	service.onStoreTimber(&sarama.ConsumerMessage{})
+	invalidKafkaMessage := &sarama.ConsumerMessage{
+		Value: []byte(`invalid_proto`),
+	}
+
+	service.onStoreTimber(invalidKafkaMessage)
 	FatalIfWrongError(t, service.lastError, string(ErrConvertKafkaMessage))
 }
 
@@ -126,8 +131,10 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
 	service.esClient = &elastic
 
+	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
+
 	service.onStoreTimber(&sarama.ConsumerMessage{
-		Value: sampleRawTimber(),
+		Value: timberBytes,
 	})
 	FatalIfWrongError(t, service.lastError, string(ErrStore))
 }
@@ -146,11 +153,17 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
 	service.esClient = &elastic
 
+	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
+
 	service.onStoreTimber(&sarama.ConsumerMessage{
-		Value: sampleRawTimber(),
+		Value: timberBytes,
 	})
 	FatalIfError(t, service.lastError)
-	FatalIf(t, service.lastTimber == nil, "lastTimber can't be nil")
+
+	nilTimber := pb.Timber{}
+	lastTimberContextIsNil := (service.lastTimber.GetContext() == nilTimber.GetContext())
+	lastTimberContentIsNil := (service.lastTimber.GetContent() == nilTimber.GetContent())
+	FatalIf(t, lastTimberContextIsNil && lastTimberContentIsNil, "lastTimber can't be nil")
 }
 
 func TestBaritoConsumerService_onNewTopicEvent(t *testing.T) {
@@ -227,10 +240,9 @@ func TestHaltAllWorker(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", []string{""}, "_logs", 0, 10, "", "", esConfig)
-	service := v.(*baritoConsumerService)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
 
 	err := service.Start()
 	FatalIfError(t, err)
@@ -260,10 +272,9 @@ func TestResumeWorker(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
 
-	var v interface{} = NewBaritoConsumerService(factory, "", []string{""}, "_logs", 0, 10, "", "", esConfig)
-	service := v.(*baritoConsumerService)
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
 
 	err := service.ResumeWorker()
 	FatalIfError(t, err)
@@ -271,4 +282,18 @@ func TestResumeWorker(t *testing.T) {
 	// service.Start() execute goroutine, so wait 1ms to make sure it come in to mainLoop
 	timekit.Sleep("1ms")
 	defer service.Close()
+}
+
+func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
+	return map[string]interface{}{
+		"factory":                factory,
+		"groupID":                "",
+		"elasticUrls":            []string{""},
+		"topicSuffix":            "_logs",
+		"kafkaMaxRetry":          1,
+		"kafkaRetryInterval":     10,
+		"newTopicEventName":      "",
+		"elasticRetrierInterval": "",
+		"esConfig":               NewEsConfig("SingleInsert", 1, time.Duration(1000), false),
+	}
 }

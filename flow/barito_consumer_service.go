@@ -11,6 +11,7 @@ import (
 	"github.com/Shopify/sarama"
 	uuid "github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (
@@ -50,27 +51,27 @@ type baritoConsumerService struct {
 	eventWorkerGroupID  string
 
 	lastError              error
-	lastTimber             Timber
+	lastTimber             pb.Timber
 	lastNewTopic           string
 	isHalt                 bool
 	elasticRetrierInterval string
 }
 
-func NewBaritoConsumerService(factory KafkaFactory, groupID string, elasticURLs []string, topicSuffix string, kafkaMaxRetry int, kafkaRetryInterval int, newTopicEventName string, elasticRetrierInterval string, esConfig esConfig) BaritoConsumerService {
-
+func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerService {
 	s := &baritoConsumerService{
-		factory:                factory,
-		groupID:                groupID,
-		elasticUrls:            elasticURLs,
-		topicSuffix:            topicSuffix,
-		kafkaMaxRetry:          kafkaMaxRetry,
-		kafkaRetryInterval:     kafkaRetryInterval,
-		newTopicEventName:      newTopicEventName,
+		factory:                params["factory"].(KafkaFactory),
+		groupID:                params["groupID"].(string),
+		elasticUrls:            params["elasticUrls"].([]string),
+		topicSuffix:            params["topicSuffix"].(string),
+		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
+		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
+		newTopicEventName:      params["newTopicEventName"].(string),
 		workerMap:              make(map[string]ConsumerWorker),
-		elasticRetrierInterval: elasticRetrierInterval,
+		elasticRetrierInterval: params["elasticRetrierInterval"].(string),
 	}
 
 	retrier := s.elasticRetrier()
+	esConfig := params["esConfig"].(esConfig)
 	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls)
 	s.esClient = &elastic
 	if err != nil {
@@ -192,7 +193,7 @@ func (s *baritoConsumerService) logError(err error) {
 	log.Warn(err.Error())
 }
 
-func (s *baritoConsumerService) logTimber(timber Timber) {
+func (s *baritoConsumerService) logTimber(timber pb.Timber) {
 	s.lastTimber = timber
 	log.Infof("Timber: %v", timber)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 type RateLimiter interface {
-	IsHitLimit(topic string, count int, maxTokenIfNotExist int) bool
+	IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool
 	Start()
 	Stop()
 	IsStart() bool
@@ -18,7 +18,7 @@ type RateLimiter interface {
 
 type rateLimiter struct {
 	isStart   bool
-	duration  int
+	duration  int32
 	tick      <-chan time.Time
 	stop      chan int
 	bucketMap map[string]*LeakyBucket
@@ -26,14 +26,14 @@ type rateLimiter struct {
 
 func NewRateLimiter(duration int) RateLimiter {
 	return &rateLimiter{
-		duration:  duration,
+		duration:  int32(duration),
 		tick:      time.Tick(timekit.Duration(strconv.Itoa(duration) + "s")),
 		stop:      make(chan int),
 		bucketMap: make(map[string]*LeakyBucket),
 	}
 }
 
-func (l *rateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int) bool {
+func (l *rateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool {
 	bucket, ok := l.bucketMap[topic]
 	if !ok {
 		bucket = NewLeakyBucket(maxTokenIfNotExist * l.duration)
