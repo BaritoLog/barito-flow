@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"fmt"
+	"github.com/BaritoLog/barito-flow/prome"
 	"time"
 
 	"github.com/BaritoLog/barito-flow/flow"
@@ -19,6 +20,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	} else {
 		log.SetLevel(log.WarnLevel)
 	}
+
+	prome.InitConsumerInstrumentation()
 
 	brokers := configKafkaBrokers()
 	groupID := configKafkaGroupId()
@@ -81,6 +84,8 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	} else {
 		log.SetLevel(log.WarnLevel)
 	}
+
+	prome.InitProducerInstrumentation()
 
 	grpcAddr := configProducerAddressGrpc()
 	restAddr := configProducerAddressRest()

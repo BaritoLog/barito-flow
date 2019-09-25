@@ -7,6 +7,9 @@ import (
 	"github.com/BaritoLog/barito-flow/cmds"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -63,6 +66,13 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Command not found: '%s'. Please use '%s -h' to view usage\n", command, Name)
 		},
 	}
+
+	http.Handle("/metrics", promhttp.Handler())
+	exporterPort, exists := os.LookupEnv("EXPORTER_PORT")
+	if !exists {
+		exporterPort = ":8008"
+	}
+	go http.ListenAndServe(exporterPort, nil)
 
 	err := app.Run(os.Args)
 	if err != nil {

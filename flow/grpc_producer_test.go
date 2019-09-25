@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"github.com/BaritoLog/barito-flow/prome"
 	"strings"
 	"testing"
 
@@ -11,6 +12,10 @@ import (
 	"github.com/golang/mock/gomock"
 	pb "github.com/vwidjaya/barito-proto/producer"
 )
+
+func init() {
+	prome.InitProducerInstrumentation()
+}
 
 func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {
 	ctrl := gomock.NewController(t)

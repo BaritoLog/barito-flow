@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"github.com/BaritoLog/barito-flow/prome"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +20,7 @@ import (
 
 func init() {
 	log.SetLevel(log.ErrorLevel)
+	prome.InitConsumerInstrumentation()
 }
 
 func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
