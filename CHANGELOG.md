@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 
+## [0.13.0]
+### Changed
+- Support GRPC with gateway
+- Add instrumentation for prometheus
+
 ## [0.12.2]
 ### Changed
 - Enable consul to get multi elasticsearch urls, if urls not available then using environment variable
