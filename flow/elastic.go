@@ -3,6 +3,7 @@ package flow
 import (
 	"context"
 	"fmt"
+	"github.com/BaritoLog/barito-flow/prome"
 
 	"time"
 
@@ -55,9 +56,13 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string) (
 		elastic.SetRetrier(retrierFunc),
 	)
 
+	beforeBulkFunc, afterBulkFunc := getCommitCallback()
+
 	p, err := c.BulkProcessor().
 		BulkActions(esConfig.bulkSize).
 		FlushInterval(esConfig.flushMs * time.Millisecond).
+		Before(beforeBulkFunc).
+		After(afterBulkFunc).
 		Do(context.Background())
 
 	if esConfig.printTPS {
@@ -77,6 +82,28 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string) (
 	}
 
 	return
+}
+
+func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []elastic.BulkableRequest, *elastic.BulkResponse, error)) {
+	var start time.Time
+	beforeCommitCallback := func(executionId int64, requests []elastic.BulkableRequest) {
+		start = time.Now()
+	}
+	afterCommitCallback := func(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
+		diff := float64(time.Now().Sub(start).Nanoseconds()) / float64(1000000000)
+		prome.ObserveBulkProcessTime(diff)
+
+		for _, response := range response.Items {
+			for _, responseItem := range response {
+				errorReason := ""
+				if responseItem.Error != nil {
+					errorReason = responseItem.Error.Reason
+				}
+				prome.IncreaseLogStoredCounter(responseItem.Index, responseItem.Result, responseItem.Status, errorReason)
+			}
+		}
+	}
+	return beforeCommitCallback, afterCommitCallback
 }
 
 func printThroughputPerSecond() {

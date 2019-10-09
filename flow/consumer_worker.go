@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
@@ -87,6 +88,7 @@ func (w *consumerWorker) loopMain() {
 		select {
 		case message, ok := <-w.consumer.Messages():
 			if ok {
+				prome.IncreaseKafkaMessagesIncoming(message.Topic)
 				w.consumer.MarkOffset(message, "")
 				w.fireSuccess(message)
 				log.Infof("Mark Offset, %v", message)
