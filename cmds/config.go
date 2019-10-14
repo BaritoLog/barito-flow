@@ -74,29 +74,39 @@ var (
 )
 
 func configKafkaBrokers() (brokers []string) {
-	consulUrl := configConsulUrl()
-	name := configConsulKafkaName()
-	brokers, err := consulKafkaBroker(consulUrl, name)
-	if err != nil {
-		brokers = sliceEnvOrDefault(EnvKafkaBrokers, ",", DefaultKafkaBrokers)
+	brokers = sliceEnvOrDefault(EnvKafkaBrokers, ",", []string{})
+
+	if len(brokers) != 0 {
 		return
 	}
 
-	logConfig("consul", EnvKafkaBrokers, brokers)
+	consulUrl := configConsulUrl()
+	name := configConsulKafkaName()
+	brokers, err := consulKafkaBroker(consulUrl, name)
+	if err == nil {
+		return
+	}
+
+	brokers = DefaultKafkaBrokers
 	return
 }
 
 func configElasticsearchUrls() (urls []string) {
+    urls = sliceEnvOrDefault(EnvElasticsearchUrls, ",", []string{})
+
+    if len(urls) > 0 {
+		return
+	}
+
 	consulUrl := configConsulUrl()
 	name := configConsulElasticsearchName()
 	urls, err := consulElasticsearchUrl(consulUrl, name)
 
-	if err != nil {
-		urls = sliceEnvOrDefault(EnvElasticsearchUrls, ",", DefaultElasticsearchUrls)
+	if err == nil {
 		return
 	}
 
-	logConfig("consul", EnvElasticsearchUrls, urls)
+	urls = DefaultElasticsearchUrls
 	return
 }
 
