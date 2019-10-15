@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"os"
 
+	"net/http"
+
 	"github.com/BaritoLog/barito-flow/cmds"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
 	Name    = "barito-flow"
-	Version = "0.13.0"
+	Version = "0.13.1"
 )
 
 var (

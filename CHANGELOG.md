@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 
+## [0.13.1]
+### Changed
+- Reorder config to fetch kafka and elasticsearch value
+
 ## [0.13.0]
 ### Changed
 - Support GRPC with gateway
