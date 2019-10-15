@@ -84,6 +84,7 @@ func configKafkaBrokers() (brokers []string) {
 	name := configConsulKafkaName()
 	brokers, err := consulKafkaBroker(consulUrl, name)
 	if err == nil {
+		logConfig("consul", EnvKafkaBrokers, brokers)
 		return
 	}
 
@@ -103,6 +104,7 @@ func configElasticsearchUrls() (urls []string) {
 	urls, err := consulElasticsearchUrl(consulUrl, name)
 
 	if err == nil {
+		logConfig("consul", EnvElasticsearchUrls, urls)
 		return
 	}
 
