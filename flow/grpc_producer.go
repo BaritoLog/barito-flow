@@ -202,6 +202,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
 	if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
+		prome.IncreaseProducerTPSExceededCounter(topic)
 		return
 	}
 
@@ -223,6 +224,7 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
 	if s.limiter.IsHitLimit(topic, len(timberCollection.GetItems()), maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
+		prome.IncreaseProducerTPSExceededCounter(topic)
 		return
 	}
 

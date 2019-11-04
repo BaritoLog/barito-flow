@@ -25,6 +25,8 @@ func resetPrometheusMetrics() {
 }
 
 func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -37,9 +39,18 @@ func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {
 
 	_, err := srv.Produce(nil, pb.SampleTimberProto())
 	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
+
+	expected := `
+		# HELP barito_producer_tps_exceeded_total Number of TPS exceeded event
+		# TYPE barito_producer_tps_exceeded_total counter
+		barito_producer_tps_exceeded_total{topic="some_topic"} 1
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_tps_exceeded_total"))
 }
 
 func TestProducerService_ProduceBatch_OnLimitExceeded(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -52,6 +63,13 @@ func TestProducerService_ProduceBatch_OnLimitExceeded(t *testing.T) {
 
 	_, err := srv.ProduceBatch(nil, pb.SampleTimberCollectionProto())
 	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
+
+	expected := `
+	# HELP barito_producer_tps_exceeded_total Number of TPS exceeded event
+	# TYPE barito_producer_tps_exceeded_total counter
+	barito_producer_tps_exceeded_total{topic="some_topic"} 1
+`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_tps_exceeded_total"))
 }
 
 func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
