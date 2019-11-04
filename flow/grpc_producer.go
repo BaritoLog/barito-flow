@@ -246,7 +246,11 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 func (s *producerService) sendLogs(topic string, timber *pb.Timber) (err error) {
 	message := ConvertTimberToKafkaMessage(timber, topic)
+
+	startTime := time.Now()
 	_, _, err = s.producer.SendMessage(message)
+	timeDifference := float64(time.Now().Sub(startTime).Nanoseconds()) / float64(1000000000)
+	prome.ObserveSendToKafkaTime(topic, timeDifference)
 	return
 }
 

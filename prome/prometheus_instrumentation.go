@@ -12,6 +12,7 @@ var consumerBulkProcessTimeSecond prometheus.Summary
 var consumerKafkaMessagesIncomingCounter *prometheus.CounterVec
 var producerKafkaMessageStoredTotal *prometheus.CounterVec
 var producerTPSExceededCounter *prometheus.CounterVec
+var producerSendToKafkaTimeSecond *prometheus.SummaryVec
 
 func InitConsumerInstrumentation() {
 	consumerLogStoredCounter = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -38,6 +39,10 @@ func InitProducerInstrumentation() {
 		Name: "barito_producer_tps_exceeded_total",
 		Help: "Number of TPS exceeded event",
 	}, []string{"topic"})
+	producerSendToKafkaTimeSecond = promauto.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "barito_producer_send_to_kafka_time_second",
+		Help: "Send to Kafka time in second",
+	}, []string{"topic"})
 }
 
 func IncreaseLogStoredCounter(index string, result string, status int, error string) {
@@ -62,4 +67,8 @@ func IncreaseKafkaMessagesStoredTotalWithError(topic string, errorType string) {
 
 func IncreaseProducerTPSExceededCounter(topic string) {
 	producerTPSExceededCounter.WithLabelValues(topic).Inc()
+}
+
+func ObserveSendToKafkaTime(topic string, elapsedTime float64) {
+	producerSendToKafkaTimeSecond.WithLabelValues(topic).Observe(elapsedTime)
 }
