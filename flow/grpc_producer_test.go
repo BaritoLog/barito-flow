@@ -16,7 +16,11 @@ import (
 	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
-func init() {
+func resetPrometheusMetrics() {
+	registry := prometheus.NewRegistry()
+	prometheus.DefaultGatherer = registry
+	prometheus.DefaultRegisterer = registry
+
 	prome.InitProducerInstrumentation()
 }
 
@@ -51,6 +55,8 @@ func TestProducerService_ProduceBatch_OnLimitExceeded(t *testing.T) {
 }
 
 func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -81,6 +87,8 @@ func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
 }
 
 func TestProducerService_Produce_OnStoreError(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -112,6 +120,8 @@ func TestProducerService_Produce_OnStoreError(t *testing.T) {
 }
 
 func TestProducerService_Produce_OnSuccess(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

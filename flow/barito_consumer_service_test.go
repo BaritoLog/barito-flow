@@ -1,12 +1,13 @@
 package flow
 
 import (
-	"github.com/BaritoLog/barito-flow/prome"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/BaritoLog/barito-flow/prome"
 
 	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
