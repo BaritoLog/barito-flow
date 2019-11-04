@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/BaritoLog/barito-flow/mock"
@@ -12,13 +13,15 @@ import (
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/golang/mock/gomock"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
 func TestConsumerWorker(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	want := &sarama.ConsumerMessage{}
+	want := &sarama.ConsumerMessage{Topic: "test"}
 	wantNotification := &cluster.Notification{}
 
 	consumer := mock.NewMockClusterConsumer(ctrl)
@@ -49,6 +52,13 @@ func TestConsumerWorker(t *testing.T) {
 
 	FatalIf(t, got != want, "wrong message")
 	FatalIf(t, gotNotification != wantNotification, "wrong notification")
+
+	expected := `
+		# HELP barito_consumer_kafka_message_incoming_total Number of messages incoming from kafka
+		# TYPE barito_consumer_kafka_message_incoming_total counter
+		barito_consumer_kafka_message_incoming_total{topic="test"} 1
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_consumer_kafka_message_incoming_total"))
 }
 
 func TestConsumerWorker_KafkaError(t *testing.T) {
