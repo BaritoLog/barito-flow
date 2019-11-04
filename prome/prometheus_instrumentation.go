@@ -34,7 +34,7 @@ func InitProducerInstrumentation() {
 	producerKafkaMessageStoredTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_producer_kafka_message_stored_total",
 		Help: "Number of message stored to kafka",
-	}, []string{"topic", "is_error"})
+	}, []string{"topic", "error_type"})
 	producerHttpRequestTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_producer_http_request_total",
 		Help: "Number of incoming http request",
@@ -58,12 +58,18 @@ func ObserveBulkProcessTime(elapsedTime float64) {
 	consumerBulkProcessTimeSecond.Observe(elapsedTime)
 }
 
-func IncreaseKafkaMessagesStoredTotal(topic string, isError string) {
-	producerKafkaMessageStoredTotal.WithLabelValues(topic, isError).Inc()
+func IncreaseKafkaMessagesStoredTotal(topic string) {
+	producerKafkaMessageStoredTotal.WithLabelValues(topic, "").Inc()
 }
+
+func IncreaseKafkaMessagesStoredTotalWithError(topic string, errorType string) {
+	producerKafkaMessageStoredTotal.WithLabelValues(topic, errorType).Inc()
+}
+
 func IncreaseProducerHttpRequestTotal(status int, path string, method string) {
 	producerHttpRequestTotal.WithLabelValues(strconv.Itoa(status), path, method).Inc()
 }
+
 func ObserveProducerHttpRequestTime(elapsedTime float64, status int, path string, method string) {
 	producerHttpRequestTime.WithLabelValues(strconv.Itoa(status), path, method).Observe(elapsedTime)
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -266,6 +267,7 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 		err = s.admin.CreateTopic(topic, numPartitions, int16(replicationFactor))
 		if err != nil {
 			err = onCreateTopicErrorGrpc(err)
+			prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "create_topic")
 			return
 		}
 
@@ -273,6 +275,7 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 		err = s.sendCreateTopicEvents(topic)
 		if err != nil {
 			err = onSendCreateTopicErrorGrpc(err)
+			prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "send_create_topic_event")
 			return
 		}
 	}
@@ -280,8 +283,10 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 	err = s.sendLogs(topic, timber)
 	if err != nil {
 		err = onStoreErrorGrpc(err)
+		prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "send_log")
 		return
 	}
 
+	prome.IncreaseKafkaMessagesStoredTotal(topic)
 	return
 }
