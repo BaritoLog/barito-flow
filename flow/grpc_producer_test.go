@@ -2,9 +2,12 @@ package flow
 
 import (
 	"fmt"
-	"github.com/BaritoLog/barito-flow/prome"
 	"strings"
 	"testing"
+
+	"github.com/BaritoLog/barito-flow/prome"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
@@ -13,11 +16,17 @@ import (
 	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
-func init() {
+func resetPrometheusMetrics() {
+	registry := prometheus.NewRegistry()
+	prometheus.DefaultGatherer = registry
+	prometheus.DefaultRegisterer = registry
+
 	prome.InitProducerInstrumentation()
 }
 
 func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -30,9 +39,18 @@ func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {
 
 	_, err := srv.Produce(nil, pb.SampleTimberProto())
 	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
+
+	expected := `
+		# HELP barito_producer_tps_exceeded_total Number of TPS exceeded event
+		# TYPE barito_producer_tps_exceeded_total counter
+		barito_producer_tps_exceeded_total{topic="some_topic"} 1
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_tps_exceeded_total"))
 }
 
 func TestProducerService_ProduceBatch_OnLimitExceeded(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -45,9 +63,18 @@ func TestProducerService_ProduceBatch_OnLimitExceeded(t *testing.T) {
 
 	_, err := srv.ProduceBatch(nil, pb.SampleTimberCollectionProto())
 	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
+
+	expected := `
+	# HELP barito_producer_tps_exceeded_total Number of TPS exceeded event
+	# TYPE barito_producer_tps_exceeded_total counter
+	barito_producer_tps_exceeded_total{topic="some_topic"} 1
+`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_tps_exceeded_total"))
 }
 
 func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -68,9 +95,18 @@ func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
 
 	_, err := srv.Produce(nil, pb.SampleTimberProto())
 	FatalIfWrongGrpcError(t, onCreateTopicErrorGrpc(fmt.Errorf("")), err)
+
+	expected := `
+		# HELP barito_producer_kafka_message_stored_total Number of message stored to kafka
+		# TYPE barito_producer_kafka_message_stored_total counter
+		barito_producer_kafka_message_stored_total{error_type="create_topic",topic="some_topic_logs"} 1
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_kafka_message_stored_total"))
 }
 
 func TestProducerService_Produce_OnStoreError(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -92,9 +128,18 @@ func TestProducerService_Produce_OnStoreError(t *testing.T) {
 
 	_, err := srv.Produce(nil, pb.SampleTimberProto())
 	FatalIfWrongGrpcError(t, onStoreErrorGrpc(fmt.Errorf("")), err)
+
+	expected := `
+		# HELP barito_producer_kafka_message_stored_total Number of message stored to kafka
+		# TYPE barito_producer_kafka_message_stored_total counter
+		barito_producer_kafka_message_stored_total{error_type="send_log",topic="some_topic_logs"} 1
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_kafka_message_stored_total"))
 }
 
 func TestProducerService_Produce_OnSuccess(t *testing.T) {
+	resetPrometheusMetrics()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -119,6 +164,13 @@ func TestProducerService_Produce_OnSuccess(t *testing.T) {
 	resp, err := srv.Produce(nil, pb.SampleTimberProto())
 	FatalIfError(t, err)
 	FatalIf(t, resp.GetTopic() != "some_topic_logs", "wrong result.Topic")
+
+	expected := `
+		# HELP barito_producer_kafka_message_stored_total Number of message stored to kafka
+		# TYPE barito_producer_kafka_message_stored_total counter
+		barito_producer_kafka_message_stored_total{error_type="",topic="some_topic_logs"} 1
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_kafka_message_stored_total"))
 }
 
 func TestProducerService_ProduceBatch_OnSuccess(t *testing.T) {

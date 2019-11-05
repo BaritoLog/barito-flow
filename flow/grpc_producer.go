@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -201,6 +202,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
 	if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
+		prome.IncreaseProducerTPSExceededCounter(topic)
 		return
 	}
 
@@ -222,6 +224,7 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
 	if s.limiter.IsHitLimit(topic, len(timberCollection.GetItems()), maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
+		prome.IncreaseProducerTPSExceededCounter(topic)
 		return
 	}
 
@@ -243,7 +246,11 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 func (s *producerService) sendLogs(topic string, timber *pb.Timber) (err error) {
 	message := ConvertTimberToKafkaMessage(timber, topic)
+
+	startTime := time.Now()
 	_, _, err = s.producer.SendMessage(message)
+	timeDifference := float64(time.Now().Sub(startTime).Nanoseconds()) / float64(1000000000)
+	prome.ObserveSendToKafkaTime(topic, timeDifference)
 	return
 }
 
@@ -266,6 +273,7 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 		err = s.admin.CreateTopic(topic, numPartitions, int16(replicationFactor))
 		if err != nil {
 			err = onCreateTopicErrorGrpc(err)
+			prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "create_topic")
 			return
 		}
 
@@ -273,6 +281,7 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 		err = s.sendCreateTopicEvents(topic)
 		if err != nil {
 			err = onSendCreateTopicErrorGrpc(err)
+			prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "send_create_topic_event")
 			return
 		}
 	}
@@ -280,8 +289,10 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 	err = s.sendLogs(topic, timber)
 	if err != nil {
 		err = onStoreErrorGrpc(err)
+		prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "send_log")
 		return
 	}
 
+	prome.IncreaseKafkaMessagesStoredTotal(topic)
 	return
 }
