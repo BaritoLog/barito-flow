@@ -40,8 +40,9 @@ func InitProducerInstrumentation() {
 		Help: "Number of TPS exceeded event",
 	}, []string{"topic"})
 	producerSendToKafkaTimeSecond = promauto.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "barito_producer_send_to_kafka_time_second",
-		Help: "Send to Kafka time in second",
+		Name:       "barito_producer_send_to_kafka_time_second",
+		Help:       "Send to Kafka time in second",
+		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, []string{"topic"})
 }
 
