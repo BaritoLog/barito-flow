@@ -15,7 +15,7 @@ import (
 
 const (
 	Name    = "barito-flow"
-	Version = "0.13.1"
+	Version = "0.13.2"
 )
 
 var (
