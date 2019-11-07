@@ -93,10 +93,11 @@ func (a *kafkaAdmin) CreateTopic(topic string, numPartitions int32, replicationF
 	detail := &sarama.TopicDetail{NumPartitions: numPartitions, ReplicationFactor: replicationFactor}
 	clusterAdmin, err := sarama.NewClusterAdmin(a.brokers, a.client.Config())
 
-	defer clusterAdmin.Close()
 	if err != nil {
 		return
 	}
+
+	defer clusterAdmin.Close()
 
 	err = clusterAdmin.CreateTopic(topic, detail, false)
 	if err != nil {
