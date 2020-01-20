@@ -12,8 +12,6 @@ type RateLimiter interface {
 	Start()
 	Stop()
 	IsStart() bool
-	PutBucket(topic string, bucket *LeakyBucket)
-	Bucket(topic string) *LeakyBucket
 }
 
 type rateLimiter struct {
