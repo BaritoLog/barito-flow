@@ -7,7 +7,8 @@ import (
 )
 
 func mockElasticRetrier() *ElasticRetrier {
-	return NewElasticRetrier(1*time.Second, mockRetrier)
+	maxRetry := 10
+	return NewElasticRetrier(1*time.Second, maxRetry, mockRetrier)
 }
 
 func mockRetrier(err error) {
@@ -15,7 +16,8 @@ func mockRetrier(err error) {
 }
 
 func TestNewElasticRetrier(t *testing.T) {
-	r := NewElasticRetrier(1*time.Second, mockRetrier)
+	maxRetry := 10
+	r := NewElasticRetrier(1*time.Second, maxRetry, mockRetrier)
 	wait, ok, err := r.Retry(context.TODO(), 1, nil, nil, nil)
 	if want, got := 1*time.Second, wait; want != got {
 		t.Fatalf("expected %v, got %v", want, got)

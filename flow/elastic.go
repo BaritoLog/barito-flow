@@ -61,6 +61,10 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		elastic.SetBasicAuth(elasticUsername, elasticPassword),
 	)
 
+	if err != nil {
+		return
+	}
+
 	beforeBulkFunc, afterBulkFunc := getCommitCallback()
 
 	p, err := c.BulkProcessor().

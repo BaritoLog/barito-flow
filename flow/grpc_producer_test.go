@@ -22,6 +22,7 @@ func resetPrometheusMetrics() {
 	prometheus.DefaultRegisterer = registry
 
 	prome.InitProducerInstrumentation()
+	prome.InitConsumerInstrumentation()
 }
 
 func TestProducerService_Produce_OnLimitExceeded(t *testing.T) {

@@ -7,9 +7,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+const (
+	ESClientFailedPhaseInit  = "init"
+	ESClientFailedPhaseRetry = "retry"
+)
+
 var consumerLogStoredCounter *prometheus.CounterVec
 var consumerBulkProcessTimeSecond prometheus.Summary
 var consumerKafkaMessagesIncomingCounter *prometheus.CounterVec
+var consumerElasticsearchClientFailed *prometheus.CounterVec
 var producerKafkaMessageStoredTotal *prometheus.CounterVec
 var producerTPSExceededCounter *prometheus.CounterVec
 var producerSendToKafkaTimeSecond *prometheus.SummaryVec
@@ -28,6 +34,10 @@ func InitConsumerInstrumentation() {
 		Name: "barito_consumer_kafka_message_incoming_total",
 		Help: "Number of messages incoming from kafka",
 	}, []string{"topic"})
+	consumerElasticsearchClientFailed = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_consumer_elasticsearch_client_failed",
+		Help: "Number of elasticsearch client failed",
+	}, []string{"phase"})
 }
 
 func InitProducerInstrumentation() {
@@ -56,6 +66,10 @@ func IncreaseKafkaMessagesIncoming(topic string) {
 
 func ObserveBulkProcessTime(elapsedTime float64) {
 	consumerBulkProcessTimeSecond.Observe(elapsedTime)
+}
+
+func IncreaseConsumerElasticsearchClientFailed(phase string) {
+	consumerElasticsearchClientFailed.WithLabelValues(phase).Inc()
 }
 
 func IncreaseKafkaMessagesStoredTotal(topic string) {

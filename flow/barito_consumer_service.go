@@ -3,6 +3,7 @@ package flow
 import (
 	"context"
 	"fmt"
+	"github.com/BaritoLog/barito-flow/prome"
 	"strings"
 	"time"
 
@@ -55,6 +56,7 @@ type baritoConsumerService struct {
 	lastNewTopic           string
 	isHalt                 bool
 	elasticRetrierInterval string
+	elasticRetrierMaxRetry int
 
 	elasticUsername string
 	elasticPassword string
@@ -74,6 +76,9 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		elasticUsername:        params["elasticUsername"].(string),
 		elasticPassword:        params["elasticPassword"].(string),
 	}
+	if n, ok := params["elasticRetrierMaxRetry"]; ok {
+        s.elasticRetrierMaxRetry = n.(int)
+	}
 
 	retrier := s.elasticRetrier()
 	esConfig := params["esConfig"].(esConfig)
@@ -81,6 +86,7 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 	s.esClient = &elastic
 	if err != nil {
 		s.logError(errkit.Concat(ErrElasticsearchClient, err))
+		prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseInit)
 	}
 
 	return s
@@ -210,6 +216,7 @@ func (s *baritoConsumerService) logNewTopic(topic string) {
 
 func (s *baritoConsumerService) onElasticRetry(err error) {
 	s.logError(errkit.Concat(ErrElasticsearchClient, err))
+	prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseRetry)
 	s.HaltAllWorker()
 }
 
@@ -275,7 +282,7 @@ func (s *baritoConsumerService) HaltAllWorker() {
 }
 
 func (s *baritoConsumerService) elasticRetrier() *ElasticRetrier {
-	return NewElasticRetrier(timekit.Duration(s.elasticRetrierInterval), s.onElasticRetry)
+	return NewElasticRetrier(timekit.Duration(s.elasticRetrierInterval), s.elasticRetrierMaxRetry, s.onElasticRetry)
 }
 
 func (s *baritoConsumerService) ResumeWorker() (err error) {
