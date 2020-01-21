@@ -73,6 +73,7 @@ func (s *producerService) initProducer() (err error) {
 				log.Infof("Retry kafka sync producer successful")
 			}
 		} else {
+			prome.IncreaseProducerKafkaClientFailed()
 			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
 				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
 				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)

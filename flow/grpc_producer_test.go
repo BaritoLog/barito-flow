@@ -206,6 +206,8 @@ func TestProducerService_ProduceBatch_OnSuccess(t *testing.T) {
 }
 
 func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
+	resetPrometheusMetrics()
+
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeSyncProducerFunc_AlwaysError("some-error")
 
@@ -215,8 +217,8 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 		"restAddr":               "rest",
 		"rateLimitResetInterval": 1,
 		"topicSuffix":            "_logs",
-		"kafkaMaxRetry":          1,
-		"kafkaRetryInterval":     10,
+		"kafkaMaxRetry":          2,
+		"kafkaRetryInterval":     1,
 		"newEventTopic":          "new_topic_events",
 	}
 
@@ -224,6 +226,12 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 	err := service.Start()
 
 	FatalIfWrongError(t, err, "Make sync producer failed: Error connecting to kafka, retry limit reached")
+	expected := `
+		# HELP barito_producer_kafka_client_failed Number of client failed to connect to kafka
+		# TYPE barito_producer_kafka_client_failed counter
+		barito_producer_kafka_client_failed 2
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_kafka_client_failed"))
 }
 
 func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
