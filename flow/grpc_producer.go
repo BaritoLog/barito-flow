@@ -236,6 +236,7 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 		err = s.handleProduce(timber, topic)
 		if err != nil {
+			log.Infof("Failed send logs to kafka: %s", err)
 			return
 		}
 	}
