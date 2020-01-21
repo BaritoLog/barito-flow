@@ -40,6 +40,8 @@ func (delegate *gubernatorMemberlistEventHandler) NotifyJoin(node *memberlist.No
 	delegate.renotifyCallback()
 }
 
-func (*gubernatorMemberlistEventHandler) NotifyLeave(*memberlist.Node) {}
+func (delegate *gubernatorMemberlistEventHandler) NotifyLeave(*memberlist.Node) {
+	delegate.SetPeersFunc([]string{"192.168.0.2:2022"})
+}
 
 func (*gubernatorMemberlistEventHandler) NotifyUpdate(*memberlist.Node) {}
