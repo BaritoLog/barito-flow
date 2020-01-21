@@ -36,7 +36,7 @@ func (limiter *gubernatorRateLimiter) IsHitLimit(topic string, count int, maxTok
 		Requests: []*gubernator.RateLimitReq{
 			&gubernator.RateLimitReq{
 				Name:      "tps",
-				UniqueKey: "tps",
+				UniqueKey: topic,
 				Hits:      1,
 				Limit:     int64(10),
 				Duration:  (1 * time.Second).Milliseconds(),
