@@ -24,7 +24,7 @@ func (delegate *gubernatorMemberlistEventHandler) prepare() {
 func (delegate *gubernatorMemberlistEventHandler) renotifyCallback() {
 	var addresses []string
 	for address := range delegate.addressMap {
-		addresses = append(addresses, address)
+		addresses = append(addresses, fmt.Sprintf("%s:%d", address, delegate.GRPCPort))
 	}
 	delegate.SetPeersFunc(addresses)
 }
@@ -33,15 +33,18 @@ func (delegate *gubernatorMemberlistEventHandler) NotifyJoin(node *memberlist.No
 	delegate.addressMapMutex.Lock()
 	defer delegate.addressMapMutex.Unlock()
 
-	address := fmt.Sprintf("%s:%d", node.Addr.String(), delegate.GRPCPort)
 	delegate.prepare()
-	delegate.addressMap[address] = struct{}{}
-
+	delegate.addressMap[node.Addr.String()] = struct{}{}
 	delegate.renotifyCallback()
 }
 
-func (delegate *gubernatorMemberlistEventHandler) NotifyLeave(*memberlist.Node) {
-	delegate.SetPeersFunc([]string{"192.168.0.2:2022"})
+func (delegate *gubernatorMemberlistEventHandler) NotifyLeave(node *memberlist.Node) {
+	delegate.addressMapMutex.Lock()
+	defer delegate.addressMapMutex.Unlock()
+
+	delegate.prepare()
+	delete(delegate.addressMap, node.Addr.String())
+	delegate.renotifyCallback()
 }
 
 func (*gubernatorMemberlistEventHandler) NotifyUpdate(*memberlist.Node) {}

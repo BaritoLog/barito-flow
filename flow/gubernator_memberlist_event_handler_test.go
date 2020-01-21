@@ -68,4 +68,12 @@ func TestGubernatorMemberlistEventHandler_NotifyLeave(t *testing.T) {
 
 		assert.ElementsMatch(t, []string{"192.168.0.2:2022"}, returnedAddresses)
 	})
+
+	t.Run("other", func(t *testing.T) {
+		delegate.NotifyLeave(&memberlist.Node{
+			Addr: net.IPv4(192, 168, 0, 2),
+		})
+
+		assert.Empty(t, returnedAddresses)
+	})
 }
