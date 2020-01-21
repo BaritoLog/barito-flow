@@ -25,7 +25,7 @@ func newGubernatorRateLimiter(grpcAddress string) *gubernatorRateLimiter {
 	})
 
 	return &gubernatorRateLimiter{
-		address:    "127.0.0.1:10011",
+		address:    grpcAddress,
 		guber:      guber,
 		grpcServer: grpcServer,
 	}
@@ -61,5 +61,12 @@ func (limiter *gubernatorRateLimiter) Start() {
 func (*gubernatorRateLimiter) Stop() {}
 
 func (limiter *gubernatorRateLimiter) SetPeers(addresses []string) {
-	limiter.guber.SetPeers([]gubernator.PeerInfo{gubernator.PeerInfo{Address: "127.0.0.1:10011"}})
+	var peers []gubernator.PeerInfo
+
+	for _, address := range addresses {
+		peers = append(peers, gubernator.PeerInfo{
+			Address: address,
+		})
+	}
+	limiter.guber.SetPeers(peers)
 }
