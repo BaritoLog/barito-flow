@@ -31,6 +31,7 @@ require (
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 	github.com/rcrowley/go-metrics v0.0.0-20190706150252-9beb055b7962 // indirect
 	github.com/sirupsen/logrus v1.4.2
+	github.com/stretchr/testify v1.3.0
 	github.com/urfave/cli v1.20.0
 	github.com/vwidjaya/barito-proto v0.0.0-20190820161146-42a41bebaef1
 	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
