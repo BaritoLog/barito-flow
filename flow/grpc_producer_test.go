@@ -68,7 +68,7 @@ func TestProducerService_ProduceBatch_OnLimitExceeded(t *testing.T) {
 	expected := `
 	# HELP barito_producer_tps_exceeded_total Number of TPS exceeded event
 	# TYPE barito_producer_tps_exceeded_total counter
-	barito_producer_tps_exceeded_total{topic="some_topic"} 1
+	barito_producer_tps_exceeded_total{topic="some_topic"} 2
 `
 	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_tps_exceeded_total"))
 }

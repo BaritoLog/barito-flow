@@ -85,8 +85,8 @@ func IncreaseKafkaMessagesStoredTotalWithError(topic string, errorType string) {
 	producerKafkaMessageStoredTotal.WithLabelValues(topic, errorType).Inc()
 }
 
-func IncreaseProducerTPSExceededCounter(topic string) {
-	producerTPSExceededCounter.WithLabelValues(topic).Inc()
+func IncreaseProducerTPSExceededCounter(topic string, n int) {
+	producerTPSExceededCounter.WithLabelValues(topic).Add(float64(n))
 }
 
 func ObserveSendToKafkaTime(topic string, elapsedTime float64) {

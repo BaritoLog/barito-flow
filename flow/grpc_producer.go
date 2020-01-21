@@ -203,7 +203,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
 	if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(topic)
+		prome.IncreaseProducerTPSExceededCounter(topic, 1)
 		return
 	}
 
@@ -223,9 +223,10 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 	topic := timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
 
 	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
-	if s.limiter.IsHitLimit(topic, len(timberCollection.GetItems()), maxTokenIfNotExist) {
+	lengthMessages := len(timberCollection.GetItems())
+	if s.limiter.IsHitLimit(topic, lengthMessages, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(topic)
+		prome.IncreaseProducerTPSExceededCounter(topic, lengthMessages)
 		return
 	}
 
