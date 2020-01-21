@@ -29,4 +29,16 @@ func TestGubernatorMemberlistEventHandler_NotifyJoin(t *testing.T) {
 
 		assert.ElementsMatch(t, []string{"192.168.0.1:2022"}, returnedAddresses)
 	})
+
+	t.Run("other", func(t *testing.T) {
+		delegate.NotifyJoin(&memberlist.Node{
+			Name: "node-02",
+			Addr: net.IPv4(192, 168, 0, 2),
+		})
+
+		assert.ElementsMatch(t, []string{
+			"192.168.0.1:2022",
+			"192.168.0.2:2022",
+		}, returnedAddresses)
+	})
 }
