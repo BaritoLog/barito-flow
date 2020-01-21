@@ -20,6 +20,7 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.9.5
 	github.com/hashicorp/consul/api v1.1.0
+	github.com/mailgun/gubernator v0.8.0
 	github.com/mailru/easyjson v0.0.0-20190620125010-da37f6c1e481 // indirect
 	github.com/olivere/elastic v6.2.19+incompatible
 	github.com/onsi/ginkgo v1.8.0 // indirect
