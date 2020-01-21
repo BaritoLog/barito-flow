@@ -38,7 +38,7 @@ func (limiter *gubernatorRateLimiter) IsHitLimit(topic string, count int, maxTok
 				Name:      "tps",
 				UniqueKey: topic,
 				Hits:      int64(count),
-				Limit:     int64(10),
+				Limit:     int64(maxTokenIfNotExist),
 				Duration:  (1 * time.Second).Milliseconds(),
 			},
 		},

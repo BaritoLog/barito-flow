@@ -80,3 +80,20 @@ func TestGubernatorRateLimiter_IsHitLimit_MultipleHits(t *testing.T) {
 	FatalIf(t, limiter.IsHitLimit("abc", int(maxToken), maxToken), "it should be still have %d tokens at abc", maxToken)
 	FatalIf(t, !limiter.IsHitLimit("abc", 1, maxToken), "it should be hit limit at abc")
 }
+
+func TestGubernatorRateLimiter_IsHitLimit_ChangingMaxToken(t *testing.T) {
+	var maxToken int32 = 10
+	var newMaxToken int32 = 20
+	peers := []string{
+		"127.0.0.1:10011",
+	}
+
+	limiter := newGubernatorRateLimiter(peers[0])
+	limiter.SetPeers(peers)
+	limiter.Start()
+	time.Sleep(10 * time.Millisecond)
+
+	FatalIf(t, limiter.IsHitLimit("abc", int(maxToken), maxToken), "it should be still have %d tokens at abc", maxToken)
+	time.Sleep(1 * time.Second)
+	FatalIf(t, limiter.IsHitLimit("abc", int(newMaxToken), newMaxToken), "it should be still have %d tokens at abc", newMaxToken)
+}
