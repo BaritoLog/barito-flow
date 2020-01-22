@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewGubernatorRateLimiter_InterfaceCompliance(t *testing.T) {
-	var _ RateLimiter = newGubernatorRateLimiter("127.0.0.1:10011")
+	var _ RateLimiter = newGubernatorRateLimiter("127.0.0.1:10010")
 }
 
 func TestGubernatorRateLimiter_IsHitLimit_SingleNode(t *testing.T) {
@@ -69,7 +69,7 @@ func TestGubernatorRateLimiter_IsHitLimit_MultipleTopic(t *testing.T) {
 func TestGubernatorRateLimiter_IsHitLimit_MultipleHits(t *testing.T) {
 	var maxToken int32 = 10
 	peers := []string{
-		"127.0.0.1:10011",
+		"127.0.0.1:10015",
 	}
 
 	limiter := newGubernatorRateLimiter(peers[0])
@@ -85,7 +85,7 @@ func TestGubernatorRateLimiter_IsHitLimit_ChangingMaxToken(t *testing.T) {
 	var maxToken int32 = 10
 	var newMaxToken int32 = 20
 	peers := []string{
-		"127.0.0.1:10011",
+		"127.0.0.1:10016",
 	}
 
 	limiter := newGubernatorRateLimiter(peers[0])
@@ -99,22 +99,19 @@ func TestGubernatorRateLimiter_IsHitLimit_ChangingMaxToken(t *testing.T) {
 }
 
 func TestGubernatorRateLimiter_IsStart(t *testing.T) {
-	limiter := newGubernatorRateLimiter("127.0.0.1:10011")
+	limiter := newGubernatorRateLimiter("127.0.0.1:10017")
 	FatalIf(t, limiter.IsStart(), "it should be stopped")
 
 	limiter.Start()
-	defer limiter.Stop()
 	FatalIf(t, !limiter.IsStart(), "it should be started")
 }
 
 func TestGubernatorRateLimiter_Stop_ReleaseResources(t *testing.T) {
-	limiter := newGubernatorRateLimiter("127.0.0.1:10011")
+	limiter := newGubernatorRateLimiter("127.0.0.1:10018")
 	limiter.Start()
 	limiter.Stop()
 	time.Sleep(10 * time.Millisecond)
 
-	limiter = newGubernatorRateLimiter("127.0.0.1:10011")
-	limiter.Start()
-	defer limiter.Stop()
+	limiter = newGubernatorRateLimiter("127.0.0.1:10018")
 	time.Sleep(10 * time.Millisecond)
 }
