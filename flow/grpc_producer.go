@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/hashicorp/memberlist"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vwidjaya/barito-proto/producer"
 	"google.golang.org/grpc"
@@ -21,6 +23,7 @@ const (
 	ErrInitGrpc               = errkit.Error("Failed to listen to gRPC address")
 	ErrRegisterGrpc           = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
 	ErrReverseProxy           = errkit.Error("Error serving REST reverse proxy")
+	ErrInitMemberlist         = errkit.Error("Error initializing memberlist")
 )
 
 type ProducerService interface {
@@ -31,33 +34,38 @@ type ProducerService interface {
 }
 
 type producerService struct {
-	factory                KafkaFactory
-	grpcAddr               string
-	restAddr               string
-	rateLimitResetInterval int
-	topicSuffix            string
-	kafkaMaxRetry          int
-	kafkaRetryInterval     int
-	newEventTopic          string
+	factory                 KafkaFactory
+	grpcAddr                string
+	restAddr                string
+	rateLimitPort           int
+	rateLimitMemberlistPort int
+	rateLimitResetInterval  int
+	topicSuffix             string
+	kafkaMaxRetry           int
+	kafkaRetryInterval      int
+	newEventTopic           string
 
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
 	limiter  RateLimiter
 
+	discoverer   *memberlist.Memberlist
 	grpcServer   *grpc.Server
 	reverseProxy *http.Server
 }
 
 func NewProducerService(params map[string]interface{}) ProducerService {
 	return &producerService{
-		factory:                params["factory"].(KafkaFactory),
-		grpcAddr:               params["grpcAddr"].(string),
-		restAddr:               params["restAddr"].(string),
-		rateLimitResetInterval: params["rateLimitResetInterval"].(int),
-		topicSuffix:            params["topicSuffix"].(string),
-		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
-		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
-		newEventTopic:          params["newEventTopic"].(string),
+		factory:                 params["factory"].(KafkaFactory),
+		grpcAddr:                params["grpcAddr"].(string),
+		restAddr:                params["restAddr"].(string),
+		rateLimitPort:           params["rateLimitPort"].(int),
+		rateLimitMemberlistPort: params["rateLimitMemberlistPort"].(int),
+		rateLimitResetInterval:  params["rateLimitResetInterval"].(int),
+		topicSuffix:             params["topicSuffix"].(string),
+		kafkaMaxRetry:           params["kafkaMaxRetry"].(int),
+		kafkaRetryInterval:      params["kafkaRetryInterval"].(int),
+		newEventTopic:           params["newEventTopic"].(string),
 	}
 }
 
@@ -137,7 +145,19 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
+	gubernatorRateLimiter := newGubernatorRateLimiter(fmt.Sprintf("0.0.0.0:%d", s.rateLimitPort))
+	memberlistConfig := memberlist.DefaultLANConfig()
+	memberlistConfig.BindPort = s.rateLimitMemberlistPort
+	memberlistConfig.Events = &gubernatorMemberlistEventHandler{
+		GRPCPort:     uint16(s.rateLimitPort),
+		SetPeersFunc: gubernatorRateLimiter.SetPeers,
+	}
+	s.discoverer, err = memberlist.Create(memberlistConfig)
+	if err != nil {
+		err = errkit.Concat(ErrInitMemberlist, err)
+	}
+
+	s.limiter = gubernatorRateLimiter
 	s.limiter.Start()
 
 	lis, grpcSrv, err := s.initGrpcServer()

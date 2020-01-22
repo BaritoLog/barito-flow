@@ -209,18 +209,21 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 	factory.Expect_MakeSyncProducerFunc_AlwaysError("some-error")
 
 	producerParams := map[string]interface{}{
-		"factory":                factory,
-		"grpcAddr":               "grpc",
-		"restAddr":               "rest",
-		"rateLimitResetInterval": 1,
-		"topicSuffix":            "_logs",
-		"kafkaMaxRetry":          1,
-		"kafkaRetryInterval":     10,
-		"newEventTopic":          "new_topic_events",
+		"factory":                 factory,
+		"grpcAddr":                "grpc",
+		"restAddr":                "rest",
+		"rateLimitPort":           10120,
+		"rateLimitMemberlistPort": 10121,
+		"rateLimitResetInterval":  1,
+		"topicSuffix":             "_logs",
+		"kafkaMaxRetry":           1,
+		"kafkaRetryInterval":      10,
+		"newEventTopic":           "new_topic_events",
 	}
 
 	service := NewProducerService(producerParams)
 	err := service.Start()
+	defer service.Close()
 
 	FatalIfWrongError(t, err, "Make sync producer failed: Error connecting to kafka, retry limit reached")
 }
@@ -230,18 +233,21 @@ func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
 
 	producerParams := map[string]interface{}{
-		"factory":                factory,
-		"grpcAddr":               "grpc",
-		"restAddr":               "rest",
-		"rateLimitResetInterval": 1,
-		"topicSuffix":            "_logs",
-		"kafkaMaxRetry":          1,
-		"kafkaRetryInterval":     10,
-		"newEventTopic":          "new_topic_events",
+		"factory":                 factory,
+		"grpcAddr":                "grpc",
+		"restAddr":                "rest",
+		"rateLimitPort":           10120,
+		"rateLimitMemberlistPort": 10121,
+		"rateLimitResetInterval":  1,
+		"topicSuffix":             "_logs",
+		"kafkaMaxRetry":           1,
+		"kafkaRetryInterval":      10,
+		"newEventTopic":           "new_topic_events",
 	}
 
 	service := NewProducerService(producerParams)
 	err := service.Start()
+	defer service.Close()
 
 	FatalIfWrongError(t, err, "Make kafka admin failed: Error connecting to kafka, retry limit reached")
 }
@@ -254,10 +260,12 @@ func TestProducerService_Start(t *testing.T) {
 	factory.Expect_MakeKafkaAdmin_ProducerServiceSuccess(ctrl, []string{})
 
 	service := &producerService{
-		factory:       factory,
-		grpcAddr:      ":24400",
-		topicSuffix:   "_logs",
-		newEventTopic: "new_topic_event",
+		factory:                 factory,
+		grpcAddr:                ":24400",
+		rateLimitPort:           10122,
+		rateLimitMemberlistPort: 10123,
+		topicSuffix:             "_logs",
+		newEventTopic:           "new_topic_event",
 	}
 
 	var err error
@@ -268,7 +276,7 @@ func TestProducerService_Start(t *testing.T) {
 
 	FatalIfError(t, err)
 
-	timekit.Sleep("1ms")
+	timekit.Sleep("10ms")
 	FatalIf(t, !service.limiter.IsStart(), "rate limiter must be start")
 }
 
