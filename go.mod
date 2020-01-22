@@ -32,6 +32,7 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20190706150252-9beb055b7962 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.3.0
+	github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 	github.com/urfave/cli v1.20.0
 	github.com/vwidjaya/barito-proto v0.0.0-20190820161146-42a41bebaef1
 	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980

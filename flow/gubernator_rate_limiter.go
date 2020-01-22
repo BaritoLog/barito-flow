@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mailgun/gubernator"
+	"github.com/tevino/abool"
 	"google.golang.org/grpc"
 )
 
@@ -13,6 +14,7 @@ type gubernatorRateLimiter struct {
 	address    string
 	guber      *gubernator.Instance
 	grpcServer *grpc.Server
+	isStarted  abool.AtomicBool
 }
 
 func newGubernatorRateLimiter(grpcAddress string) *gubernatorRateLimiter {
@@ -47,12 +49,15 @@ func (limiter *gubernatorRateLimiter) IsHitLimit(topic string, count int, maxTok
 	return response.Responses[0].GetStatus() == gubernator.Status_OVER_LIMIT
 }
 
-func (*gubernatorRateLimiter) IsStart() bool {
-	return false
+func (limiter *gubernatorRateLimiter) IsStart() bool {
+	return limiter.isStarted.IsSet()
 }
 
 func (limiter *gubernatorRateLimiter) Start() {
+	limiter.isStarted.Set()
 	go func() {
+		defer limiter.isStarted.UnSet()
+
 		listener, _ := net.Listen("tcp", limiter.address)
 		limiter.grpcServer.Serve(listener)
 	}()

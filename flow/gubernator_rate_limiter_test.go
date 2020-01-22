@@ -97,3 +97,12 @@ func TestGubernatorRateLimiter_IsHitLimit_ChangingMaxToken(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	FatalIf(t, limiter.IsHitLimit("abc", int(newMaxToken), newMaxToken), "it should be still have %d tokens at abc", newMaxToken)
 }
+
+func TestGubernatorRateLimiter_IsStart(t *testing.T) {
+	limiter := newGubernatorRateLimiter("127.0.0.1:10011")
+	FatalIf(t, limiter.IsStart(), "it should be stopped")
+
+	limiter.Start()
+	defer limiter.Stop()
+	FatalIf(t, !limiter.IsStart(), "it should be started")
+}
