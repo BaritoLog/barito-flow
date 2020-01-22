@@ -214,6 +214,7 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 		"restAddr":                "rest",
 		"rateLimitPort":           10120,
 		"rateLimitMemberlistPort": 10121,
+		"rateLimitJoinAddress":    "127.0.0.1",
 		"rateLimitResetInterval":  1,
 		"topicSuffix":             "_logs",
 		"kafkaMaxRetry":           1,
@@ -238,6 +239,7 @@ func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 		"restAddr":                "rest",
 		"rateLimitPort":           10120,
 		"rateLimitMemberlistPort": 10121,
+		"rateLimitJoinAddress":    "127.0.0.1",
 		"rateLimitResetInterval":  1,
 		"topicSuffix":             "_logs",
 		"kafkaMaxRetry":           1,
@@ -264,6 +266,7 @@ func TestProducerService_Start(t *testing.T) {
 		grpcAddr:                ":24400",
 		rateLimitPort:           10122,
 		rateLimitMemberlistPort: 10123,
+		rateLimitJoinAddress:    "127.0.0.1",
 		topicSuffix:             "_logs",
 		newEventTopic:           "new_topic_event",
 	}

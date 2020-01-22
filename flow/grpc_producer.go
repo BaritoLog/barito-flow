@@ -24,6 +24,7 @@ const (
 	ErrRegisterGrpc           = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
 	ErrReverseProxy           = errkit.Error("Error serving REST reverse proxy")
 	ErrInitMemberlist         = errkit.Error("Error initializing memberlist")
+	ErrJoinMemberlist         = errkit.Error("Error joining memberlist cluster")
 )
 
 type ProducerService interface {
@@ -40,6 +41,7 @@ type producerService struct {
 	rateLimitPort           int
 	rateLimitMemberlistPort int
 	rateLimitResetInterval  int
+	rateLimitJoinAddress    string
 	topicSuffix             string
 	kafkaMaxRetry           int
 	kafkaRetryInterval      int
@@ -62,6 +64,7 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		rateLimitPort:           params["rateLimitPort"].(int),
 		rateLimitMemberlistPort: params["rateLimitMemberlistPort"].(int),
 		rateLimitResetInterval:  params["rateLimitResetInterval"].(int),
+		rateLimitJoinAddress:    params["rateLimitJoinAddress"].(string),
 		topicSuffix:             params["topicSuffix"].(string),
 		kafkaMaxRetry:           params["kafkaMaxRetry"].(int),
 		kafkaRetryInterval:      params["kafkaRetryInterval"].(int),
@@ -155,6 +158,13 @@ func (s *producerService) Start() (err error) {
 	s.discoverer, err = memberlist.Create(memberlistConfig)
 	if err != nil {
 		err = errkit.Concat(ErrInitMemberlist, err)
+		return
+	}
+
+	_, err = s.discoverer.Join([]string{s.rateLimitJoinAddress})
+	if err != nil {
+		err = errkit.Concat(ErrJoinMemberlist, err)
+		return
 	}
 
 	s.limiter = gubernatorRateLimiter
