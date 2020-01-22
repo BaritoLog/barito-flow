@@ -106,3 +106,15 @@ func TestGubernatorRateLimiter_IsStart(t *testing.T) {
 	defer limiter.Stop()
 	FatalIf(t, !limiter.IsStart(), "it should be started")
 }
+
+func TestGubernatorRateLimiter_Stop_ReleaseResources(t *testing.T) {
+	limiter := newGubernatorRateLimiter("127.0.0.1:10011")
+	limiter.Start()
+	limiter.Stop()
+	time.Sleep(10 * time.Millisecond)
+
+	limiter = newGubernatorRateLimiter("127.0.0.1:10011")
+	limiter.Start()
+	defer limiter.Stop()
+	time.Sleep(10 * time.Millisecond)
+}

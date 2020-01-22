@@ -59,11 +59,15 @@ func (limiter *gubernatorRateLimiter) Start() {
 		defer limiter.isStarted.UnSet()
 
 		listener, _ := net.Listen("tcp", limiter.address)
+		defer listener.Close()
+
 		limiter.grpcServer.Serve(listener)
 	}()
 }
 
-func (*gubernatorRateLimiter) Stop() {}
+func (limiter *gubernatorRateLimiter) Stop() {
+	limiter.grpcServer.GracefulStop()
+}
 
 func (limiter *gubernatorRateLimiter) SetPeers(addresses []string) {
 	var peers []gubernator.PeerInfo
