@@ -41,11 +41,12 @@ func TestGubernatorRateLimiter_IsHitLimit_MultipleNode(t *testing.T) {
 	limiter2.SetPeers(peers)
 	limiter1.Start()
 	limiter2.Start()
-	time.Sleep(10 * time.Millisecond)
 
 	for i := maxToken; i > 0; i-- {
+		time.Sleep(5 * time.Millisecond)
 		FatalIf(t, limiter1.IsHitLimit("abc", 1, maxToken), "it should be still have %d token(s) at abc", i)
 	}
+	time.Sleep(10 * time.Millisecond)
 	FatalIf(t, !limiter2.IsHitLimit("abc", 1, maxToken), "it should be hit limit at abc")
 }
 
