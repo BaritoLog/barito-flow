@@ -20,6 +20,7 @@ func TestGubernatorRateLimiter_IsHitLimit_SingleNode(t *testing.T) {
 	limiter := newGubernatorRateLimiter(peers[0])
 	limiter.SetPeers(peers)
 	limiter.Start()
+	defer limiter.Stop()
 	time.Sleep(10 * time.Millisecond)
 
 	for i := maxToken; i > 0; i-- {
@@ -31,8 +32,8 @@ func TestGubernatorRateLimiter_IsHitLimit_SingleNode(t *testing.T) {
 func TestGubernatorRateLimiter_IsHitLimit_MultipleNode(t *testing.T) {
 	var maxToken int32 = 10
 	peers := []string{
-		"127.0.0.1:10012",
-		"127.0.0.1:10013",
+		"127.0.0.1:30012",
+		"127.0.0.1:30013",
 	}
 
 	limiter1 := newGubernatorRateLimiter(peers[0])
@@ -40,13 +41,15 @@ func TestGubernatorRateLimiter_IsHitLimit_MultipleNode(t *testing.T) {
 	limiter1.SetPeers(peers)
 	limiter2.SetPeers(peers)
 	limiter1.Start()
+	defer limiter1.Stop()
 	limiter2.Start()
+	defer limiter2.Stop()
+	time.Sleep(500 * time.Millisecond)
 
 	for i := maxToken; i > 0; i-- {
-		time.Sleep(5 * time.Millisecond)
 		FatalIf(t, limiter1.IsHitLimit("abc", 1, maxToken), "it should be still have %d token(s) at abc", i)
 	}
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	FatalIf(t, !limiter2.IsHitLimit("abc", 1, maxToken), "it should be hit limit at abc")
 }
 
@@ -59,6 +62,7 @@ func TestGubernatorRateLimiter_IsHitLimit_MultipleTopic(t *testing.T) {
 	limiter := newGubernatorRateLimiter(peers[0])
 	limiter.SetPeers(peers)
 	limiter.Start()
+	defer limiter.Stop()
 	time.Sleep(10 * time.Millisecond)
 
 	for i := maxToken; i > 0; i-- {
@@ -76,6 +80,7 @@ func TestGubernatorRateLimiter_IsHitLimit_MultipleHits(t *testing.T) {
 	limiter := newGubernatorRateLimiter(peers[0])
 	limiter.SetPeers(peers)
 	limiter.Start()
+	defer limiter.Stop()
 	time.Sleep(10 * time.Millisecond)
 
 	FatalIf(t, limiter.IsHitLimit("abc", int(maxToken), maxToken), "it should be still have %d tokens at abc", maxToken)
@@ -92,6 +97,7 @@ func TestGubernatorRateLimiter_IsHitLimit_ChangingMaxToken(t *testing.T) {
 	limiter := newGubernatorRateLimiter(peers[0])
 	limiter.SetPeers(peers)
 	limiter.Start()
+	defer limiter.Stop()
 	time.Sleep(10 * time.Millisecond)
 
 	FatalIf(t, limiter.IsHitLimit("abc", int(maxToken), maxToken), "it should be still have %d tokens at abc", maxToken)
@@ -104,6 +110,7 @@ func TestGubernatorRateLimiter_IsStart(t *testing.T) {
 	FatalIf(t, limiter.IsStart(), "it should be stopped")
 
 	limiter.Start()
+	defer limiter.Stop()
 	FatalIf(t, !limiter.IsStart(), "it should be started")
 }
 
@@ -114,5 +121,7 @@ func TestGubernatorRateLimiter_Stop_ReleaseResources(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	limiter = newGubernatorRateLimiter("127.0.0.1:10018")
+	limiter.Start()
+	defer limiter.Stop()
 	time.Sleep(10 * time.Millisecond)
 }
