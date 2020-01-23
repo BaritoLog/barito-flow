@@ -91,6 +91,9 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	restAddr := configProducerAddressRest()
 	kafkaBrokers := configKafkaBrokers()
 	maxRetry := configProducerMaxRetry()
+	rateLimitPort := configProducerRateLimitPort()
+	rateLimitMemberlistPort := configProducerRateLimitMemberlistPort()
+	rateLimitMemberlistJoin := configProducerRateLimitMemberlistJoin()
 	rateLimitResetInterval := configProducerRateLimitResetInterval()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
@@ -108,14 +111,17 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
 	producerParams := map[string]interface{}{
-		"factory":                factory,
-		"grpcAddr":               grpcAddr,
-		"restAddr":               restAddr,
-		"rateLimitResetInterval": rateLimitResetInterval,
-		"topicSuffix":            topicSuffix,
-		"kafkaMaxRetry":          kafkaMaxRetry,
-		"kafkaRetryInterval":     kafkaRetryInterval,
-		"newEventTopic":          newTopicEventName,
+		"factory":                 factory,
+		"grpcAddr":                grpcAddr,
+		"restAddr":                restAddr,
+		"rateLimitPort":           rateLimitPort,
+		"rateLimitMemberlistPort": rateLimitMemberlistPort,
+		"rateLimitMemberlistJoin": rateLimitMemberlistJoin,
+		"rateLimitResetInterval":  rateLimitResetInterval,
+		"topicSuffix":             topicSuffix,
+		"kafkaMaxRetry":           kafkaMaxRetry,
+		"kafkaRetryInterval":      kafkaRetryInterval,
+		"newEventTopic":           newTopicEventName,
 	}
 
 	service := flow.NewProducerService(producerParams)

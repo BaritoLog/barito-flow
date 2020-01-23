@@ -23,12 +23,15 @@ const (
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
 
-	EnvServeRestApi                   = "BARITO_PRODUCER_REST_API" // TODO: rename to better name
-	EnvProducerAddressGrpc            = "BARITO_PRODUCER_GRPC"     // TODO: rename to better name
-	EnvProducerAddressRest            = "BARITO_PRODUCER_REST"     // TODO: rename to better name
-	EnvProducerMaxRetry               = "BARITO_PRODUCER_MAX_RETRY"
-	EnvProducerMaxTPS                 = "BARITO_PRODUCER_MAX_TPS"
-	EnvProducerRateLimitResetInterval = "BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL"
+	EnvServeRestApi                    = "BARITO_PRODUCER_REST_API" // TODO: rename to better name
+	EnvProducerAddressGrpc             = "BARITO_PRODUCER_GRPC"     // TODO: rename to better name
+	EnvProducerAddressRest             = "BARITO_PRODUCER_REST"     // TODO: rename to better name
+	EnvProducerMaxRetry                = "BARITO_PRODUCER_MAX_RETRY"
+	EnvProducerMaxTPS                  = "BARITO_PRODUCER_MAX_TPS"
+	EnvProducerRateLimitPort           = "BARITO_PRODUCER_RATE_LIMIT_PORT"
+	EnvProducerRateLimitMemberlistPort = "BARITO_PRODUCER_RATE_LIMIT_MEMBERLIST_PORT"
+	EnvProducerRateLimitMemberlistJoin = "BARITO_PRODUCER_RATE_LIMIT_MEMBERLIST_JOIN"
+	EnvProducerRateLimitResetInterval  = "BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL"
 
 	EnvConsulUrl               = "BARITO_CONSUL_URL"
 	EnvConsulKafkaName         = "BARITO_CONSUL_KAFKA_NAME"
@@ -56,12 +59,15 @@ var (
 	DefaultPushMetricUrl      = ""
 	DefaultPushMetricInterval = "30s"
 
-	DefaultServeRestApi                   = "true"
-	DefaultProducerAddressGrpc            = ":8082"
-	DefaultProducerAddressRest            = ":8080"
-	DefaultProducerMaxRetry               = 10
-	DefaultProducerMaxTPS                 = 100
-	DefaultProducerRateLimitResetInterval = 10
+	DefaultServeRestApi                    = "true"
+	DefaultProducerAddressGrpc             = ":8082"
+	DefaultProducerAddressRest             = ":8080"
+	DefaultProducerMaxRetry                = 10
+	DefaultProducerMaxTPS                  = 100
+	DefaultProducerRateLimitPort           = 10200
+	DefaultProducerRateLimitMemberlistPort = 10201
+	DefaultProducerRateLimitMemberlistJoin = "127.0.0.1"
+	DefaultProducerRateLimitResetInterval  = 10
 
 	DefaultNewTopicEventName            = "new_topic_events"
 	DefaultElasticsearchRetrierInterval = "30s"
@@ -93,9 +99,9 @@ func configKafkaBrokers() (brokers []string) {
 }
 
 func configElasticsearchUrls() (urls []string) {
-    urls = sliceEnvOrDefault(EnvElasticsearchUrls, ",", []string{})
+	urls = sliceEnvOrDefault(EnvElasticsearchUrls, ",", []string{})
 
-    if len(urls) > 0 {
+	if len(urls) > 0 {
 		return
 	}
 
@@ -166,6 +172,18 @@ func configProducerMaxRetry() (i int) {
 
 func configProducerMaxTPS() (i int) {
 	return intEnvOrDefault(EnvProducerMaxTPS, DefaultProducerMaxTPS)
+}
+
+func configProducerRateLimitPort() (i int) {
+	return intEnvOrDefault(EnvProducerRateLimitPort, DefaultProducerRateLimitPort)
+}
+
+func configProducerRateLimitMemberlistPort() (i int) {
+	return intEnvOrDefault(EnvProducerRateLimitMemberlistPort, DefaultProducerRateLimitMemberlistPort)
+}
+
+func configProducerRateLimitMemberlistJoin() (s string) {
+	return stringEnvOrDefault(EnvProducerRateLimitMemberlistJoin, DefaultProducerRateLimitMemberlistJoin)
 }
 
 func configProducerRateLimitResetInterval() (i int) {
