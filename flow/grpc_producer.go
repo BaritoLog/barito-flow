@@ -40,8 +40,8 @@ type producerService struct {
 	restAddr                string
 	rateLimitPort           int
 	rateLimitMemberlistPort int
+	rateLimitMemberlistJoin string
 	rateLimitResetInterval  int
-	rateLimitJoinAddress    string
 	topicSuffix             string
 	kafkaMaxRetry           int
 	kafkaRetryInterval      int
@@ -63,8 +63,8 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		restAddr:                params["restAddr"].(string),
 		rateLimitPort:           params["rateLimitPort"].(int),
 		rateLimitMemberlistPort: params["rateLimitMemberlistPort"].(int),
+		rateLimitMemberlistJoin: params["rateLimitMemberlistJoin"].(string),
 		rateLimitResetInterval:  params["rateLimitResetInterval"].(int),
-		rateLimitJoinAddress:    params["rateLimitJoinAddress"].(string),
 		topicSuffix:             params["topicSuffix"].(string),
 		kafkaMaxRetry:           params["kafkaMaxRetry"].(int),
 		kafkaRetryInterval:      params["kafkaRetryInterval"].(int),
@@ -161,7 +161,7 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	_, err = s.discoverer.Join([]string{s.rateLimitJoinAddress})
+	_, err = s.discoverer.Join([]string{s.rateLimitMemberlistJoin})
 	if err != nil {
 		err = errkit.Concat(ErrJoinMemberlist, err)
 		return
