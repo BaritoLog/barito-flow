@@ -10,7 +10,9 @@ import (
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
+	"github.com/cenkalti/backoff"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/hashicorp/go-sockaddr"
 	"github.com/hashicorp/memberlist"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vwidjaya/barito-proto/producer"
@@ -151,6 +153,12 @@ func (s *producerService) Start() (err error) {
 	gubernatorRateLimiter := newGubernatorRateLimiter(fmt.Sprintf("0.0.0.0:%d", s.rateLimitPort))
 	memberlistConfig := memberlist.DefaultLANConfig()
 	memberlistConfig.BindPort = s.rateLimitMemberlistPort
+	memberlistConfig.AdvertisePort = s.rateLimitMemberlistPort
+
+	if ip, _ := sockaddr.GetPublicIP(); ip != "" {
+		memberlistConfig.AdvertiseAddr = ip
+	}
+
 	memberlistConfig.Events = &gubernatorMemberlistEventHandler{
 		GRPCPort:     uint16(s.rateLimitPort),
 		SetPeersFunc: gubernatorRateLimiter.SetPeers,
@@ -161,11 +169,12 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	_, err = s.discoverer.Join([]string{s.rateLimitMemberlistJoin})
-	if err != nil {
-		err = errkit.Concat(ErrJoinMemberlist, err)
-		return
-	}
+	go func() {
+		backoff.Retry(func() error {
+			_, joinErr := s.discoverer.Join([]string{s.rateLimitMemberlistJoin})
+			return joinErr
+		}, backoff.NewExponentialBackOff())
+	}()
 
 	s.limiter = gubernatorRateLimiter
 	s.limiter.Start()

@@ -10,6 +10,7 @@ require (
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/bouk/monkey v1.0.1 // indirect
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
@@ -20,6 +21,7 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.9.5
 	github.com/hashicorp/consul/api v1.1.0
+	github.com/hashicorp/go-sockaddr v1.0.0
 	github.com/hashicorp/memberlist v0.1.3
 	github.com/mailgun/gubernator v0.8.0
 	github.com/mailru/easyjson v0.0.0-20190620125010-da37f6c1e481 // indirect
