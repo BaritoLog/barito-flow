@@ -133,7 +133,7 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 
 	if !exists {
 		log.Warnf("ES index '%s' is not exist", indexName)
-		index := elasticCreateIndex(indexPrefix)
+		index := elasticCreateIndex()
 		_, err = e.client.CreateIndex(indexName).
 			BodyJson(index).
 			Do(ctx)
@@ -174,11 +174,9 @@ func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentTyp
 	return
 }
 
-func elasticCreateIndex(indexPrefix string) *es.Index {
+func elasticCreateIndex() *es.Index {
 
 	return &es.Index{
-		Template: fmt.Sprintf("%s-*", indexPrefix),
-		Version:  60001,
 		Settings: map[string]interface{}{
 			"index.refresh_interval": "5s",
 		},
