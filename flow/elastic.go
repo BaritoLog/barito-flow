@@ -3,6 +3,7 @@ package flow
 import (
 	"context"
 	"fmt"
+
 	"github.com/BaritoLog/barito-flow/prome"
 
 	"time"
@@ -47,13 +48,14 @@ func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printT
 	}
 }
 
-func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string) (client elasticClient, err error) {
+func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, elasticUsername string, elasticPassword string) (client elasticClient, err error) {
 
 	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
 		elastic.SetRetrier(retrierFunc),
+		elastic.SetBasicAuth(elasticUsername, elasticPassword),
 	)
 
 	beforeBulkFunc, afterBulkFunc := getCommitCallback()

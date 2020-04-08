@@ -125,13 +125,15 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 	defer ts.Close()
 
 	elasticUrls := []string{ts.URL}
+	elasticUsername := ""
+	elasticPassword := ""
 	service := &baritoConsumerService{
 		elasticUrls: elasticUrls,
 	}
 
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
 	service.esClient = &elastic
 
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
@@ -151,9 +153,12 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 		elasticUrls: elasticUrls,
 	}
 
+	elasticUsername := ""
+	elasticPassword := ""
+
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, elasticUrls)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
 	service.esClient = &elastic
 
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
@@ -298,5 +303,7 @@ func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
 		"newTopicEventName":      "",
 		"elasticRetrierInterval": "",
 		"esConfig":               NewEsConfig("SingleInsert", 1, time.Duration(1000), false),
+		"elasticUsername":        "",
+		"elasticPassword":        "",
 	}
 }
