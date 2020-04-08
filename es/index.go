@@ -2,6 +2,8 @@
 package es
 
 type Index struct {
+	Template string                 `json:"template,omitempty"`
+	Version  int                    `json:"version,omitempty"`
 	Settings map[string]interface{} `json:"settings,omitempty"`
 	Doc      *Mappings              `json:"_doc,omitempty"`
 }
