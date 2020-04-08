@@ -58,6 +58,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		elastic.SetRetrier(retrierFunc),
 		elastic.SetBasicAuth(elasticUsername, elasticPassword),
 	)
+	// go printVersion(c, urls[0])
 
 	beforeBulkFunc, afterBulkFunc := getCommitCallback()
 
@@ -85,6 +86,13 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 	}
 
 	return
+}
+
+func printVersion(c *elastic.Client, url string) {
+	version, _ := c.ElasticsearchVersion(url)
+	fmt.Println("==================================")
+	fmt.Println("ES VERSION: ", version)
+	fmt.Println("==================================")	
 }
 
 func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []elastic.BulkableRequest, *elastic.BulkResponse, error)) {
@@ -175,8 +183,10 @@ func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentTyp
 	return
 }
 
-func elasticCreateIndex() *es.Index {
+func elasticCreateIndex(indexPrefix string) *es.Index {
 	return &es.Index{
+		Template: fmt.Sprintf("%s-*", indexPrefix),
+		Version:  60001,
 		Settings: map[string]interface{}{
 			"index.refresh_interval": "5s",
 		},
