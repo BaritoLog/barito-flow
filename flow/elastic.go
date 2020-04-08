@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/es"
+	"github.com/BaritoLog/barito-flow/es7"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
@@ -133,7 +134,7 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 
 	if !exists {
 		log.Warnf("ES index '%s' is not exist", indexName)
-		index := elasticCreateIndex()
+		index := elasticSevenCreateIndex()
 		_, err = e.client.CreateIndex(indexName).
 			BodyJson(index).
 			Do(ctx)
@@ -175,7 +176,6 @@ func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentTyp
 }
 
 func elasticCreateIndex() *es.Index {
-
 	return &es.Index{
 		Settings: map[string]interface{}{
 			"index.refresh_interval": "5s",
@@ -205,4 +205,32 @@ func elasticCreateIndex() *es.Index {
 			}).
 			AddPropertyWithType("@timestamp", "date"),
 	}
+}
+
+func elasticSevenCreateIndex() *es7.Index {
+	return es7.NewIndex().
+		AddSetting("index.refresh_interval", "5s").
+		AddDynamicTemplate("message_field", es7.MatchConditions{
+			PathMatch:        "@message",
+			MatchMappingType: "string",
+			Mapping: es7.MatchMapping{
+				Type:  "text",
+				Norms: false,
+			},
+		}).
+		AddDynamicTemplate("string_fields", es7.MatchConditions{
+			Match:            "*",
+			MatchMappingType: "string",
+			Mapping: es7.MatchMapping{
+				Type:  "text",
+				Norms: false,
+				Fields: map[string]es7.Field{
+					"keyword": es7.Field{
+						Type:        "keyword",
+						IgnoreAbove: 256,
+					},
+				},
+			},
+		}).
+		AddPropertyWithType("@timestamp", "date")
 }
