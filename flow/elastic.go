@@ -218,29 +218,33 @@ func elasticCreateIndex(indexPrefix string) *es.Index {
 }
 
 func elasticSevenCreateIndex() *es7.Index {
-	return es7.NewIndex().
-		AddSetting("index.refresh_interval", "5s").
-		AddDynamicTemplate("message_field", es7.MatchConditions{
-			PathMatch:        "@message",
-			MatchMappingType: "string",
-			Mapping: es7.MatchMapping{
-				Type:  "text",
-				Norms: false,
-			},
-		}).
-		AddDynamicTemplate("string_fields", es7.MatchConditions{
-			Match:            "*",
-			MatchMappingType: "string",
-			Mapping: es7.MatchMapping{
-				Type:  "text",
-				Norms: false,
-				Fields: map[string]es7.Field{
-					"keyword": es7.Field{
-						Type:        "keyword",
-						IgnoreAbove: 256,
+	return &es7.Index{
+		Settings: map[string]interface{}{
+			"index.refresh_interval": "5s",
+		},
+		Mappings: es7.NewMappings().
+			AddDynamicTemplate("message_field", es7.MatchConditions{
+				PathMatch:        "@message",
+				MatchMappingType: "string",
+				Mapping: es7.MatchMapping{
+					Type:  "text",
+					Norms: false,
+				},
+			}).
+			AddDynamicTemplate("string_fields", es7.MatchConditions{
+				Match:            "*",
+				MatchMappingType: "string",
+				Mapping: es7.MatchMapping{
+					Type:  "text",
+					Norms: false,
+					Fields: map[string]es7.Field{
+						"keyword": es7.Field{
+							Type:        "keyword",
+							IgnoreAbove: 256,
+						},
 					},
 				},
-			},
-		}).
-		AddPropertyWithType("@timestamp", "date")
+			}).
+			AddPropertyWithType("@timestamp", "date"),
+	}
 }
