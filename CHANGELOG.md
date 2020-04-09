@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+## [0.13.3]
+### Changed
+- Make barito-flow-consumer compatible with both ES 6.x and ES 7.x
+- Add basic auth for xpack-security feature
+- Remove index settings when creating new index
+- Set document type to `_doc`
 
 ## [0.13.2]
 ### Changed
