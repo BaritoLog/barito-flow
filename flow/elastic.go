@@ -88,13 +88,6 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 	return
 }
 
-func printVersion(c *elastic.Client, url string) {
-	version, _ := c.ElasticsearchVersion(url)
-	fmt.Println("==================================")
-	fmt.Println("ES VERSION: ", version)
-	fmt.Println("==================================")	
-}
-
 func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []elastic.BulkableRequest, *elastic.BulkResponse, error)) {
 	var start time.Time
 	beforeCommitCallback := func(executionId int64, requests []elastic.BulkableRequest) {
