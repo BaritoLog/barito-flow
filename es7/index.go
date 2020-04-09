@@ -3,7 +3,7 @@ package es7
 
 type Index struct {
 	Settings map[string]interface{} `json:"settings,omitempty"`
-	Mappings      *Mappings              `json:"mappings,omitempty"`
+	Mappings *Mappings              `json:"mappings,omitempty"`
 }
 
 // NewESIndex

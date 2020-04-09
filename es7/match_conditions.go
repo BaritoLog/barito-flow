@@ -3,7 +3,7 @@ package es7
 // ESDynamicTemplate https://www.elastic.co/guide/en/elasticsearch/reference/current/dynamic-templates.html
 type MatchConditions struct {
   Match            string       `json:"match,omitempty"`
-  PathMatch        string       `json:"patch_match,omitempty"`
+  PathMatch        string       `json:"path_match,omitempty"`
   MatchMappingType string       `json:"match_mapping_type,omitempty"`
   Mapping          MatchMapping `json:"mapping,omitempty"`
 }
