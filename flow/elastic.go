@@ -128,7 +128,6 @@ func printThroughputPerSecond() {
 func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
-	documentType := timber.GetContext().GetEsDocumentType()
 	appSecret := timber.GetContext().GetAppSecret()
 
 	exists, _ := e.client.IndexExists(indexName).Do(ctx)
@@ -145,7 +144,7 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 
 	document := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 
-	err = e.onStoreFunc(ctx, indexName, documentType, document)
+	err = e.onStoreFunc(ctx, indexName, document)
 	counter++
 	instruESStore(appSecret, err)
 
@@ -156,19 +155,17 @@ func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
 	e.onFailureFunc = f
 }
 
-func (e *elasticClient) bulkInsert(_ context.Context, indexName, documentType, document string) (err error) {
+func (e *elasticClient) bulkInsert(_ context.Context, indexName, document string) (err error) {
 	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
-		Type(documentType).
 		Doc(document)
 	e.bulkProcessor.Add(r)
 	return
 }
 
-func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentType, document string) (err error) {
+func (e *elasticClient) singleInsert(ctx context.Context, indexName, document string) (err error) {
 	_, err = e.client.Index().
 		Index(indexName).
-		Type(documentType).
 		BodyString(document).
 		Do(ctx)
 	return
