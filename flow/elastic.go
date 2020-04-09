@@ -135,9 +135,7 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 
 	if !exists {
 		log.Warnf("ES index '%s' is not exist", indexName)
-		index := elasticSevenCreateIndex()
 		_, err = e.client.CreateIndex(indexName).
-			BodyJson(index).
 			Do(ctx)
 		instruESCreateIndex(err)
 		if err != nil {
@@ -174,70 +172,4 @@ func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentTyp
 		BodyString(document).
 		Do(ctx)
 	return
-}
-
-func elasticCreateIndex(indexPrefix string) *es.Index {
-	return &es.Index{
-		Template: fmt.Sprintf("%s-*", indexPrefix),
-		Version:  60001,
-		Settings: map[string]interface{}{
-			"index.refresh_interval": "5s",
-		},
-		Doc: es.NewMappings().
-			AddDynamicTemplate("message_field", es.MatchConditions{
-				PathMatch:        "@message",
-				MatchMappingType: "string",
-				Mapping: es.MatchMapping{
-					Type:  "text",
-					Norms: false,
-				},
-			}).
-			AddDynamicTemplate("string_fields", es.MatchConditions{
-				Match:            "*",
-				MatchMappingType: "string",
-				Mapping: es.MatchMapping{
-					Type:  "text",
-					Norms: false,
-					Fields: map[string]es.Field{
-						"keyword": es.Field{
-							Type:        "keyword",
-							IgnoreAbove: 256,
-						},
-					},
-				},
-			}).
-			AddPropertyWithType("@timestamp", "date"),
-	}
-}
-
-func elasticSevenCreateIndex() *es7.Index {
-	return &es7.Index{
-		Settings: map[string]interface{}{
-			"index.refresh_interval": "5s",
-		},
-		Mappings: es7.NewMappings().
-			AddDynamicTemplate("message_field", es7.MatchConditions{
-				PathMatch:        "@message",
-				MatchMappingType: "string",
-				Mapping: es7.MatchMapping{
-					Type:  "text",
-					Norms: false,
-				},
-			}).
-			AddDynamicTemplate("string_fields", es7.MatchConditions{
-				Match:            "*",
-				MatchMappingType: "string",
-				Mapping: es7.MatchMapping{
-					Type:  "text",
-					Norms: false,
-					Fields: map[string]es7.Field{
-						"keyword": es7.Field{
-							Type:        "keyword",
-							IgnoreAbove: 256,
-						},
-					},
-				},
-			}).
-			AddPropertyWithType("@timestamp", "date"),
-	}
 }
