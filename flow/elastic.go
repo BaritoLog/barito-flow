@@ -26,7 +26,7 @@ type elasticClient struct {
 	client        *elastic.Client
 	bulkProcessor *elastic.BulkProcessor
 	onFailureFunc func(*pb.Timber)
-	onStoreFunc   func(ctx context.Context, indexName, documentType, document string) (err error)
+	onStoreFunc   func(ctx context.Context, indexName, document string) (err error)
 	jspbMarshaler *jsonpb.Marshaler
 }
 
@@ -156,6 +156,7 @@ func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
 func (e *elasticClient) bulkInsert(_ context.Context, indexName, document string) (err error) {
 	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
+		Type("_doc").
 		Doc(document)
 	e.bulkProcessor.Add(r)
 	return
@@ -164,6 +165,7 @@ func (e *elasticClient) bulkInsert(_ context.Context, indexName, document string
 func (e *elasticClient) singleInsert(ctx context.Context, indexName, document string) (err error) {
 	_, err = e.client.Index().
 		Index(indexName).
+		Type("_doc").
 		BodyString(document).
 		Do(ctx)
 	return
