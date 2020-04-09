@@ -8,8 +8,6 @@ import (
 
 	"time"
 
-	"github.com/BaritoLog/barito-flow/es"
-	"github.com/BaritoLog/barito-flow/es7"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
