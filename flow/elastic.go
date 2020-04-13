@@ -16,6 +16,10 @@ import (
 
 var counter int = 0
 
+const (
+	DEFAULT_ELASTIC_DOCUMENT_TYPE = "_doc"
+)
+
 type Elastic interface {
 	OnFailure(f func(*pb.Timber))
 	Store(ctx context.Context, timber pb.Timber) error
@@ -26,7 +30,7 @@ type elasticClient struct {
 	client        *elastic.Client
 	bulkProcessor *elastic.BulkProcessor
 	onFailureFunc func(*pb.Timber)
-	onStoreFunc   func(ctx context.Context, indexName, document string) (err error)
+	onStoreFunc   func(ctx context.Context, indexName, documentType, document string) (err error)
 	jspbMarshaler *jsonpb.Marshaler
 }
 
@@ -127,7 +131,7 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 	appSecret := timber.GetContext().GetAppSecret()
-
+	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
 	exists, _ := e.client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
@@ -142,7 +146,7 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 
 	document := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 
-	err = e.onStoreFunc(ctx, indexName, document)
+	err = e.onStoreFunc(ctx, indexName, documentType, document)
 	counter++
 	instruESStore(appSecret, err)
 
@@ -153,7 +157,7 @@ func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
 	e.onFailureFunc = f
 }
 
-func (e *elasticClient) bulkInsert(_ context.Context, indexName, document string) (err error) {
+func (e *elasticClient) bulkInsert(_ context.Context, indexName, documentType, document string) (err error) {
 	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
 		Type("_doc").
@@ -162,7 +166,7 @@ func (e *elasticClient) bulkInsert(_ context.Context, indexName, document string
 	return
 }
 
-func (e *elasticClient) singleInsert(ctx context.Context, indexName, document string) (err error) {
+func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentType, document string) (err error) {
 	_, err = e.client.Index().
 		Index(indexName).
 		Type("_doc").

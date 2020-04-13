@@ -15,7 +15,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	pb "github.com/vwidjaya/barito-proto/producer"
 )
-var (
+
+const (
 	BARITO_DEFAULT_USERNAME = ""
 	BARITO_DEFAULT_PASSWORD = ""
 )
