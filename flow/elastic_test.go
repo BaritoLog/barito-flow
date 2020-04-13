@@ -15,6 +15,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	pb "github.com/vwidjaya/barito-proto/producer"
 )
+var (
+	BARITO_DEFAULT_USERNAME = ""
+	BARITO_DEFAULT_PASSWORD = ""
+)
 
 func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer instru.Flush()
@@ -30,7 +34,7 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 
 	retrier := mockElasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
-	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, "", "")
+	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD)
 	FatalIfError(t, err)
 
 	err = client.Store(context.Background(), timber)
