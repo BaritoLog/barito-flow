@@ -130,8 +130,8 @@ func printThroughputPerSecond() {
 func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
-	appSecret := timber.GetContext().GetAppSecret()
 	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
+	appSecret := timber.GetContext().GetAppSecret()
 	exists, _ := e.client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
@@ -160,7 +160,7 @@ func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
 func (e *elasticClient) bulkInsert(_ context.Context, indexName, documentType, document string) (err error) {
 	r := elastic.NewBulkIndexRequest().
 		Index(indexName).
-		Type("_doc").
+		Type(documentType).
 		Doc(document)
 	e.bulkProcessor.Add(r)
 	return
@@ -169,7 +169,7 @@ func (e *elasticClient) bulkInsert(_ context.Context, indexName, documentType, d
 func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentType, document string) (err error) {
 	_, err = e.client.Index().
 		Index(indexName).
-		Type("_doc").
+		Type(documentType).
 		BodyString(document).
 		Do(ctx)
 	return
