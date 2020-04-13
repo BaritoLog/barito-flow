@@ -60,7 +60,6 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		elastic.SetRetrier(retrierFunc),
 		elastic.SetBasicAuth(elasticUsername, elasticPassword),
 	)
-	// go printVersion(c, urls[0])
 
 	beforeBulkFunc, afterBulkFunc := getCommitCallback()
 

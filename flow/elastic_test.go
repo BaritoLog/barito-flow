@@ -57,7 +57,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 
 	retrier := mockElasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
-	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, "", "")
+	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD)
 	FatalIfError(t, err)
 
 	appSecret := timber.GetContext().GetAppSecret()
@@ -82,7 +82,7 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 
 	retrier := mockElasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
-	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, "", "")
+	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD)
 	FatalIfError(t, err)
 
 	appSecret := timber.GetContext().GetAppSecret()
@@ -142,7 +142,7 @@ func TestElasticStore_ExportMetrics(t *testing.T) {
 
 	retrier := mockElasticRetrier()
 	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
-	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, "", "")
+	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD)
 	FatalIfError(t, err)
 
 	err = client.Store(context.Background(), timber)
