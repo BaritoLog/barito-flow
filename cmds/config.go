@@ -39,6 +39,9 @@ const (
 	EnvConsumerRebalancingStrategy          = "BARITO_CONSUMER_REBALANCING_STRATEGY"
 
 	EnvPrintTPS = "BARITO_PRINT_TPS"
+
+	EnvElasticUsername = "ELASTIC_USERNAME"
+	EnvElasticPassword = "ELASTIC_PASSWORD"
 )
 
 var (
@@ -71,6 +74,9 @@ var (
 	DefaultEsFlushIntervalMs            = 500
 
 	DefaultPrintTPS = "false"
+
+	DefaultElasticUsername = ""
+	DefaultElasticPassword = ""
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -93,9 +99,9 @@ func configKafkaBrokers() (brokers []string) {
 }
 
 func configElasticsearchUrls() (urls []string) {
-    urls = sliceEnvOrDefault(EnvElasticsearchUrls, ",", []string{})
+	urls = sliceEnvOrDefault(EnvElasticsearchUrls, ",", []string{})
 
-    if len(urls) > 0 {
+	if len(urls) > 0 {
 		return
 	}
 
@@ -199,6 +205,14 @@ func configConsumerRebalancingStrategy() string {
 
 func configPrintTPS() bool {
 	return (stringEnvOrDefault(EnvPrintTPS, DefaultPrintTPS) == "true")
+}
+
+func configElasticUsername() (s string) {
+	return stringEnvOrDefault(EnvElasticUsername, DefaultElasticUsername)
+}
+
+func configElasticPassword() (s string) {
+	return stringEnvOrDefault(EnvElasticPassword, DefaultElasticPassword)
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {

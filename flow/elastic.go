@@ -3,11 +3,11 @@ package flow
 import (
 	"context"
 	"fmt"
+
 	"github.com/BaritoLog/barito-flow/prome"
 
 	"time"
 
-	"github.com/BaritoLog/barito-flow/es"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
@@ -15,6 +15,10 @@ import (
 )
 
 var counter int = 0
+
+const (
+	DEFAULT_ELASTIC_DOCUMENT_TYPE = "_doc"
+)
 
 type Elastic interface {
 	OnFailure(f func(*pb.Timber))
@@ -47,13 +51,14 @@ func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printT
 	}
 }
 
-func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string) (client elasticClient, err error) {
+func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, elasticUsername string, elasticPassword string) (client elasticClient, err error) {
 
 	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
 		elastic.SetRetrier(retrierFunc),
+		elastic.SetBasicAuth(elasticUsername, elasticPassword),
 	)
 
 	beforeBulkFunc, afterBulkFunc := getCommitCallback()
@@ -124,16 +129,13 @@ func printThroughputPerSecond() {
 func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
-	documentType := timber.GetContext().GetEsDocumentType()
+	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
 	appSecret := timber.GetContext().GetAppSecret()
-
 	exists, _ := e.client.IndexExists(indexName).Do(ctx)
 
 	if !exists {
 		log.Warnf("ES index '%s' is not exist", indexName)
-		index := elasticCreateIndex(indexPrefix)
 		_, err = e.client.CreateIndex(indexName).
-			BodyJson(index).
 			Do(ctx)
 		instruESCreateIndex(err)
 		if err != nil {
@@ -170,39 +172,4 @@ func (e *elasticClient) singleInsert(ctx context.Context, indexName, documentTyp
 		BodyString(document).
 		Do(ctx)
 	return
-}
-
-func elasticCreateIndex(indexPrefix string) *es.Index {
-
-	return &es.Index{
-		Template: fmt.Sprintf("%s-*", indexPrefix),
-		Version:  60001,
-		Settings: map[string]interface{}{
-			"index.refresh_interval": "5s",
-		},
-		Doc: es.NewMappings().
-			AddDynamicTemplate("message_field", es.MatchConditions{
-				PathMatch:        "@message",
-				MatchMappingType: "string",
-				Mapping: es.MatchMapping{
-					Type:  "text",
-					Norms: false,
-				},
-			}).
-			AddDynamicTemplate("string_fields", es.MatchConditions{
-				Match:            "*",
-				MatchMappingType: "string",
-				Mapping: es.MatchMapping{
-					Type:  "text",
-					Norms: false,
-					Fields: map[string]es.Field{
-						"keyword": es.Field{
-							Type:        "keyword",
-							IgnoreAbove: 256,
-						},
-					},
-				},
-			}).
-			AddPropertyWithType("@timestamp", "date"),
-	}
 }

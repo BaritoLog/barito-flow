@@ -55,6 +55,9 @@ type baritoConsumerService struct {
 	lastNewTopic           string
 	isHalt                 bool
 	elasticRetrierInterval string
+
+	elasticUsername string
+	elasticPassword string
 }
 
 func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerService {
@@ -68,11 +71,13 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		newTopicEventName:      params["newTopicEventName"].(string),
 		workerMap:              make(map[string]ConsumerWorker),
 		elasticRetrierInterval: params["elasticRetrierInterval"].(string),
+		elasticUsername:        params["elasticUsername"].(string),
+		elasticPassword:        params["elasticPassword"].(string),
 	}
 
 	retrier := s.elasticRetrier()
 	esConfig := params["esConfig"].(esConfig)
-	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls)
+	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword)
 	s.esClient = &elastic
 	if err != nil {
 		s.logError(errkit.Concat(ErrElasticsearchClient, err))

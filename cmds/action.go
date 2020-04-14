@@ -2,8 +2,9 @@ package cmds
 
 import (
 	"fmt"
-	"github.com/BaritoLog/barito-flow/prome"
 	"time"
+
+	"github.com/BaritoLog/barito-flow/prome"
 
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
@@ -35,6 +36,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	esBulkSize := configEsBulkSize()
 	esFlushIntervalMs := configEsFlushIntervalMs()
 	printTPS := configPrintTPS()
+	elasticUsername := configElasticUsername()
+	elasticPassword := configElasticPassword()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_10_2_1 // TODO: get version from env
@@ -63,6 +66,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"newTopicEventName":      newTopicEventName,
 		"elasticRetrierInterval": elasticRetrierInterval,
 		"esConfig":               esConfig,
+		"elasticUsername":        elasticUsername,
+		"elasticPassword":        elasticPassword,
 	}
 
 	service := flow.NewBaritoConsumerService(consumerParams)
