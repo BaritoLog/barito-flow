@@ -209,6 +209,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
 	err = s.handleProduce(timber, topic)
 	if err != nil {
+		log.Warnf("%s: Unable to handle produce: %s", topic, err)
 		return
 	}
 
@@ -234,6 +235,7 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 		err = s.handleProduce(timber, topic)
 		if err != nil {
+			log.Warnf("%s: Unable to handle produce: %s", topic, err)
 			return
 		}
 	}
