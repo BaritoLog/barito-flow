@@ -51,7 +51,7 @@ func (f *dummyKafkaFactory) Expect_MakeClusterConsumer_AlwaysSuccess(ctrl *gomoc
 		consumer.EXPECT().Messages().AnyTimes()
 		consumer.EXPECT().Notifications().AnyTimes()
 		consumer.EXPECT().Errors().AnyTimes()
-		consumer.EXPECT().Close()
+		consumer.EXPECT().Close().AnyTimes()
 		return consumer, nil
 	}
 }
@@ -63,7 +63,7 @@ func (f *dummyKafkaFactory) Expect_MakeClusterConsumer_ConsumerSpawnWorkerErrorC
 			consumer.EXPECT().Messages().AnyTimes()
 			consumer.EXPECT().Notifications().AnyTimes()
 			consumer.EXPECT().Errors().AnyTimes()
-			consumer.EXPECT().Close()
+			consumer.EXPECT().Close().AnyTimes()
 			return consumer, nil
 		}
 
@@ -80,8 +80,8 @@ func (f *dummyKafkaFactory) Expect_MakeKafkaAdmin_AlwaysError(errMsg string) {
 func (f *dummyKafkaFactory) Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl *gomock.Controller, topics []string) {
 	f.MakeKafkaAdminFunc = func() (KafkaAdmin, error) {
 		admin := mock.NewMockKafkaAdmin(ctrl)
-		admin.EXPECT().Topics().Return(topics)
-		admin.EXPECT().Close()
+		admin.EXPECT().Topics().Return(topics).AnyTimes()
+		admin.EXPECT().Close().AnyTimes()
 		return admin, nil
 	}
 }

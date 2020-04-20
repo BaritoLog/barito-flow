@@ -73,6 +73,7 @@ func (s *producerService) initProducer() (err error) {
 				log.Infof("Retry kafka sync producer successful")
 			}
 		} else {
+			prome.IncreaseProducerKafkaClientFailed()
 			if (s.kafkaMaxRetry == 0) || (retry < s.kafkaMaxRetry) {
 				log.Warnf("Cannot connect to kafka: %s, retrying in %d seconds", err, s.kafkaRetryInterval)
 				time.Sleep(time.Duration(s.kafkaRetryInterval) * time.Second)
@@ -202,7 +203,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
 	if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(topic)
+		prome.IncreaseProducerTPSExceededCounter(topic, 1)
 		return
 	}
 
@@ -222,9 +223,10 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 	topic := timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
 
 	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
-	if s.limiter.IsHitLimit(topic, len(timberCollection.GetItems()), maxTokenIfNotExist) {
+	lengthMessages := len(timberCollection.GetItems())
+	if s.limiter.IsHitLimit(topic, lengthMessages, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(topic)
+		prome.IncreaseProducerTPSExceededCounter(topic, lengthMessages)
 		return
 	}
 
@@ -234,6 +236,7 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 		err = s.handleProduce(timber, topic)
 		if err != nil {
+			log.Infof("Failed send logs to kafka: %s", err)
 			return
 		}
 	}

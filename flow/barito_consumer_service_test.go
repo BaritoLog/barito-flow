@@ -1,13 +1,13 @@
 package flow
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/BaritoLog/barito-flow/prome"
 
 	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
@@ -21,10 +21,10 @@ import (
 
 func init() {
 	log.SetLevel(log.ErrorLevel)
-	prome.InitConsumerInstrumentation()
 }
 
 func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
+	resetPrometheusMetrics()
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
 
@@ -76,6 +76,52 @@ func TestBaritoConsumerService(t *testing.T) {
 	worker, ok := workerMap["abc_logs"]
 	FatalIf(t, !ok, "worker of topic abc_logs is missing")
 	FatalIf(t, !worker.IsStart(), "worker of topic abc_logs is not starting")
+}
+
+func TestBaritoConsumerService_OnElasticRetry(t *testing.T) {
+	resetPrometheusMetrics()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	esHandler := &ELasticTestHandler{}
+	ts := httptest.NewServer(esHandler)
+	defer ts.Close()
+	esHandler.CustomHandler = func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "HEAD" { // check if index exist
+			w.WriteHeader(200)
+			_, _ = w.Write([]byte(`{}`))
+			go func() {
+				ts.Close()
+			}()
+		}
+	}
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
+
+	consumerParams := SampleConsumerParams(factory)
+	consumerParams["elasticRetrierInterval"] = "1ms"
+	consumerParams["elasticRetrierMaxRetry"] = 5
+	consumerParams["elasticUrls"] = []string{ts.URL}
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
+
+	err := service.Start()
+	FatalIfError(t, err)
+	defer service.Close()
+	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
+
+	service.onStoreTimber(&sarama.ConsumerMessage{
+		Value: timberBytes,
+	})
+	FatalIf(t, service.lastError == nil, "Should return error because ES is stopped")
+
+	expected := `
+		# HELP barito_consumer_elasticsearch_client_failed Number of elasticsearch client failed
+		# TYPE barito_consumer_elasticsearch_client_failed counter
+		barito_consumer_elasticsearch_client_failed{phase="retry"} 5
+	`
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_consumer_elasticsearch_client_failed"))
 }
 
 func TestBaritoConsumerService_SpawnWorkerError(t *testing.T) {
@@ -301,7 +347,8 @@ func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
 		"kafkaMaxRetry":          1,
 		"kafkaRetryInterval":     10,
 		"newTopicEventName":      "",
-		"elasticRetrierInterval": "",
+		"elasticRetrierInterval": "1s",
+		"elasticRetrierMaxRetry": 1,
 		"esConfig":               NewEsConfig("SingleInsert", 1, time.Duration(1000), false),
 		"elasticUsername":        "",
 		"elasticPassword":        "",
