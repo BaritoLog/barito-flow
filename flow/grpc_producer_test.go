@@ -160,6 +160,8 @@ func TestProducerService_Produce_OnSuccess(t *testing.T) {
 		topicSuffix: "_logs",
 		admin:       admin,
 		limiter:     limiter,
+		kafkaMaxRetry:          5,
+		kafkaRetryInterval:     10,
 	}
 
 	resp, err := srv.Produce(nil, pb.SampleTimberProto())

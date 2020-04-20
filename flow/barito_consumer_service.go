@@ -73,11 +73,9 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		newTopicEventName:      params["newTopicEventName"].(string),
 		workerMap:              make(map[string]ConsumerWorker),
 		elasticRetrierInterval: params["elasticRetrierInterval"].(string),
+		elasticRetrierMaxRetry: params["elasticRetrierMaxRetry"].(int),
 		elasticUsername:        params["elasticUsername"].(string),
 		elasticPassword:        params["elasticPassword"].(string),
-	}
-	if n, ok := params["elasticRetrierMaxRetry"]; ok {
-        s.elasticRetrierMaxRetry = n.(int)
 	}
 
 	retrier := s.elasticRetrier()

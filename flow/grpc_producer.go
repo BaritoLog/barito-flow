@@ -258,16 +258,6 @@ func (s *producerService) sendLogs(topic string, timber *pb.Timber) (err error) 
 }
 
 func (s *producerService) sendCreateTopicEvents(topic string) (err error) {
-	if !s.admin.Exist(s.newEventTopic) {
-		numPartitions := 1
-		replicationFactor:= 1
-		err = s.admin.CreateTopic(s.newEventTopic, int32(numPartitions), int16(replicationFactor))
-		if err != nil {
-			err = onCreateTopicErrorGrpc(err)
-			return
-		}
-	}
-
 	message := &sarama.ProducerMessage{
 		Topic: s.newEventTopic,
 		Value: sarama.ByteEncoder(topic),

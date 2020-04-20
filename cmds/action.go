@@ -32,6 +32,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	elasticRetrierInterval := configElasticsearchRetrierInterval()
+	elasticRetrierMaxRetry := configElasticsearchRetrierMaxRetry()
 	esIndexMethod := configEsIndexMethod()
 	esBulkSize := configEsBulkSize()
 	esFlushIntervalMs := configEsFlushIntervalMs()
@@ -65,6 +66,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"kafkaRetryInterval":     kafkaRetryInterval,
 		"newTopicEventName":      newTopicEventName,
 		"elasticRetrierInterval": elasticRetrierInterval,
+		"elasticRetrierMaxRetry": elasticRetrierMaxRetry,
 		"esConfig":               esConfig,
 		"elasticUsername":        elasticUsername,
 		"elasticPassword":        elasticPassword,

@@ -36,6 +36,7 @@ const (
 
 	EnvNewTopicEventName                    = "BARITO_NEW_TOPIC_EVENT"
 	EnvConsumerElasticsearchRetrierInterval = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_INTERVAL"
+	EnvConsumerElasticsearchRetrierMaxRetry = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_MAX_RETRY"
 	EnvConsumerRebalancingStrategy          = "BARITO_CONSUMER_REBALANCING_STRATEGY"
 
 	EnvPrintTPS = "BARITO_PRINT_TPS"
@@ -68,6 +69,7 @@ var (
 
 	DefaultNewTopicEventName            = "new_topic_events"
 	DefaultElasticsearchRetrierInterval = "30s"
+	DefaultElasticsearchRetrierMaxRetry = 5
 	DefaultConsumerRebalancingStrategy  = "RoundRobin"
 	DefaultEsIndexMethod                = "BulkProcessor"
 	DefaultEsBulkSize                   = 100
@@ -197,6 +199,10 @@ func configNewTopicEvent() string {
 
 func configElasticsearchRetrierInterval() string {
 	return stringEnvOrDefault(EnvConsumerElasticsearchRetrierInterval, DefaultElasticsearchRetrierInterval)
+}
+
+func configElasticsearchRetrierMaxRetry() int {
+	return intEnvOrDefault(EnvConsumerElasticsearchRetrierMaxRetry, DefaultElasticsearchRetrierMaxRetry)
 }
 
 func configConsumerRebalancingStrategy() string {
