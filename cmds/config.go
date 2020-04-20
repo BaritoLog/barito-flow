@@ -69,7 +69,7 @@ var (
 
 	DefaultNewTopicEventName            = "new_topic_events"
 	DefaultElasticsearchRetrierInterval = "30s"
-	DefaultElasticsearchRetrierMaxRetry = 5
+	DefaultElasticsearchRetrierMaxRetry = 10
 	DefaultConsumerRebalancingStrategy  = "RoundRobin"
 	DefaultEsIndexMethod                = "BulkProcessor"
 	DefaultEsBulkSize                   = 100
