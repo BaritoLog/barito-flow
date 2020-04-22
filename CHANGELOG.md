@@ -5,7 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.13.4]
 ### Changed
+- Add metrics when barito-flow failed connect to ES or Kafka
+- Adjust log message when barito-flow failed connect to ES or Kafka
+
 ## [0.13.3]
 ### Changed
 - Make barito-flow-consumer compatible with both ES 6.x and ES 7.x
