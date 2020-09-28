@@ -2,9 +2,11 @@ package prome
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/common/log"
 )
 
 const (
@@ -20,6 +22,19 @@ var producerKafkaMessageStoredTotal *prometheus.CounterVec
 var producerTPSExceededCounter *prometheus.CounterVec
 var producerSendToKafkaTimeSecond *prometheus.SummaryVec
 var producerKafkaClientFailed *prometheus.CounterVec
+
+var logStoredErrorMap map[string]string = map[string]string{
+	"the final mapping":           "multiple_type",
+	"to parse field":              "mapping_failed",
+	"mapping":                     "mapping_failed",
+	"mapper":                      "mapping_failed",
+	"Data too large":              "data_too_large",
+	"TransportService is closed":  "request_error_transport_service_closed",
+	"Node not connected":          "node_not_connected",
+	"primary shard is not active": "inactive_primary_shard",
+	"no such shard":               "no_such_shard",
+	"index read-only":             "index_read_only",
+}
 
 func InitConsumerInstrumentation() {
 	consumerLogStoredCounter = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -61,8 +76,22 @@ func InitProducerInstrumentation() {
 	}, []string{"topic"})
 }
 
-func IncreaseLogStoredCounter(index string, result string, status int, error string) {
-	consumerLogStoredCounter.WithLabelValues(index, result, strconv.Itoa(status), error).Inc()
+func IncreaseLogStoredCounter(index string, result string, status int, errorMessage string) {
+	errorType := ""
+	if errorMessage != "" {
+		errorType = "undefined_error"
+		for k, v := range logStoredErrorMap {
+			if strings.Contains(errorMessage, k) {
+				errorType = v
+				break
+			}
+		}
+
+		if errorType == "undefined_error" {
+			log.Errorf("Found undefined error when consumer fail: %s", errorMessage)
+		}
+	}
+	consumerLogStoredCounter.WithLabelValues(index, result, strconv.Itoa(status), errorType).Inc()
 }
 
 func IncreaseKafkaMessagesIncoming(topic string) {
@@ -81,8 +110,8 @@ func IncreaseKafkaMessagesStoredTotal(topic string) {
 	producerKafkaMessageStoredTotal.WithLabelValues(topic, "").Inc()
 }
 
-func IncreaseKafkaMessagesStoredTotalWithError(topic string, errorType string) {
-	producerKafkaMessageStoredTotal.WithLabelValues(topic, errorType).Inc()
+func IncreaseKafkaMessagesStoredTotalWithError(topic string, errorMessage string) {
+	producerKafkaMessageStoredTotal.WithLabelValues(topic, errorMessage).Inc()
 }
 
 func IncreaseProducerTPSExceededCounter(topic string, n int) {

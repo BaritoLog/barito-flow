@@ -153,7 +153,7 @@ func TestElasticStore_ExportMetrics(t *testing.T) {
 		# HELP barito_consumer_log_stored_total Number log stored to ES
 		# TYPE barito_consumer_log_stored_total counter
 		barito_consumer_log_stored_total{error="",index="index1",result="200",status=""} 2
-		barito_consumer_log_stored_total{error="reason",index="index2",result="400",status=""} 1
+		barito_consumer_log_stored_total{error="undefined_error",index="index2",result="400",status=""} 1
 	`
 	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_consumer_log_stored_total"))
 }
