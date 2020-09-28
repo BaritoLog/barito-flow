@@ -16,15 +16,16 @@ import (
 )
 
 const (
-	ErrConvertKafkaMessage   = errkit.Error("Convert KafkaMessage Failed")
-	ErrStore                 = errkit.Error("Store Failed")
-	ErrElasticsearchClient   = errkit.Error("Elasticsearch Client Failed")
-	ErrConsumerWorker        = errkit.Error("Consumer Worker Failed")
-	ErrMakeKafkaAdmin        = errkit.Error("Make kafka admin failed")
-	ErrMakeNewTopicWorker    = errkit.Error("Make new topic worker failed")
-	ErrSpawnWorkerOnNewTopic = errkit.Error("Spawn worker on new topic failed")
-	ErrSpawnWorker           = errkit.Error("Span worker failed")
-	ErrHaltWorker            = errkit.Error("Consumer Worker Halted")
+	ErrConvertKafkaMessage    = errkit.Error("Convert KafkaMessage Failed")
+	ErrKafkaRetryLimitReached = errkit.Error("Error connecting to kafka, retry limit reached")
+	ErrStore                  = errkit.Error("Store Failed")
+	ErrElasticsearchClient    = errkit.Error("Elasticsearch Client Failed")
+	ErrConsumerWorker         = errkit.Error("Consumer Worker Failed")
+	ErrMakeKafkaAdmin         = errkit.Error("Make kafka admin failed")
+	ErrMakeNewTopicWorker     = errkit.Error("Make new topic worker failed")
+	ErrSpawnWorkerOnNewTopic  = errkit.Error("Spawn worker on new topic failed")
+	ErrSpawnWorker            = errkit.Error("Span worker failed")
+	ErrHaltWorker             = errkit.Error("Consumer Worker Halted")
 
 	PrefixEventGroupID = "nte"
 )
