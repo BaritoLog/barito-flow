@@ -1,6 +1,7 @@
 package prome
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -22,6 +23,8 @@ var producerKafkaMessageStoredTotal *prometheus.CounterVec
 var producerTPSExceededCounter *prometheus.CounterVec
 var producerSendToKafkaTimeSecond *prometheus.SummaryVec
 var producerKafkaClientFailed *prometheus.CounterVec
+
+var indexDatePattern *regexp.Regexp = regexp.MustCompile(`-\d{4}\.\d{2}\.\d{2}$`)
 
 var logStoredErrorMap map[string]string = map[string]string{
 	"the final mapping":           "multiple_type",
@@ -91,7 +94,9 @@ func IncreaseLogStoredCounter(index string, result string, status int, errorMess
 			log.Errorf("Found undefined error when consumer fail: %s", errorMessage)
 		}
 	}
-	consumerLogStoredCounter.WithLabelValues(index, result, strconv.Itoa(status), errorType).Inc()
+
+	indexWithoutDate := indexDatePattern.ReplaceAllString(index, "")
+	consumerLogStoredCounter.WithLabelValues(indexWithoutDate, result, strconv.Itoa(status), errorType).Inc()
 }
 
 func IncreaseKafkaMessagesIncoming(topic string) {
