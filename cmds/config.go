@@ -20,6 +20,8 @@ const (
 	EnvEsBulkSize        = "BARITO_ELASTICSEARCH_BULK_SIZE"
 	EnvEsFlushIntervalMs = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
 
+	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
+
 	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
 
@@ -56,6 +58,8 @@ var (
 	DefaultKafkaRetryInterval = 10
 
 	DefaultElasticsearchUrls = []string{"http://localhost:9200"}
+
+	DefaultGrpcMaxRecvMsgSize = 20 * 1000 * 1000
 
 	DefaultPushMetricUrl      = ""
 	DefaultPushMetricInterval = "30s"
@@ -130,6 +134,10 @@ func configEsBulkSize() (i int) {
 
 func configEsFlushIntervalMs() (i int) {
 	return intEnvOrDefault(EnvEsFlushIntervalMs, DefaultEsFlushIntervalMs)
+}
+
+func configGrpcMaxRecvMsgSize() (i int) {
+	return intEnvOrDefault(EnvGrpcMaxRecvMsgSize, DefaultGrpcMaxRecvMsgSize)
 }
 
 func configConsulElasticsearchName() (s string) {
