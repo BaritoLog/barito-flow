@@ -59,6 +59,7 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
 		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
 		newEventTopic:          params["newEventTopic"].(string),
+		grpcMaxRecvMsgSize:     params["grpcMaxRecvMsgSize"].(int),
 	}
 }
 
