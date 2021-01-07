@@ -39,6 +39,7 @@ type producerService struct {
 	kafkaMaxRetry          int
 	kafkaRetryInterval     int
 	newEventTopic          string
+	grpcMaxRecvMsgSize     int
 
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
@@ -58,6 +59,7 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
 		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
 		newEventTopic:          params["newEventTopic"].(string),
+		grpcMaxRecvMsgSize:     params["grpcMaxRecvMsgSize"].(int),
 	}
 }
 
@@ -118,7 +120,7 @@ func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server, 
 		return
 	}
 
-	srv = grpc.NewServer()
+	srv = grpc.NewServer(grpc.MaxRecvMsgSize(s.grpcMaxRecvMsgSize))
 	pb.RegisterProducerServer(srv, s)
 
 	s.grpcServer = srv

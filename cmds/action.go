@@ -103,6 +103,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaMaxRetry := configKafkaMaxRetry()
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
+	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
 
 	// kafka producer config
 	config := sarama.NewConfig()
@@ -123,6 +124,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"kafkaMaxRetry":          kafkaMaxRetry,
 		"kafkaRetryInterval":     kafkaRetryInterval,
 		"newEventTopic":          newTopicEventName,
+		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
 	}
 
 	service := flow.NewProducerService(producerParams)

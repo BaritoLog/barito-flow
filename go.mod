@@ -8,6 +8,8 @@ require (
 	github.com/BaritoLog/instru v0.0.0-20190715232619-ef001fffe4f0
 	github.com/Shopify/sarama v1.19.0
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
+	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/bouk/monkey v1.0.1 // indirect
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
 	github.com/eapache/go-resiliency v1.2.0 // indirect
@@ -21,6 +23,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.9.5
 	github.com/hashicorp/consul/api v1.1.0
 	github.com/mailru/easyjson v0.0.0-20190620125010-da37f6c1e481 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/olivere/elastic v6.2.19+incompatible
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
