@@ -222,6 +222,7 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 		"kafkaMaxRetry":          2,
 		"kafkaRetryInterval":     1,
 		"newEventTopic":          "new_topic_events",
+		"grpcMaxRecvMsgSize":      20000000,
 	}
 
 	service := NewProducerService(producerParams)
@@ -249,6 +250,7 @@ func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 		"kafkaMaxRetry":          1,
 		"kafkaRetryInterval":     10,
 		"newEventTopic":          "new_topic_events",
+		"grpcMaxRecvMsgSize":      20000000,
 	}
 
 	service := NewProducerService(producerParams)
