@@ -31,6 +31,7 @@ const (
 	EnvProducerMaxRetry               = "BARITO_PRODUCER_MAX_RETRY"
 	EnvProducerMaxTPS                 = "BARITO_PRODUCER_MAX_TPS"
 	EnvProducerRateLimitResetInterval = "BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL"
+	EnvProducerIgnoreKafkaOptions     = "BARITO_PRODUCER_IGNORE_KAFKA_OPTIONS"
 
 	EnvConsulUrl               = "BARITO_CONSUL_URL"
 	EnvConsulKafkaName         = "BARITO_CONSUL_KAFKA_NAME"
@@ -70,6 +71,7 @@ var (
 	DefaultProducerMaxRetry               = 10
 	DefaultProducerMaxTPS                 = 100
 	DefaultProducerRateLimitResetInterval = 10
+	DefaultProducerIgnoreKafkaOptions     = "false"
 
 	DefaultNewTopicEventName            = "new_topic_events"
 	DefaultElasticsearchRetrierInterval = "30s"
@@ -186,6 +188,10 @@ func configProducerMaxTPS() (i int) {
 
 func configProducerRateLimitResetInterval() (i int) {
 	return intEnvOrDefault(EnvProducerRateLimitResetInterval, DefaultProducerRateLimitResetInterval)
+}
+
+func configProducerIgnoreKafkaOptions() bool {
+	return (stringEnvOrDefault(EnvProducerIgnoreKafkaOptions, DefaultProducerIgnoreKafkaOptions) == "true")
 }
 
 func configConsulKafkaName() (s string) {

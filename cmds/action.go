@@ -99,6 +99,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaBrokers := configKafkaBrokers()
 	maxRetry := configProducerMaxRetry()
 	rateLimitResetInterval := configProducerRateLimitResetInterval()
+	ignoreKafkaOptions := configProducerIgnoreKafkaOptions()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
 	kafkaRetryInterval := configKafkaRetryInterval()
@@ -125,6 +126,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"kafkaRetryInterval":     kafkaRetryInterval,
 		"newEventTopic":          newTopicEventName,
 		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
+		"ignoreKafkaOptions":     ignoreKafkaOptions,
 	}
 
 	service := flow.NewProducerService(producerParams)

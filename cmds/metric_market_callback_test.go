@@ -33,7 +33,7 @@ func TestMetricMarketCallback_ClientError(t *testing.T) {
 	callback := NewMetricMarketCallback("wrong-formatted-url")
 
 	err := callback.OnCallback(instru.DefaultInstrumentation)
-	FatalIfWrongError(t, err, `Post wrong-formatted-url: unsupported protocol scheme ""`)
+	FatalIfWrongError(t, err, `Post "wrong-formatted-url": unsupported protocol scheme ""`)
 }
 
 func TestMetricMarketCallback_ReturnNotOkStatus(t *testing.T) {

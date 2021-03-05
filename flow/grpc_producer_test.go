@@ -156,12 +156,12 @@ func TestProducerService_Produce_OnSuccess(t *testing.T) {
 	limiter := NewDummyRateLimiter()
 
 	srv := &producerService{
-		producer:    producer,
-		topicSuffix: "_logs",
-		admin:       admin,
-		limiter:     limiter,
-		kafkaMaxRetry:          5,
-		kafkaRetryInterval:     10,
+		producer:           producer,
+		topicSuffix:        "_logs",
+		admin:              admin,
+		limiter:            limiter,
+		kafkaMaxRetry:      5,
+		kafkaRetryInterval: 10,
 	}
 
 	resp, err := srv.Produce(nil, pb.SampleTimberProto())
@@ -174,6 +174,35 @@ func TestProducerService_Produce_OnSuccess(t *testing.T) {
 		barito_producer_kafka_message_stored_total{error_type="",topic="some_topic_logs"} 1
 	`
 	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_kafka_message_stored_total"))
+}
+
+func TestProducerService_Produce_IgnoreKafkaOptions(t *testing.T) {
+	resetPrometheusMetrics()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	admin := mock.NewMockKafkaAdmin(ctrl)
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), int32(-1), int16(-1)).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+
+	producer := mock.NewMockSyncProducer(ctrl)
+	producer.EXPECT().SendMessage(gomock.Any()).AnyTimes()
+
+	limiter := NewDummyRateLimiter()
+
+	srv := &producerService{
+		producer:           producer,
+		topicSuffix:        "_logs",
+		admin:              admin,
+		limiter:            limiter,
+		kafkaMaxRetry:      5,
+		kafkaRetryInterval: 10,
+		ignoreKafkaOptions: true,
+	}
+	srv.Produce(nil, pb.SampleTimberProto())
 }
 
 func TestProducerService_ProduceBatch_OnSuccess(t *testing.T) {
@@ -222,7 +251,8 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 		"kafkaMaxRetry":          2,
 		"kafkaRetryInterval":     1,
 		"newEventTopic":          "new_topic_events",
-		"grpcMaxRecvMsgSize":      20000000,
+		"grpcMaxRecvMsgSize":     20000000,
+		"ignoreKafkaOptions":     false,
 	}
 
 	service := NewProducerService(producerParams)
@@ -250,7 +280,8 @@ func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 		"kafkaMaxRetry":          1,
 		"kafkaRetryInterval":     10,
 		"newEventTopic":          "new_topic_events",
-		"grpcMaxRecvMsgSize":      20000000,
+		"grpcMaxRecvMsgSize":     20000000,
+		"ignoreKafkaOptions":     false,
 	}
 
 	service := NewProducerService(producerParams)
