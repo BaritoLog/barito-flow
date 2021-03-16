@@ -41,7 +41,8 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	elasticPassword := configElasticPassword()
 
 	config := sarama.NewConfig()
-	config.Version = sarama.V0_10_2_1 // TODO: get version from env
+	config.Consumer.Offsets.CommitInterval = time.Second
+	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 	if configConsumerRebalancingStrategy() == "RoundRobin" {
 		config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
 	} else if configConsumerRebalancingStrategy() == "Range" {
@@ -99,6 +100,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaBrokers := configKafkaBrokers()
 	maxRetry := configProducerMaxRetry()
 	rateLimitResetInterval := configProducerRateLimitResetInterval()
+	ignoreKafkaOptions := configProducerIgnoreKafkaOptions()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
 	kafkaRetryInterval := configKafkaRetryInterval()
@@ -107,11 +109,15 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 	// kafka producer config
 	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.RequiredAcks = 1
 	config.Producer.Retry.Max = maxRetry
 	config.Producer.Return.Successes = true
+	config.Producer.Compression = sarama.CompressionZSTD
+	config.Producer.CompressionLevel = sarama.CompressionLevelDefault
 	config.Metadata.RefreshFrequency = 1 * time.Minute
-	config.Version = sarama.V0_10_2_1 // TODO: get version from env
+	config.Producer.Flush.Bytes = 16000
+	config.Producer.Flush.Frequency = 100 * time.Millisecond
+	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
@@ -125,6 +131,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"kafkaRetryInterval":     kafkaRetryInterval,
 		"newEventTopic":          newTopicEventName,
 		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
+		"ignoreKafkaOptions":     ignoreKafkaOptions,
 	}
 
 	service := flow.NewProducerService(producerParams)

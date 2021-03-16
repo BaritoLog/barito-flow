@@ -40,6 +40,7 @@ type producerService struct {
 	kafkaRetryInterval     int
 	newEventTopic          string
 	grpcMaxRecvMsgSize     int
+	ignoreKafkaOptions     bool
 
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
@@ -60,6 +61,7 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
 		newEventTopic:          params["newEventTopic"].(string),
 		grpcMaxRecvMsgSize:     params["grpcMaxRecvMsgSize"].(int),
+		ignoreKafkaOptions:     params["ignoreKafkaOptions"].(bool),
 	}
 }
 
@@ -270,8 +272,13 @@ func (s *producerService) sendCreateTopicEvents(topic string) (err error) {
 
 func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err error) {
 	if !s.admin.Exist(topic) {
-		numPartitions := timber.GetContext().GetKafkaPartition()
-		replicationFactor := timber.GetContext().GetKafkaReplicationFactor()
+		var numPartitions int32 = -1
+		var replicationFactor int32 = -1
+
+		if !s.ignoreKafkaOptions {
+			numPartitions = timber.GetContext().GetKafkaPartition()
+			replicationFactor = timber.GetContext().GetKafkaReplicationFactor()
+		}
 
 		log.Warnf("%s does not exist. Creating topic with partition:%v replication_factor:%v", topic, numPartitions, replicationFactor)
 
