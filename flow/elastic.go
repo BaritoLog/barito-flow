@@ -147,7 +147,11 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 		}
 	}
 
-	document := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
+	document, err := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
+	if err != nil {
+		prome.IncreaseConsumerTimberConvertError(indexPrefix)
+		return err
+	}
 
 	err = e.onStoreFunc(ctx, indexName, documentType, document)
 	counter++

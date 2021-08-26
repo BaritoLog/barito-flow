@@ -7,7 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/struct"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
@@ -55,7 +55,33 @@ func TestConvertTimberToEsDocumentString(t *testing.T) {
 			Fields: make(map[string]*structpb.Value),
 		},
 	}
-	document := ConvertTimberToEsDocumentString(timber, &jsonpb.Marshaler{})
+	document, err := ConvertTimberToEsDocumentString(timber, &jsonpb.Marshaler{})
+	FatalIfError(t, err)
+
 	expected := "{\"@timestamp\":\"\"}"
+	FatalIf(t, expected != document, "expected %s, received %s", expected, document)
+}
+
+func TestConvertTimberToEsDocumentString_FieldsIsNil(t *testing.T) {
+	timber := pb.Timber{
+		Content: &structpb.Struct{
+			Fields: nil,
+		},
+	}
+	document, err := ConvertTimberToEsDocumentString(timber, &jsonpb.Marshaler{})
+	FatalIf(t, TimberFieldsMissing != err, "expected %s, received %s", TimberFieldsMissing, document)
+
+	expected := ""
+	FatalIf(t, expected != document, "expected %s, received %s", expected, document)
+}
+
+func TestConvertTimberToEsDocumentString_FieldsIsMissing(t *testing.T) {
+	timber := pb.Timber{
+		Content: &structpb.Struct{},
+	}
+	document, err := ConvertTimberToEsDocumentString(timber, &jsonpb.Marshaler{})
+	FatalIf(t, TimberFieldsMissing != err, "expected %s, received %s", TimberFieldsMissing, document)
+
+	expected := ""
 	FatalIf(t, expected != document, "expected %s, received %s", expected, document)
 }

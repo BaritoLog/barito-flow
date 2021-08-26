@@ -15,6 +15,7 @@ const (
 	ESClientFailedPhaseRetry = "retry"
 )
 
+var consumerTimberConvertError *prometheus.CounterVec
 var consumerLogStoredCounter *prometheus.CounterVec
 var consumerBulkProcessTimeSecond prometheus.Summary
 var consumerKafkaMessagesIncomingCounter *prometheus.CounterVec
@@ -40,6 +41,10 @@ var logStoredErrorMap map[string]string = map[string]string{
 }
 
 func InitConsumerInstrumentation() {
+	consumerTimberConvertError = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_consumer_timber_convert_error",
+		Help: "Number error when read timber",
+	}, []string{"index"})
 	consumerLogStoredCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_consumer_log_stored_total",
 		Help: "Number log stored to ES",
@@ -77,6 +82,10 @@ func InitProducerInstrumentation() {
 		Help:       "Send to Kafka time in second",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, []string{"topic"})
+}
+
+func IncreaseConsumerTimberConvertError(index string) {
+	consumerTimberConvertError.WithLabelValues(index).Inc()
 }
 
 func IncreaseLogStoredCounter(index string, result string, status int, errorMessage string) {
