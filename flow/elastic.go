@@ -3,6 +3,7 @@ package flow
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/BaritoLog/barito-flow/prome"
 
@@ -139,10 +140,9 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 
 	if !exists {
 		log.Warnf("ES index '%s' is not exist", indexName)
-		_, err = e.client.CreateIndex(indexName).
-			Do(ctx)
+		_, err = e.client.CreateIndex(indexName).Do(ctx)
 		instruESCreateIndex(err)
-		if err != nil {
+		if (err != nil) && (!strings.Contains(err.Error(), "resource_already_exists_exception")) {
 			return
 		}
 	}
