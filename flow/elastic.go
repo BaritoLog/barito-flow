@@ -108,6 +108,7 @@ func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []
 				errorReason := ""
 				if responseItem.Error != nil {
 					errorReason = responseItem.Error.Reason
+					log.Warnf("Bulk send error=%q, index=%q\n", errorReason, responseItem.Index)
 				}
 				prome.IncreaseLogStoredCounter(responseItem.Index, responseItem.Result, responseItem.Status, errorReason)
 			}
