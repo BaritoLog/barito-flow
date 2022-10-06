@@ -15,14 +15,14 @@ import (
 type ElasticRetrier struct {
 	backoff     elastic.Backoff
 	onRetryFunc func(err error)
-	maxRetry int
+	maxRetry    int
 }
 
 func NewElasticRetrier(t time.Duration, n int, f func(err error)) *ElasticRetrier {
 	return &ElasticRetrier{
 		backoff:     elastic.NewConstantBackoff(t),
 		onRetryFunc: f,
-		maxRetry: n,
+		maxRetry:    n,
 	}
 }
 
@@ -33,13 +33,14 @@ func (r *ElasticRetrier) Retry(ctx context.Context, retry int, req *http.Request
 		err = errors.New("Elasticsearch or network down")
 	}
 
-	// Let the backoff strategy decide how long to wait and whether to stop
-	wait, stop := r.backoff.Next(retry)
+	// Let the backoff strategy decide how long to wait and whether to shouldRetry
+	wait, shouldRetry := r.backoff.Next(retry)
 	r.onRetryFunc(err)
 
 	// if max retry 0, it will retry forever
 	if r.maxRetry > 0 && retry >= r.maxRetry {
-        stop = false
+		shouldRetry = false
 	}
-	return wait, stop, nil
+
+	return wait, shouldRetry, nil
 }

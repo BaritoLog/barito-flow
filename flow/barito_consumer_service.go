@@ -3,9 +3,10 @@ package flow
 import (
 	"context"
 	"fmt"
-	"github.com/BaritoLog/barito-flow/prome"
 	"strings"
 	"time"
+
+	"github.com/BaritoLog/barito-flow/prome"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
@@ -215,7 +216,6 @@ func (s *baritoConsumerService) logNewTopic(topic string) {
 func (s *baritoConsumerService) onElasticRetry(err error) {
 	s.logError(errkit.Concat(ErrElasticsearchClient, err))
 	prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseRetry)
-	s.HaltAllWorker()
 }
 
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
@@ -232,14 +232,6 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 	if err != nil {
 		s.logError(errkit.Concat(ErrStore, err))
 		return
-	}
-
-	if s.isHalt {
-		err = s.ResumeWorker()
-		if err != nil {
-			s.logError(errkit.Concat(ErrConsumerWorker, err))
-			return
-		}
 	}
 
 	s.logTimber(timber)
