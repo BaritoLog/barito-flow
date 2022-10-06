@@ -218,6 +218,10 @@ func (s *baritoConsumerService) onElasticRetry(err error) {
 	prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseRetry)
 }
 
+func (s *baritoConsumerService) onElasticMaxRetryReached() {
+	s.HaltAllWorker()
+}
+
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 	// convert kafka message
 	timber, err := ConvertKafkaMessageToTimber(message)
@@ -272,7 +276,12 @@ func (s *baritoConsumerService) HaltAllWorker() {
 }
 
 func (s *baritoConsumerService) elasticRetrier() *ElasticRetrier {
-	return NewElasticRetrier(timekit.Duration(s.elasticRetrierInterval), s.elasticRetrierMaxRetry, s.onElasticRetry)
+	return NewElasticRetrier(
+		timekit.Duration(s.elasticRetrierInterval),
+		s.elasticRetrierMaxRetry,
+		s.onElasticRetry,
+		s.onElasticMaxRetryReached,
+	)
 }
 
 func (s *baritoConsumerService) ResumeWorker() (err error) {

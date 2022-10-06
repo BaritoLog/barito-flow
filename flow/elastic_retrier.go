@@ -13,16 +13,18 @@ import (
 )
 
 type ElasticRetrier struct {
-	backoff     elastic.Backoff
-	onRetryFunc func(err error)
-	maxRetry    int
+	backoff           elastic.Backoff
+	onRetryFunc       func(err error)
+	onMaxRetryReached func()
+	maxRetry          int
 }
 
-func NewElasticRetrier(t time.Duration, n int, f func(err error)) *ElasticRetrier {
+func NewElasticRetrier(t time.Duration, n int, onRetryFunc func(err error), onMaxRetryReached func()) *ElasticRetrier {
 	return &ElasticRetrier{
-		backoff:     elastic.NewConstantBackoff(t),
-		onRetryFunc: f,
-		maxRetry:    n,
+		backoff:           elastic.NewConstantBackoff(t),
+		onRetryFunc:       onRetryFunc,
+		onMaxRetryReached: onMaxRetryReached,
+		maxRetry:          n,
 	}
 }
 
@@ -40,6 +42,7 @@ func (r *ElasticRetrier) Retry(ctx context.Context, retry int, req *http.Request
 	// if max retry 0, it will retry forever
 	if r.maxRetry > 0 && retry >= r.maxRetry {
 		shouldRetry = false
+		r.onMaxRetryReached()
 	}
 
 	return wait, shouldRetry, nil
