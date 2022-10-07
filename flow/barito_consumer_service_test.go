@@ -1,13 +1,14 @@
 package flow
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
@@ -20,11 +21,11 @@ import (
 )
 
 func init() {
+	resetPrometheusMetrics()
 	log.SetLevel(log.ErrorLevel)
 }
 
 func TestBaritConsumerService_MakeKafkaAdminError(t *testing.T) {
-	resetPrometheusMetrics()
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
 
