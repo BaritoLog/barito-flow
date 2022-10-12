@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
 	"net"
 	"net/http"
 	"time"
@@ -48,6 +49,9 @@ type producerService struct {
 
 	grpcServer   *grpc.Server
 	reverseProxy *http.Server
+
+	redisClient    *redis.Client
+	redisKeyPrefix string
 }
 
 func NewProducerService(params map[string]interface{}) ProducerService {
@@ -62,6 +66,8 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		newEventTopic:          params["newEventTopic"].(string),
 		grpcMaxRecvMsgSize:     params["grpcMaxRecvMsgSize"].(int),
 		ignoreKafkaOptions:     params["ignoreKafkaOptions"].(bool),
+		redisClient:            params["redisClient"].(*redis.Client),
+		redisKeyPrefix:         params["redisKeyPrefix"].(string),
 	}
 }
 
@@ -142,8 +148,11 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
-	s.limiter.Start()
+	s.limiter = NewDistributedRateLimiter(s.redisClient,
+		WithDuration(time.Duration(s.rateLimitResetInterval)*time.Second),
+		WithTimeout(30*time.Second),
+		WithKeyPrefix(s.redisKeyPrefix),
+	)
 
 	lis, grpcSrv, err := s.initGrpcServer()
 	if err != nil {
