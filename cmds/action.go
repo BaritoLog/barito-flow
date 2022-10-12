@@ -1,7 +1,9 @@
 package cmds
 
 import (
+	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"time"
 
 	"github.com/BaritoLog/barito-flow/prome"
@@ -107,6 +109,10 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	newTopicEventName := configNewTopicEvent()
 	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
 
+	redisUrl := configRedisUrl()
+	redisPassword := configRedisPassword()
+	redisKeyPrefix := configRedisKeyPrefix()
+
 	// kafka producer config
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = 1
@@ -121,6 +127,15 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisUrl,
+		Password: redisPassword,
+	})
+
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		return err
+	}
+
 	producerParams := map[string]interface{}{
 		"factory":                factory,
 		"grpcAddr":               grpcAddr,
@@ -132,6 +147,8 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"newEventTopic":          newTopicEventName,
 		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
 		"ignoreKafkaOptions":     ignoreKafkaOptions,
+		"redisClient":            redisClient,
+		"redisKeyPrefix":         redisKeyPrefix,
 	}
 
 	service := flow.NewProducerService(producerParams)
