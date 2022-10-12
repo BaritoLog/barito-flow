@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	log "github.com/sirupsen/logrus"
+	"strings"
 	"sync"
 	"time"
 )
@@ -16,6 +17,9 @@ const (
 
 	// defaultDuration is the default key duration used by EXPIRE command
 	defaultDuration time.Duration = time.Minute
+
+	// defaultKeyPrefix is the default key prefix
+	defaultKeyPrefix string = ""
 )
 
 // DistributedRateLimiterOpts is used to set optional attributes of DistributedRateLimiter
@@ -37,6 +41,13 @@ func WithTimeout(timeout time.Duration) DistributedRateLimiterOpts {
 	}
 }
 
+// WithKeyPrefix enables separation of key among redis usage
+func WithKeyPrefix(prefix string) DistributedRateLimiterOpts {
+	return func(d *DistributedRateLimiter) {
+		d.keyPrefix = strings.TrimSpace(prefix)
+	}
+}
+
 // WithMutex is used whenever DistributedRateLimiter is used inside a goroutine to avoid race condition
 func WithMutex() DistributedRateLimiterOpts {
 	return func(d *DistributedRateLimiter) {
@@ -48,9 +59,10 @@ func WithMutex() DistributedRateLimiterOpts {
 // which depends on Redis as a remote storage
 type DistributedRateLimiter struct {
 	*sync.Mutex
-	db       *redis.Client
-	timeout  time.Duration
-	duration time.Duration
+	db        *redis.Client
+	timeout   time.Duration
+	duration  time.Duration
+	keyPrefix string
 }
 
 // NewDistributedRateLimiter creates *DistributedRateLimiter
@@ -76,19 +88,20 @@ func (d *DistributedRateLimiter) IsHitLimit(topic string, count int, maxTokenIfN
 		defer d.Unlock()
 	}
 
-	currentToken, err := d.getTopicCounter(context.Background(), topic)
+	key := d.getKeyFormatted(topic)
+	currentToken, err := d.getKeyCurrentToken(context.Background(), key)
 	if err != nil {
 		log.Errorf("unexpected error: %v", err)
 		return true
 	}
 
 	if currentToken >= maxTokenIfNotExist {
-		log.Debugf("topic: %v is reaching limit", topic)
+		log.Debugf("key: %v is reaching limit", key)
 		return true
 	}
 
 	log.Debugf("current token: %v", currentToken)
-	if err := d.incrementTopicCounterBy(context.Background(), topic, int64(count)); d.isLegitRedisError(err) {
+	if err := d.incrementKeyCounterBy(context.Background(), key, int64(count)); d.isLegitRedisError(err) {
 		log.Errorf("unexpected error: %v", err)
 		return true
 	}
@@ -96,36 +109,41 @@ func (d *DistributedRateLimiter) IsHitLimit(topic string, count int, maxTokenIfN
 	return false
 }
 
+// Deprecated: no-op
 func (d *DistributedRateLimiter) Start() {
 	// no-op
 }
 
+// Deprecated: no-op
 func (d *DistributedRateLimiter) Stop() {
 	// no-op
 }
 
+// Deprecated: no-op, always return true
 func (d *DistributedRateLimiter) IsStart() bool {
 	return true
 }
 
+// Deprecated: no-op
 func (d *DistributedRateLimiter) PutBucket(_ string, _ *LeakyBucket) {
 	// no-op
 }
 
+// Deprecated: no-op, always return nil
 func (d *DistributedRateLimiter) Bucket(_ string) *LeakyBucket {
 	// no-op
 	return nil
 }
 
-// getTopicCounter returns the current counter of the topic
-// getTopicCounter will query redis using GET
-// if GET query returns nil / topic is unset, getTopicCounter will return 0
+// getKeyCurrentToken returns the currentToken of the key
+// getKeyCurrentToken will query redis using GET
+// if GET query returns nil / key is unset, getKeyCurrentToken will return 0
 // otherwise return the result / error
-func (d *DistributedRateLimiter) getTopicCounter(ctx context.Context, topic string) (counter int32, err error) {
+func (d *DistributedRateLimiter) getKeyCurrentToken(ctx context.Context, key string) (currentToken int32, err error) {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
-	result, err := d.db.Get(ctx, topic).Result()
+	result, err := d.db.Get(ctx, key).Result()
 
 	if err != nil {
 		// if key is unset
@@ -137,17 +155,17 @@ func (d *DistributedRateLimiter) getTopicCounter(ctx context.Context, topic stri
 		return 0, err
 	}
 
-	if _, err := fmt.Sscanf(result, "%d", &counter); err != nil {
+	if _, err := fmt.Sscanf(result, "%d", &currentToken); err != nil {
 		return 0, err
 	}
 
-	return counter, nil
+	return currentToken, nil
 }
 
-// incrementTopicCounterBy creates a transaction which
-// increments the topic by given value using INCRBY query
-// if topic is newly created, TTL will be set using EXPIRE query with DistributedRateLimiter.duration
-func (d *DistributedRateLimiter) incrementTopicCounterBy(ctx context.Context, topic string, value int64) error {
+// incrementKeyCounterBy creates a transaction which
+// increments the key current token by given value using INCRBY query
+// if key is newly created, TTL will be set using EXPIRE query with DistributedRateLimiter.duration
+func (d *DistributedRateLimiter) incrementKeyCounterBy(ctx context.Context, topic string, value int64) error {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
@@ -169,4 +187,13 @@ func (d *DistributedRateLimiter) incrementTopicCounterBy(ctx context.Context, to
 // isLegitRedisError checks whether given err is truly redis error, and not Nil returned by redis
 func (d *DistributedRateLimiter) isLegitRedisError(err error) bool {
 	return err != nil && !errors.Is(err, redis.Nil)
+}
+
+// getKeyFormatted returns topic prepended with DistributedRateLimiter.keyPrefix if it's not empty
+func (d *DistributedRateLimiter) getKeyFormatted(topic string) string {
+	if d.keyPrefix != "" {
+		return fmt.Sprintf("%s:%s", d.keyPrefix, topic)
+	}
+
+	return topic
 }
