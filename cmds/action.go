@@ -1,7 +1,6 @@
 package cmds
 
 import (
-	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"time"
@@ -131,10 +130,6 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		Addr:     redisUrl,
 		Password: redisPassword,
 	})
-
-	if err := redisClient.Ping(context.Background()).Err(); err != nil {
-		return err
-	}
 
 	producerParams := map[string]interface{}{
 		"factory":                factory,

@@ -148,11 +148,18 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	s.limiter = NewDistributedRateLimiter(s.redisClient,
-		WithDuration(time.Duration(s.rateLimitResetInterval)*time.Second),
-		WithTimeout(30*time.Second),
-		WithKeyPrefix(s.redisKeyPrefix),
-	)
+	if err := s.redisClient.Ping(context.Background()).Err(); err != nil {
+		log.Infof("using local rate limiter due to failed connecting to redisClient: %v", err)
+		s.limiter = NewRateLimiter(s.rateLimitResetInterval)
+	} else {
+		s.limiter = NewDistributedRateLimiter(s.redisClient,
+			WithDuration(time.Duration(s.rateLimitResetInterval)*time.Second),
+			WithTimeout(30*time.Second),
+			WithKeyPrefix(s.redisKeyPrefix),
+		)
+	}
+
+	s.limiter.Start()
 
 	lis, grpcSrv, err := s.initGrpcServer()
 	if err != nil {
