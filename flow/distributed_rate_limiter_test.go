@@ -13,15 +13,15 @@ import (
 )
 
 const (
-	distributedRateLimiterDefaultTopic    string = "foo"
-	distributedRateLimiterDefaultCount    int    = 2
-	distributedRateLimiterDefaultMaxToken int32  = 3
-	distributedRateLimiterNumOfWorkers    int    = 2
-	// run 3 times more than `distributedRateLimiterDefaultMaxToken` to check is limitation reached
-	distributedRateLimiterDuration time.Duration = time.Second * 2
+	distributedRateLimiterDefaultTopic    string        = "foo"
+	distributedRateLimiterDefaultCount    int           = 2
+	distributedRateLimiterDefaultMaxToken int32         = 3
+	distributedRateLimiterNumOfWorkers    int           = 2
+	distributedRateLimiterDuration        time.Duration = time.Second * 2
 )
 
 var (
+	// run 3 times more than the cap to check is limitation reached
 	distributedRateLimiterNumOfIteration int = 3 + int(distributedRateLimiterDefaultMaxToken)*int(distributedRateLimiterDuration.Seconds())
 )
 
