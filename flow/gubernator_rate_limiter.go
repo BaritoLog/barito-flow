@@ -38,16 +38,16 @@ func (g *GubernatorRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNo
 	)
 	resp, err := g.httpClient.Post(g.gubernatorURL, "application/json", bytes.NewReader([]byte(payload)))
 	if err != nil {
-		return false
+		return true
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return false
+		return true
 	}
 
-	return strings.Contains(string(body), "UNDER_LIMIT")
+	return strings.Contains(string(body), "OVER_LIMIT")
 }
 
 // Deprecated: no-op
