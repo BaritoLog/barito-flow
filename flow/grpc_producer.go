@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
@@ -51,7 +49,6 @@ type producerService struct {
 	grpcServer   *grpc.Server
 	reverseProxy *http.Server
 
-	redisClient    *redis.Client
 	redisKeyPrefix string
 
 	gubernatorURL       string
@@ -70,7 +67,6 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		newEventTopic:          params["newEventTopic"].(string),
 		grpcMaxRecvMsgSize:     params["grpcMaxRecvMsgSize"].(int),
 		ignoreKafkaOptions:     params["ignoreKafkaOptions"].(bool),
-		redisClient:            params["redisClient"].(*redis.Client),
 		redisKeyPrefix:         params["redisKeyPrefix"].(string),
 		gubernatorURL:          params["gubernatorURL"].(string),
 		gubernatorKeyPrefix:    params["redisKeyPrefix"].(string),
