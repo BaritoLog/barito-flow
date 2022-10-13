@@ -151,7 +151,7 @@ func (s *producerService) Start() (err error) {
 	}
 
 	s.limiter = NewGubernatorRateLimiter(
-		"http://gb",
+		"http://gb.barito-core",
 		s.gubernatorKeyPrefix,
 		&http.Client{
 			Timeout: 1 * time.Second,
