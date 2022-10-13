@@ -6,18 +6,23 @@ import (
 	"github.com/go-redis/redismock/v8"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"os"
 	"sync"
 	"testing"
 	"time"
 )
 
 const (
-	distributedRateLimiterDefaultTopic    string = "foo"
-	distributedRateLimiterDefaultCount    int    = 1
-	distributedRateLimiterDefaultMaxToken int32  = 10
-	distributedRateLimiterNumOfWorkers    int    = 3
-	// run 3 times more than `distributedRateLimiterDefaultMaxToken` to check is limitation reached
-	distributedRateLimiterNumOfIteration int = int(distributedRateLimiterDefaultMaxToken) + 3
+	distributedRateLimiterDefaultTopic    string        = "foo"
+	distributedRateLimiterDefaultCount    int           = 2
+	distributedRateLimiterDefaultMaxToken int32         = 3
+	distributedRateLimiterNumOfWorkers    int           = 2
+	distributedRateLimiterDuration        time.Duration = time.Second * 2
+)
+
+var (
+	// run 3 times more than the cap to check is limitation reached
+	distributedRateLimiterNumOfIteration int = 3 + int(distributedRateLimiterDefaultMaxToken)*int(distributedRateLimiterDuration.Seconds())
 )
 
 func init() {
@@ -42,8 +47,8 @@ func configureMock(t *testing.T, mock redismock.ClientMock) {
 		mock.ExpectGet(key).SetVal(fmt.Sprintf("%d", i))
 
 		mock.ExpectTxPipeline()
-		mock.ExpectIncrBy(key, 1).RedisNil()
-		mock.ExpectExpire(key, time.Second).RedisNil()
+		mock.ExpectIncrBy(key, int64(distributedRateLimiterDefaultCount)).RedisNil()
+		mock.ExpectExpire(key, distributedRateLimiterDuration).RedisNil()
 		mock.ExpectTxPipelineExec().SetErr(nil)
 	}
 
@@ -54,7 +59,7 @@ func work(t *testing.T, idx int, limiter flow.RateLimiter, iterationCh <-chan in
 	t.Helper()
 	r := require.New(t)
 
-	max := int(distributedRateLimiterDefaultMaxToken)
+	max := int(distributedRateLimiterDefaultMaxToken) * int(distributedRateLimiterDuration.Seconds())
 
 	for i := range iterationCh {
 		key := getKey(t, i)
@@ -66,11 +71,11 @@ func work(t *testing.T, idx int, limiter flow.RateLimiter, iterationCh <-chan in
 
 		log.Debugf("worker-%v got signal for iteration: %v, is reached limit? %v", idx, i, isReachedLimit)
 
-		if i > max && isReachedLimit != true {
+		if i+distributedRateLimiterDefaultCount > max && isReachedLimit != true {
 			r.Equalf(true, isReachedLimit, "at iteration: %v", i)
 		}
 
-		if i < max && isReachedLimit != false {
+		if i+distributedRateLimiterDefaultCount < max && isReachedLimit != false {
 			r.Equalf(false, isReachedLimit, "at iteration: %v", i)
 		}
 
@@ -81,13 +86,14 @@ func work(t *testing.T, idx int, limiter flow.RateLimiter, iterationCh <-chan in
 // TestDistributedRateLimiter_IsHitLimit tests rate limiter with multiple replicas
 // simulated by goroutine
 func TestDistributedRateLimiter_IsHitLimit(t *testing.T) {
+	//db := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	db, mock := redismock.NewClientMock()
 	defer db.Close()
 
 	configureMock(t, mock)
 
 	limiter := flow.NewDistributedRateLimiter(db,
-		flow.WithDuration(time.Second),
+		flow.WithDuration(distributedRateLimiterDuration),
 		flow.WithTimeout(time.Second),
 		flow.WithMutex(),
 	)
@@ -102,6 +108,7 @@ func TestDistributedRateLimiter_IsHitLimit(t *testing.T) {
 		close(iterationCh)
 
 		log.Debugf("iteration stucks for %vs, something wrong with the worker / redis", timeout.Seconds())
+		os.Exit(1)
 	}()
 
 	// simulate multiple replicas
