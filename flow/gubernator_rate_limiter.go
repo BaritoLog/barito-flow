@@ -28,12 +28,13 @@ func NewGubernatorRateLimiter(gubernatorURL string, prefix string, httpClient *h
 }
 
 func (g *GubernatorRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool {
+	limit := maxTokenIfNotExist * 10
 	payload := fmt.Sprintf(
-		`{ "requests":[ { "name": "requests_per_sec", "unique_key": "%s:%s", "hits": %d, "duration": %d, "limit": 6000 } ] }`,
+		`{ "requests":[ { "name": "requests_per_sec", "unique_key": "%s:%s", "hits": %d, "duration": 10000, "limit": %d } ] }`,
 		g.prefix,
 		topic,
 		count,
-		maxTokenIfNotExist,
+		limit,
 	)
 	resp, err := g.httpClient.Post(g.gubernatorURL, "application/json", bytes.NewReader([]byte(payload)))
 	if err != nil {
