@@ -51,6 +51,9 @@ const (
 	EnvRedisUrl       = "BARITO_REDIS_URL"
 	EnvRedisPassword  = "BARITO_REDIS_PASSWORD"
 	EnvRedisKeyPrefix = "BARITO_REDIS_KEY_PREFIX"
+
+	EnvGubernatorURL       = "BARITO_GUBERNATOR_URL"
+	EnvGubernatorKeyPrefix = "BARITO_GUBERNATOR_KEY_PREFIX"
 )
 
 var (
@@ -95,6 +98,9 @@ var (
 	DefaultRedisUrl       = "http://localhost:6379"
 	DefaultRedisPassword  = ""
 	DefaultRedisKeyPrefix = "barito:producer:ratelimit:"
+
+	DefaultGubernatorURL       = "http://gb.barito-core.svc"
+	DefaultGubernatorKeyPrefix = "barito:producer:ratelimit:"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -274,6 +280,14 @@ func configRedisKeyPrefix() (s string) {
 
 func configConsulRedisName() (s string) {
 	return stringEnvOrDefault(EnvConsulRedisName, DefaultConsulRedisName)
+}
+
+func configGubernatorURL() (s string) {
+	return stringEnvOrDefault(EnvGubernatorURL, DefaultGubernatorURL)
+}
+
+func configGubernatorKeyPrefix() (s string) {
+	return stringEnvOrDefault(EnvGubernatorKeyPrefix, DefaultGubernatorKeyPrefix)
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {

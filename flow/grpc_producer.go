@@ -2,10 +2,11 @@ package flow
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
@@ -52,6 +53,9 @@ type producerService struct {
 
 	redisClient    *redis.Client
 	redisKeyPrefix string
+
+	gubernatorURL       string
+	gubernatorKeyPrefix string
 }
 
 func NewProducerService(params map[string]interface{}) ProducerService {
@@ -68,6 +72,8 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		ignoreKafkaOptions:     params["ignoreKafkaOptions"].(bool),
 		redisClient:            params["redisClient"].(*redis.Client),
 		redisKeyPrefix:         params["redisKeyPrefix"].(string),
+		gubernatorURL:          params["gubernatorURL"].(string),
+		gubernatorKeyPrefix:    params["redisKeyPrefix"].(string),
 	}
 }
 
@@ -148,10 +154,12 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	s.limiter = NewDistributedRateLimiter(s.redisClient,
-		WithDuration(time.Duration(s.rateLimitResetInterval)*time.Second),
-		WithTimeout(30*time.Second),
-		WithKeyPrefix(s.redisKeyPrefix),
+	s.limiter = NewGubernatorRateLimiter(
+		"http://gb",
+		s.gubernatorKeyPrefix,
+		&http.Client{
+			Timeout: 1 * time.Second,
+		},
 	)
 
 	lis, grpcSrv, err := s.initGrpcServer()

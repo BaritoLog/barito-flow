@@ -3,8 +3,9 @@ package cmds
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 
 	"github.com/BaritoLog/barito-flow/prome"
 
@@ -113,6 +114,9 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	redisPassword := configRedisPassword()
 	redisKeyPrefix := configRedisKeyPrefix()
 
+	gubernatorURL := configGubernatorURL()
+	gubernatorKeyPrefix := configGubernatorKeyPrefix()
+
 	// kafka producer config
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = 1
@@ -149,6 +153,8 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"ignoreKafkaOptions":     ignoreKafkaOptions,
 		"redisClient":            redisClient,
 		"redisKeyPrefix":         redisKeyPrefix,
+		"gubernatorURL":          gubernatorURL,
+		"gubernatorKeyPrefix":    gubernatorKeyPrefix,
 	}
 
 	service := flow.NewProducerService(producerParams)
