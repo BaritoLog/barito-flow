@@ -156,6 +156,7 @@ func (s *producerService) Start() (err error) {
 			WithDuration(time.Duration(s.rateLimitResetInterval)*time.Second),
 			WithTimeout(30*time.Second),
 			WithKeyPrefix(s.redisKeyPrefix),
+			WithMutex(),
 		)
 	}
 
