@@ -237,6 +237,7 @@ func (d *DistributedRateLimiter) onErr(err error) bool {
 	}
 
 	if d.isRedisConnectionRefused(err) {
+		log.Debugf("redis disconnected, start using local limiter")
 		d.isUsingLocal = true
 	}
 
