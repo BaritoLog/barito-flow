@@ -86,7 +86,6 @@ func work(t *testing.T, idx int, limiter flow.RateLimiter, iterationCh <-chan in
 // TestDistributedRateLimiter_IsHitLimit tests rate limiter with multiple replicas
 // simulated by goroutine
 func TestDistributedRateLimiter_IsHitLimit(t *testing.T) {
-	//db := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	db, mock := redismock.NewClientMock()
 	defer db.Close()
 
