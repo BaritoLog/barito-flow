@@ -96,7 +96,7 @@ func NewDistributedRateLimiter(db *redis.Client, opts ...DistributedRateLimiterO
 	return d
 }
 
-// IsHitLimit implements best practice from redis official website
+// IsHitLimit implements best practice from redis official website with some optimization
 // https://redis.com/redis-best-practices/basic-rate-limiting/
 func (d *DistributedRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool {
 	if d.Mutex != nil {
@@ -109,18 +109,23 @@ func (d *DistributedRateLimiter) IsHitLimit(topic string, count int, maxTokenIfN
 	}
 
 	key := d.getKeyFormatted(topic)
-	currentToken, err := d.getKeyCurrentToken(context.Background(), key)
+	currentToken, err := d.incrBy(context.Background(), key, count)
 	if d.onErr(err) {
 		return true
 	}
 
-	if (currentToken + int32(count)) > (maxTokenIfNotExist * int32(d.duration.Seconds())) {
+	if currentToken >= (maxTokenIfNotExist * int32(d.duration.Seconds())) {
 		log.Debugf("key: %v is reaching limit", key)
 		return true
 	}
 
 	log.Debugf("current token: %v", currentToken)
-	if err := d.incrementKeyCounterBy(context.Background(), key, int64(count)); d.onErr(err) {
+	if int(currentToken) != count {
+		return false
+	}
+
+	log.Debugf("current token == count, means the key is newly created, set expire NX")
+	if err := d.expireNx(context.Background(), key); d.onErr(err) {
 		return true
 	}
 
@@ -153,53 +158,30 @@ func (d *DistributedRateLimiter) Bucket(_ string) *LeakyBucket {
 	return nil
 }
 
-// getKeyCurrentToken returns the currentToken of the key
-// getKeyCurrentToken will query redis using GET
-// if GET query returns nil / key is unset, getKeyCurrentToken will return 0
-// otherwise return the result / error
-func (d *DistributedRateLimiter) getKeyCurrentToken(ctx context.Context, key string) (currentToken int32, err error) {
+// incrBy increments the key current token by given value using INCRBY query
+func (d *DistributedRateLimiter) incrBy(ctx context.Context, key string, value int) (int32, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
-	result, err := d.db.Get(ctx, key).Result()
-
-	if err != nil {
-		// if key is unset
-		if errors.Is(err, redis.Nil) {
-			return 0, nil
-		}
-
-		// if legit error
+	token, err := d.db.IncrBy(ctx, key, int64(value)).Result()
+	if d.isLegitRedisError(err) {
 		return 0, err
 	}
 
-	if _, err := fmt.Sscanf(result, "%d", &currentToken); err != nil {
-		return 0, err
-	}
-
-	return currentToken, nil
+	return int32(token), nil
 }
 
-// incrementKeyCounterBy creates a transaction which
-// increments the key current token by given value using INCRBY query
-// if key is newly created, TTL will be set using EXPIRE query with DistributedRateLimiter.duration
-func (d *DistributedRateLimiter) incrementKeyCounterBy(ctx context.Context, topic string, value int64) error {
+// expireNx sets TTL using EXPIRE query with DistributedRateLimiter.duration
+// only if the key is newly created
+func (d *DistributedRateLimiter) expireNx(ctx context.Context, key string) error {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
-	_, err := d.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
-		if err := p.IncrBy(ctx, topic, value).Err(); d.isLegitRedisError(err) {
-			return err
-		}
+	if err := d.db.ExpireNX(ctx, key, d.duration).Err(); d.isLegitRedisError(err) {
+		return err
+	}
 
-		if err := p.ExpireNX(ctx, topic, d.duration).Err(); d.isLegitRedisError(err) {
-			return err
-		}
-
-		return nil
-	})
-
-	return err
+	return nil
 }
 
 // isLegitRedisError checks whether given err is truly redis error, and not Nil returned by redis

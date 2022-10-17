@@ -45,12 +45,10 @@ func configureMock(t *testing.T, mock redismock.ClientMock) {
 	// redismock limitation: expectation should be set for different topics
 	for i := 1; i <= distributedRateLimiterNumOfIteration; i++ {
 		key := getKey(t, i)
-		mock.ExpectGet(key).SetVal(fmt.Sprintf("%d", i))
 
-		mock.ExpectTxPipeline()
-		mock.ExpectIncrBy(key, int64(distributedRateLimiterDefaultCount)).RedisNil()
+		mock.ExpectIncrBy(key, int64(distributedRateLimiterDefaultCount)).
+			SetVal(int64(i + distributedRateLimiterDefaultCount))
 		mock.ExpectExpire(key, distributedRateLimiterDuration).RedisNil()
-		mock.ExpectTxPipelineExec().SetErr(nil)
 	}
 
 }
@@ -61,6 +59,7 @@ func work(t *testing.T, idx int, limiter flow.RateLimiter, iterationCh <-chan in
 	r := require.New(t)
 
 	max := int(distributedRateLimiterDefaultMaxToken) * int(distributedRateLimiterDuration.Seconds())
+	log.Debug("max:", max)
 
 	for i := range iterationCh {
 		key := getKey(t, i)
