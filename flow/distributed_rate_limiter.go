@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -48,6 +49,12 @@ func WithKeyPrefix(prefix string) DistributedRateLimiterOpts {
 	}
 }
 
+func WithFallbackToLocal(limiter Limiter) DistributedRateLimiterOpts {
+	return func(d *DistributedRateLimiter) {
+		d.localLimiter = limiter
+	}
+}
+
 // WithMutex is used whenever DistributedRateLimiter is used inside a goroutine to avoid race condition
 func WithMutex() DistributedRateLimiterOpts {
 	return func(d *DistributedRateLimiter) {
@@ -63,24 +70,33 @@ type DistributedRateLimiter struct {
 	timeout   time.Duration
 	duration  time.Duration
 	keyPrefix string
+
+	localLimiter Limiter
+	isUsingLocal bool
 }
 
 // NewDistributedRateLimiter creates *DistributedRateLimiter
 func NewDistributedRateLimiter(db *redis.Client, opts ...DistributedRateLimiterOpts) *DistributedRateLimiter {
 	d := &DistributedRateLimiter{
-		db:       db,
-		timeout:  defaultTimeout,
-		duration: defaultDuration,
+		db:        db,
+		timeout:   defaultTimeout,
+		duration:  defaultDuration,
+		keyPrefix: defaultKeyPrefix,
+		localLimiter: LimiterFunc(func(_ string, _ int, _ int32) bool {
+			// not limit anything
+			return false
+		}),
 	}
 
 	for _, opt := range opts {
 		opt(d)
 	}
 
+	db.Options().OnConnect = d.onConnect
 	return d
 }
 
-// IsHitLimit implements best practice from redis official website
+// IsHitLimit implements best practice from redis official website with some optimization
 // https://redis.com/redis-best-practices/basic-rate-limiting/
 func (d *DistributedRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool {
 	if d.Mutex != nil {
@@ -88,40 +104,47 @@ func (d *DistributedRateLimiter) IsHitLimit(topic string, count int, maxTokenIfN
 		defer d.Unlock()
 	}
 
+	if d.isUsingLocal {
+		return d.localLimiter.IsHitLimit(topic, count, maxTokenIfNotExist)
+	}
+
 	key := d.getKeyFormatted(topic)
-	currentToken, err := d.getKeyCurrentToken(context.Background(), key)
-	if err != nil {
-		log.Errorf("unexpected error: %v", err)
+	currentToken, err := d.incrBy(context.Background(), key, count)
+	if d.onErr(err) {
 		return true
 	}
 
-	if (currentToken + int32(count)) > (maxTokenIfNotExist * int32(d.duration.Seconds())) {
+	if currentToken > (maxTokenIfNotExist * int32(d.duration.Seconds())) {
 		log.Debugf("key: %v is reaching limit", key)
 		return true
 	}
 
 	log.Debugf("current token: %v", currentToken)
-	if err := d.incrementKeyCounterBy(context.Background(), key, int64(count)); d.isLegitRedisError(err) {
-		log.Errorf("unexpected error: %v", err)
+	if int(currentToken) != count {
+		return false
+	}
+
+	log.Debugf("current token == count, means the key is newly created, set expire NX")
+	if err := d.expireNx(context.Background(), key); d.onErr(err) {
 		return true
 	}
 
 	return false
 }
 
-// Deprecated: no-op
+// Start starts the DistributedRateLimiter.localLimiter
 func (d *DistributedRateLimiter) Start() {
-	// no-op
+	d.callLocalStartFunction()
 }
 
-// Deprecated: no-op
+// Stop stops the DistributedRateLimiter.localLimiter
 func (d *DistributedRateLimiter) Stop() {
-	// no-op
+	d.callLocalStopFunction()
 }
 
-// Deprecated: no-op, always return true
+// IsStart checks whether the DistributedRateLimiter.localLimiter is started
 func (d *DistributedRateLimiter) IsStart() bool {
-	return true
+	return d.callLocalIsStartFunction()
 }
 
 // Deprecated: no-op
@@ -135,58 +158,40 @@ func (d *DistributedRateLimiter) Bucket(_ string) *LeakyBucket {
 	return nil
 }
 
-// getKeyCurrentToken returns the currentToken of the key
-// getKeyCurrentToken will query redis using GET
-// if GET query returns nil / key is unset, getKeyCurrentToken will return 0
-// otherwise return the result / error
-func (d *DistributedRateLimiter) getKeyCurrentToken(ctx context.Context, key string) (currentToken int32, err error) {
+// incrBy increments the key current token by given value using INCRBY query
+func (d *DistributedRateLimiter) incrBy(ctx context.Context, key string, value int) (int32, error) {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
-	result, err := d.db.Get(ctx, key).Result()
-
-	if err != nil {
-		// if key is unset
-		if errors.Is(err, redis.Nil) {
-			return 0, nil
-		}
-
-		// if legit error
+	token, err := d.db.IncrBy(ctx, key, int64(value)).Result()
+	if d.isLegitRedisError(err) {
 		return 0, err
 	}
 
-	if _, err := fmt.Sscanf(result, "%d", &currentToken); err != nil {
-		return 0, err
-	}
-
-	return currentToken, nil
+	return int32(token), nil
 }
 
-// incrementKeyCounterBy creates a transaction which
-// increments the key current token by given value using INCRBY query
-// if key is newly created, TTL will be set using EXPIRE query with DistributedRateLimiter.duration
-func (d *DistributedRateLimiter) incrementKeyCounterBy(ctx context.Context, topic string, value int64) error {
+// expireNx sets TTL using EXPIRE query with DistributedRateLimiter.duration
+// only if the key is newly created
+func (d *DistributedRateLimiter) expireNx(ctx context.Context, key string) error {
 	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
-	_, err := d.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
-		if err := p.IncrBy(ctx, topic, value).Err(); d.isLegitRedisError(err) {
-			return err
-		}
+	if err := d.db.ExpireNX(ctx, key, d.duration).Err(); d.isLegitRedisError(err) {
+		return err
+	}
 
-		if err := p.ExpireNX(ctx, topic, d.duration).Err(); d.isLegitRedisError(err) {
-			return err
-		}
-
-		return nil
-	})
-
-	return err
+	return nil
 }
 
 // isLegitRedisError checks whether given err is truly redis error, and not Nil returned by redis
 func (d *DistributedRateLimiter) isLegitRedisError(err error) bool {
 	return err != nil && !errors.Is(err, redis.Nil)
+}
+
+// isRedisConnectionRefused checks whether given err is due to the connection error
+func (d *DistributedRateLimiter) isRedisConnectionRefused(err error) bool {
+	return err != nil && errors.Is(err, syscall.ECONNREFUSED)
 }
 
 // getKeyFormatted returns topic prepended with DistributedRateLimiter.keyPrefix if it's not empty
@@ -196,4 +201,65 @@ func (d *DistributedRateLimiter) getKeyFormatted(topic string) string {
 	}
 
 	return topic
+}
+
+// onConnect is a hook that will be called whenever redis connection is recovered
+func (d *DistributedRateLimiter) onConnect(_ context.Context, _ *redis.Conn) error {
+	log.Debug("(re)connected to redis")
+	d.isUsingLocal = false
+	return nil
+}
+
+// onErr is a high-level error handling function
+// if given err is connection refused, DistributedRateLimiter.isUsingLocal will be set to true
+// returns true if DistributedRateLimiter.isLegitRedisError(err) is true
+func (d *DistributedRateLimiter) onErr(err error) bool {
+	if !d.isLegitRedisError(err) {
+		return false
+	}
+
+	if d.isRedisConnectionRefused(err) {
+		log.Debugf("redis disconnected, start using local limiter")
+		d.isUsingLocal = true
+	}
+
+	log.Errorf("unexpected error: %v", err)
+	return true
+}
+
+// isLocalRateLimiter checks whether DistributedRateLimiter.localLimiter is implementing RateLimiter interface
+func (d *DistributedRateLimiter) isLocalRateLimiter() (RateLimiter, bool) {
+	if d.localLimiter != nil {
+		rl, ok := d.localLimiter.(RateLimiter)
+		return rl, ok
+	}
+
+	return nil, false
+}
+
+// callLocalStartFunction calls DistributedRateLimiter.localLimiter.Start() if set
+func (d *DistributedRateLimiter) callLocalStartFunction() {
+	rl, ok := d.isLocalRateLimiter()
+	if ok {
+		rl.Start()
+	}
+}
+
+// callLocalStopFunction calls DistributedRateLimiter.localLimiter.Stop() if set
+func (d *DistributedRateLimiter) callLocalStopFunction() {
+	rl, ok := d.isLocalRateLimiter()
+	if ok {
+		rl.Stop()
+	}
+}
+
+// callLocalIsStartFunction calls DistributedRateLimiter.localLimiter.IsStart() if set
+// otherwise return true
+func (d *DistributedRateLimiter) callLocalIsStartFunction() bool {
+	rl, ok := d.isLocalRateLimiter()
+	if ok {
+		return rl.IsStart()
+	}
+
+	return true
 }
