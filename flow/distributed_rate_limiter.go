@@ -114,7 +114,7 @@ func (d *DistributedRateLimiter) IsHitLimit(topic string, count int, maxTokenIfN
 		return true
 	}
 
-	if currentToken >= (maxTokenIfNotExist * int32(d.duration.Seconds())) {
+	if currentToken > (maxTokenIfNotExist * int32(d.duration.Seconds())) {
 		log.Debugf("key: %v is reaching limit", key)
 		return true
 	}
