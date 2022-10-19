@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mailgun/gubernator/v2"
 )
@@ -23,7 +24,7 @@ func NewGubernatorRateLimiter(gubernatorInstance *gubernator.V1Instance, rateLim
 }
 
 func (g *GubernatorRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool {
-	g.gubernatorInstance.GetRateLimits(
+	resp, err := g.gubernatorInstance.GetRateLimits(
 		context.Background(),
 		&gubernator.GetRateLimitsReq{
 			Requests: []*gubernator.RateLimitReq{
@@ -37,7 +38,12 @@ func (g *GubernatorRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNo
 			},
 		},
 	)
-	return true
+	if err != nil || len(resp.Responses) == 0 {
+		fmt.Println("err", err)
+		return true
+	}
+
+	return resp.Responses[0].GetStatus() == gubernator.Status_OVER_LIMIT
 }
 
 // Deprecated: no-op
