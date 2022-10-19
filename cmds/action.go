@@ -147,7 +147,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"newEventTopic":          newTopicEventName,
 		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
 		"ignoreKafkaOptions":     ignoreKafkaOptions,
-		"guberantorInstance":     gubernatorInstance,
+		"gubernatorInstance":     gubernatorInstance,
 	}
 
 	service := flow.NewProducerService(producerParams)
