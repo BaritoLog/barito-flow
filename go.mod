@@ -11,7 +11,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
-	github.com/hashicorp/consul/api v1.13.0
+	github.com/hashicorp/consul/api v1.15.2
 	github.com/olivere/elastic v6.2.35+incompatible
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/common v0.37.0
