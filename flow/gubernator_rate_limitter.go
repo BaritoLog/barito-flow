@@ -32,7 +32,7 @@ func (g *GubernatorRateLimiter) IsHitLimit(topic string, count int, maxTokenIfNo
 					Name:      "abc",
 					UniqueKey: topic,
 					Hits:      int64(count),
-					Limit:     int64(maxTokenIfNotExist),
+					Limit:     int64(maxTokenIfNotExist * int32(g.rateLimitInterval)),
 					Duration:  gubernator.Second * int64(g.rateLimitInterval),
 				},
 			},
