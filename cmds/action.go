@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/BaritoLog/instru"
 	"github.com/Shopify/sarama"
+	"github.com/mailgun/gubernator/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -119,6 +121,19 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Producer.Flush.Frequency = 100 * time.Millisecond
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 
+	// gubernator
+	conf, err := gubernator.SetupDaemonConfig(log.StandardLogger(), "")
+	if err != nil {
+		fmt.Println("Failed to initiate gubernator config", err)
+		return err
+	}
+	gubernatorDaemon, err := gubernator.SpawnDaemon(context.Background(), conf)
+	if err != nil {
+		fmt.Println("Failed to initiate gubernator", err)
+		return err
+	}
+	gubernatorInstance := gubernatorDaemon.V1Server
+
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
 	producerParams := map[string]interface{}{
@@ -132,6 +147,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"newEventTopic":          newTopicEventName,
 		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
 		"ignoreKafkaOptions":     ignoreKafkaOptions,
+		"guberantorInstance":     gubernatorInstance,
 	}
 
 	service := flow.NewProducerService(producerParams)

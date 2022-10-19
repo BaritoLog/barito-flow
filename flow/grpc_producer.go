@@ -10,6 +10,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/mailgun/gubernator/v2"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vwidjaya/barito-proto/producer"
 	"google.golang.org/grpc"
@@ -42,6 +43,8 @@ type producerService struct {
 	grpcMaxRecvMsgSize     int
 	ignoreKafkaOptions     bool
 
+	gubernatorInstance *gubernator.V1Instance
+
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
 	limiter  RateLimiter
@@ -62,6 +65,7 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		newEventTopic:          params["newEventTopic"].(string),
 		grpcMaxRecvMsgSize:     params["grpcMaxRecvMsgSize"].(int),
 		ignoreKafkaOptions:     params["ignoreKafkaOptions"].(bool),
+		gubernatorInstance:     params["gubernatorInstance"].(*gubernator.V1Instance),
 	}
 }
 
@@ -142,7 +146,7 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
+	s.limiter = NewGubernatorRateLimiter(s.gubernatorInstance, s.rateLimitResetInterval)
 	s.limiter.Start()
 
 	lis, grpcSrv, err := s.initGrpcServer()
