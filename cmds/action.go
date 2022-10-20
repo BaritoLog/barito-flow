@@ -106,6 +106,12 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
+	rateLimiterOpt := configRateLimiterOpt()
+
+	if rateLimiterOpt == RateLimiterOptUndefined {
+		err = fmt.Errorf("undefined rate limiter options, allowed options are %v", RateLimiterAllowedOpts)
+		return
+	}
 
 	// kafka producer config
 	config := sarama.NewConfig()
@@ -120,7 +126,17 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
-	rateLimiter := flow.NewRateLimiter(rateLimitResetInterval)
+
+	var rateLimiter flow.RateLimiter
+
+	switch rateLimiterOpt {
+	case RateLimiterOptRedis:
+		// ToDo add some redis here
+	case RateLimiterOptGubernator:
+		// ToDo add some gubernator here:
+	case RateLimiterOptLocal:
+		rateLimiter = flow.NewRateLimiter(rateLimitResetInterval)
+	}
 
 	producerParams := map[string]interface{}{
 		"factory":            factory,

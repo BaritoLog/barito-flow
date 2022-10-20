@@ -46,6 +46,8 @@ const (
 
 	EnvElasticUsername = "ELASTIC_USERNAME"
 	EnvElasticPassword = "ELASTIC_PASSWORD"
+
+	EnvRateLimiterOpt = "BARITO_RATE_LIMITER_OPT"
 )
 
 var (
@@ -85,6 +87,8 @@ var (
 
 	DefaultElasticUsername = ""
 	DefaultElasticPassword = ""
+
+	DefaultRateLimiterOpt = RateLimiterOptLocal
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -224,7 +228,7 @@ func configConsumerRebalancingStrategy() string {
 }
 
 func configPrintTPS() bool {
-	return (stringEnvOrDefault(EnvPrintTPS, DefaultPrintTPS) == "true")
+	return stringEnvOrDefault(EnvPrintTPS, DefaultPrintTPS) == "true"
 }
 
 func configElasticUsername() (s string) {
@@ -233,6 +237,10 @@ func configElasticUsername() (s string) {
 
 func configElasticPassword() (s string) {
 	return stringEnvOrDefault(EnvElasticPassword, DefaultElasticPassword)
+}
+
+func configRateLimiterOpt() RateLimiterOpt {
+	return NewRateLimiterOpt(stringEnvOrDefault(EnvRateLimiterOpt, DefaultRateLimiterOpt.String()))
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {
