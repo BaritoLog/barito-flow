@@ -31,16 +31,15 @@ type ProducerService interface {
 }
 
 type producerService struct {
-	factory                KafkaFactory
-	grpcAddr               string
-	restAddr               string
-	rateLimitResetInterval int
-	topicSuffix            string
-	kafkaMaxRetry          int
-	kafkaRetryInterval     int
-	newEventTopic          string
-	grpcMaxRecvMsgSize     int
-	ignoreKafkaOptions     bool
+	factory            KafkaFactory
+	grpcAddr           string
+	restAddr           string
+	topicSuffix        string
+	kafkaMaxRetry      int
+	kafkaRetryInterval int
+	newEventTopic      string
+	grpcMaxRecvMsgSize int
+	ignoreKafkaOptions bool
 
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
@@ -52,16 +51,16 @@ type producerService struct {
 
 func NewProducerService(params map[string]interface{}) ProducerService {
 	return &producerService{
-		factory:                params["factory"].(KafkaFactory),
-		grpcAddr:               params["grpcAddr"].(string),
-		restAddr:               params["restAddr"].(string),
-		rateLimitResetInterval: params["rateLimitResetInterval"].(int),
-		topicSuffix:            params["topicSuffix"].(string),
-		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
-		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
-		newEventTopic:          params["newEventTopic"].(string),
-		grpcMaxRecvMsgSize:     params["grpcMaxRecvMsgSize"].(int),
-		ignoreKafkaOptions:     params["ignoreKafkaOptions"].(bool),
+		factory:            params["factory"].(KafkaFactory),
+		grpcAddr:           params["grpcAddr"].(string),
+		restAddr:           params["restAddr"].(string),
+		topicSuffix:        params["topicSuffix"].(string),
+		kafkaMaxRetry:      params["kafkaMaxRetry"].(int),
+		kafkaRetryInterval: params["kafkaRetryInterval"].(int),
+		newEventTopic:      params["newEventTopic"].(string),
+		grpcMaxRecvMsgSize: params["grpcMaxRecvMsgSize"].(int),
+		ignoreKafkaOptions: params["ignoreKafkaOptions"].(bool),
+		limiter:            params["limiter"].(RateLimiter),
 	}
 }
 
@@ -142,7 +141,6 @@ func (s *producerService) Start() (err error) {
 		return
 	}
 
-	s.limiter = NewRateLimiter(s.rateLimitResetInterval)
 	s.limiter.Start()
 
 	lis, grpcSrv, err := s.initGrpcServer()

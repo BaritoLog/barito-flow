@@ -120,18 +120,19 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
+	rateLimiter := flow.NewRateLimiter(rateLimitResetInterval)
 
 	producerParams := map[string]interface{}{
-		"factory":                factory,
-		"grpcAddr":               grpcAddr,
-		"restAddr":               restAddr,
-		"rateLimitResetInterval": rateLimitResetInterval,
-		"topicSuffix":            topicSuffix,
-		"kafkaMaxRetry":          kafkaMaxRetry,
-		"kafkaRetryInterval":     kafkaRetryInterval,
-		"newEventTopic":          newTopicEventName,
-		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
-		"ignoreKafkaOptions":     ignoreKafkaOptions,
+		"factory":            factory,
+		"grpcAddr":           grpcAddr,
+		"restAddr":           restAddr,
+		"topicSuffix":        topicSuffix,
+		"kafkaMaxRetry":      kafkaMaxRetry,
+		"kafkaRetryInterval": kafkaRetryInterval,
+		"newEventTopic":      newTopicEventName,
+		"grpcMaxRecvMsgSize": grpcMaxRecvMsgSize,
+		"ignoreKafkaOptions": ignoreKafkaOptions,
+		"limiter":            rateLimiter,
 	}
 
 	service := flow.NewProducerService(producerParams)
