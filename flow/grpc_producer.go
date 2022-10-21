@@ -10,6 +10,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/mailgun/gubernator/v2"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vwidjaya/barito-proto/producer"
 	"google.golang.org/grpc"
@@ -40,6 +41,8 @@ type producerService struct {
 	newEventTopic      string
 	grpcMaxRecvMsgSize int
 	ignoreKafkaOptions bool
+
+	gubernatorInstance *gubernator.V1Instance
 
 	producer sarama.SyncProducer
 	admin    KafkaAdmin

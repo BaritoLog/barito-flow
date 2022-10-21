@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/BaritoLog/instru"
 	"github.com/Shopify/sarama"
+	"github.com/mailgun/gubernator/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -124,6 +126,8 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Producer.Flush.Frequency = 100 * time.Millisecond
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 
+	// gubernator
+
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
 	var rateLimiter flow.RateLimiter
@@ -132,7 +136,10 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	case RateLimiterOptRedis:
 		// ToDo add some redis here
 	case RateLimiterOptGubernator:
-		// ToDo add some gubernator here:
+		rateLimiter, err = setupGubernatorRateLimiter(context.Background(), rateLimitResetInterval)
+		if err != nil {
+			return fmt.Errorf("failed to setup gubernator rate limiter. %w", err)
+		}
 	case RateLimiterOptLocal:
 		rateLimiter = flow.NewRateLimiter(rateLimitResetInterval)
 	}
@@ -176,4 +183,17 @@ func callbackInstrumentation() bool {
 	)
 	return true
 
+}
+
+func setupGubernatorRateLimiter(ctx context.Context, rateLimitResetInterval int) (*flow.GubernatorRateLimiter, error) {
+	conf, err := gubernator.SetupDaemonConfig(log.StandardLogger(), "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate gubernator config. %w", err)
+	}
+	daemon, err := gubernator.SpawnDaemon(ctx, conf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate gubernator. %w", err)
+	}
+
+	return flow.NewGubernatorRateLimiter(daemon.V1Server, rateLimitResetInterval), nil
 }
