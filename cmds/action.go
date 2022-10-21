@@ -109,8 +109,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	rateLimiterOpt := configRateLimiterOpt()
 
 	if rateLimiterOpt == RateLimiterOptUndefined {
-		err = fmt.Errorf("undefined rate limiter options, allowed options are %v", RateLimiterAllowedOpts)
-		return
+		return fmt.Errorf("undefined rate limiter options, allowed options are %v", RateLimiterAllowedOpts)
 	}
 
 	// kafka producer config
