@@ -127,7 +127,6 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 
 	// gubernator
-
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
 	var rateLimiter flow.RateLimiter

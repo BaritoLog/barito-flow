@@ -44,6 +44,8 @@ type producerService struct {
 
 	gubernatorInstance *gubernator.V1Instance
 
+	gubernatorInstance *gubernator.V1Instance
+
 	producer sarama.SyncProducer
 	admin    KafkaAdmin
 	limiter  RateLimiter
@@ -143,6 +145,7 @@ func (s *producerService) Start() (err error) {
 		err = errkit.Concat(ErrMakeKafkaAdmin, err)
 		return
 	}
+
 
 	s.limiter.Start()
 
