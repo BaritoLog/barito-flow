@@ -220,6 +220,7 @@ func setupRedisRateLimiter(_ context.Context,
 	return flow.NewRedisRateLimiter(redisClient,
 		flow.WithDuration(time.Duration(rateLimitResetInterval)*time.Second),
 		flow.WithKeyPrefix(redisKeyPrefix),
+		flow.WithFallbackToLocal(flow.NewRateLimiter(rateLimitResetInterval)),
 		flow.WithMutex(),
 	), nil
 }
