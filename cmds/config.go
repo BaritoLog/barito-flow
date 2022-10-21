@@ -36,6 +36,7 @@ const (
 	EnvConsulUrl               = "BARITO_CONSUL_URL"
 	EnvConsulKafkaName         = "BARITO_CONSUL_KAFKA_NAME"
 	EnvConsulElasticsearchName = "BARITO_CONSUL_ELASTICSEARCH_NAME"
+	EnvConsulRedisName         = "BARITO_CONSUL_REDIS_NAME"
 
 	EnvNewTopicEventName                    = "BARITO_NEW_TOPIC_EVENT"
 	EnvConsumerElasticsearchRetrierInterval = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_INTERVAL"
@@ -48,11 +49,15 @@ const (
 	EnvElasticPassword = "ELASTIC_PASSWORD"
 
 	EnvRateLimiterOpt = "BARITO_RATE_LIMITER_OPT"
+	EnvRedisUrl       = "BARITO_REDIS_URL"
+	EnvRedisPassword  = "BARITO_REDIS_PASSWORD"
+	EnvRedisKeyPrefix = "BARITO_REDIS_KEY_PREFIX"
 )
 
 var (
 	DefaultConsulKafkaName         = "kafka"
 	DefaultConsulElasticsearchName = "elasticsearch"
+	DefaultConsulRedisName         = "redis"
 
 	DefaultKafkaBrokers       = []string{"localhost:9092"}
 	DefaultKafkaTopicSuffix   = "_logs"
@@ -89,6 +94,9 @@ var (
 	DefaultElasticPassword = ""
 
 	DefaultRateLimiterOpt = RateLimiterOptLocal
+	DefaultRedisUrl       = "http://localhost:6379"
+	DefaultRedisPassword  = ""
+	DefaultRedisKeyPrefix = "barito:producer:ratelimit:"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -241,6 +249,37 @@ func configElasticPassword() (s string) {
 
 func configRateLimiterOpt() RateLimiterOpt {
 	return NewRateLimiterOpt(stringEnvOrDefault(EnvRateLimiterOpt, DefaultRateLimiterOpt.String()))
+}
+
+func configRedisUrl() (url string) {
+	url = stringEnvOrDefault(EnvRedisUrl, DefaultRedisUrl)
+	if strings.TrimSpace(url) != "" {
+		return
+	}
+
+	consulUrl := configConsulUrl()
+	name := configConsulRedisName()
+	urls, err := consulRedisUrl(consulUrl, name)
+
+	if err == nil {
+		logConfig("consul", EnvRedisUrl, urls)
+		return
+	}
+
+	urls = DefaultRedisUrl
+	return
+}
+
+func configRedisPassword() (s string) {
+	return stringEnvOrDefault(EnvRedisPassword, DefaultRedisPassword)
+}
+
+func configRedisKeyPrefix() (s string) {
+	return stringEnvOrDefault(EnvRedisKeyPrefix, DefaultRedisKeyPrefix)
+}
+
+func configConsulRedisName() (s string) {
+	return stringEnvOrDefault(EnvConsulRedisName, DefaultConsulRedisName)
 }
 
 func stringEnvOrDefault(key, defaultValue string) string {
