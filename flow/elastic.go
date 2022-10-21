@@ -120,7 +120,7 @@ func printThroughputPerSecond() {
 	t := time.NewTicker(1000 * time.Millisecond)
 
 	go func() {
-		for _ = range t.C {
+		for range t.C {
 			fmt.Println()
 			fmt.Println("-------------------------------------")
 			fmt.Println("PROCESSED:   ", counter)

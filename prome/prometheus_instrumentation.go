@@ -1,13 +1,13 @@
 package prome
 
 import (
+	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	log "github.com/sirupsen/logrus"
 )
 
 const (

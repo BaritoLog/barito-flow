@@ -7,7 +7,7 @@ type ELasticTestHandler struct {
 	CreateAPIStatus int
 	PostAPIStatus   int
 	ResponseBody    []byte
-	CustomHandler func(w http.ResponseWriter, r *http.Request)
+	CustomHandler   func(w http.ResponseWriter, r *http.Request)
 }
 
 func (handler *ELasticTestHandler) getResponseBody() (body []byte) {

@@ -108,6 +108,11 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
+	rateLimiterOpt := configRateLimiterOpt()
+
+	if rateLimiterOpt == RateLimiterOptUndefined {
+		return fmt.Errorf("undefined rate limiter options, allowed options are %v", RateLimiterAllowedOpts)
+	}
 
 	// kafka producer config
 	config := sarama.NewConfig()
@@ -122,32 +127,33 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 
 	// gubernator
-	conf, err := gubernator.SetupDaemonConfig(log.StandardLogger(), "")
-	if err != nil {
-		fmt.Println("Failed to initiate gubernator config", err)
-		return err
-	}
-	gubernatorDaemon, err := gubernator.SpawnDaemon(context.Background(), conf)
-	if err != nil {
-		fmt.Println("Failed to initiate gubernator", err)
-		return err
-	}
-	gubernatorInstance := gubernatorDaemon.V1Server
-
 	factory := flow.NewKafkaFactory(kafkaBrokers, config)
 
+	var rateLimiter flow.RateLimiter
+
+	switch rateLimiterOpt {
+	case RateLimiterOptRedis:
+		// ToDo add some redis here
+	case RateLimiterOptGubernator:
+		rateLimiter, err = setupGubernatorRateLimiter(context.Background(), rateLimitResetInterval)
+		if err != nil {
+			return fmt.Errorf("failed to setup gubernator rate limiter. %w", err)
+		}
+	case RateLimiterOptLocal:
+		rateLimiter = flow.NewRateLimiter(rateLimitResetInterval)
+	}
+
 	producerParams := map[string]interface{}{
-		"factory":                factory,
-		"grpcAddr":               grpcAddr,
-		"restAddr":               restAddr,
-		"rateLimitResetInterval": rateLimitResetInterval,
-		"topicSuffix":            topicSuffix,
-		"kafkaMaxRetry":          kafkaMaxRetry,
-		"kafkaRetryInterval":     kafkaRetryInterval,
-		"newEventTopic":          newTopicEventName,
-		"grpcMaxRecvMsgSize":     grpcMaxRecvMsgSize,
-		"ignoreKafkaOptions":     ignoreKafkaOptions,
-		"gubernatorInstance":     gubernatorInstance,
+		"factory":            factory,
+		"grpcAddr":           grpcAddr,
+		"restAddr":           restAddr,
+		"topicSuffix":        topicSuffix,
+		"kafkaMaxRetry":      kafkaMaxRetry,
+		"kafkaRetryInterval": kafkaRetryInterval,
+		"newEventTopic":      newTopicEventName,
+		"grpcMaxRecvMsgSize": grpcMaxRecvMsgSize,
+		"ignoreKafkaOptions": ignoreKafkaOptions,
+		"limiter":            rateLimiter,
 	}
 
 	service := flow.NewProducerService(producerParams)
@@ -176,4 +182,17 @@ func callbackInstrumentation() bool {
 	)
 	return true
 
+}
+
+func setupGubernatorRateLimiter(ctx context.Context, rateLimitResetInterval int) (*flow.GubernatorRateLimiter, error) {
+	conf, err := gubernator.SetupDaemonConfig(log.StandardLogger(), "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate gubernator config. %w", err)
+	}
+	daemon, err := gubernator.SpawnDaemon(ctx, conf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate gubernator. %w", err)
+	}
+
+	return flow.NewGubernatorRateLimiter(daemon.V1Server, rateLimitResetInterval), nil
 }
