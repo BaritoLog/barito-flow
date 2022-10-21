@@ -3,6 +3,7 @@ package cmds
 import (
 	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"time"
 
 	"github.com/BaritoLog/barito-flow/prome"
@@ -114,6 +115,10 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		return fmt.Errorf("undefined rate limiter options, allowed options are %v", RateLimiterAllowedOpts)
 	}
 
+	redisUrl := configRedisUrl()
+	redisPassword := configRedisPassword()
+	redisKeyPrefix := configRedisKeyPrefix()
+
 	// kafka producer config
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = 1
@@ -133,7 +138,11 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 
 	switch rateLimiterOpt {
 	case RateLimiterOptRedis:
-		// ToDo add some redis here
+		rateLimiter, err = setupRedisRateLimiter(context.Background(),
+			redisUrl, redisPassword, redisKeyPrefix, rateLimitResetInterval)
+		if err != nil {
+			return fmt.Errorf("failed to setup redis rate limiter. %w", err)
+		}
 	case RateLimiterOptGubernator:
 		rateLimiter, err = setupGubernatorRateLimiter(context.Background(), rateLimitResetInterval)
 		if err != nil {
@@ -195,4 +204,22 @@ func setupGubernatorRateLimiter(ctx context.Context, rateLimitResetInterval int)
 	}
 
 	return flow.NewGubernatorRateLimiter(daemon.V1Server, rateLimitResetInterval), nil
+}
+
+func setupRedisRateLimiter(_ context.Context,
+	redisUrl, redisPassword, redisKeyPrefix string, rateLimitResetInterval int) (*flow.RedisRateLimiter, error) {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisUrl,
+		Password: redisPassword,
+	})
+
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		return nil, fmt.Errorf("failed to ping redis client. %w", err)
+	}
+
+	return flow.NewRedisRateLimiter(redisClient,
+		flow.WithDuration(time.Duration(rateLimitResetInterval)*time.Second),
+		flow.WithKeyPrefix(redisKeyPrefix),
+		flow.WithMutex(),
+	), nil
 }
