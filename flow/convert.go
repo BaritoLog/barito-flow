@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	JsonParseError      = errkit.Error("JSON Parse Error")
-	ProtoParseError     = errkit.Error("Protobuf Parse Error")
-	TimberFieldsMissing = errkit.Error("Timber Field Missing Error")
+	JsonParseError       = errkit.Error("JSON Parse Error")
+	ProtoParseError      = errkit.Error("Protobuf Parse Error")
+	TimberContentMissing = errkit.Error("Timber Content Missing Error")
+	TimberFieldsMissing  = errkit.Error("Timber Field Missing Error")
 )
 
 func ConvertTimberToKafkaMessage(timber *pb.Timber, topic string) *sarama.ProducerMessage {
@@ -36,6 +37,10 @@ func ConvertKafkaMessageToTimber(message *sarama.ConsumerMessage) (timber pb.Tim
 
 func ConvertTimberToEsDocumentString(timber pb.Timber, m *jsonpb.Marshaler) (string, error) {
 	doc := timber.GetContent()
+
+	if doc == nil {
+		return "", TimberContentMissing
+	}
 
 	if doc.Fields == nil {
 		return "", TimberFieldsMissing

@@ -62,6 +62,17 @@ func TestConvertTimberToEsDocumentString(t *testing.T) {
 	FatalIf(t, expected != document, "expected %s, received %s", expected, document)
 }
 
+func TestConvertTimberToEsDocumentString_ContentIsNil(t *testing.T) {
+	timber := pb.Timber{
+		Content: nil,
+	}
+	document, err := ConvertTimberToEsDocumentString(timber, &jsonpb.Marshaler{})
+	FatalIf(t, TimberContentMissing != err, "expected %s, received %s", TimberContentMissing, document)
+
+	expected := ""
+	FatalIf(t, expected != document, "expected %s, received %s", expected, document)
+}
+
 func TestConvertTimberToEsDocumentString_FieldsIsNil(t *testing.T) {
 	timber := pb.Timber{
 		Content: &structpb.Struct{
