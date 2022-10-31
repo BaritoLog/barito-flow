@@ -7,8 +7,18 @@ import (
 	"github.com/BaritoLog/go-boilerplate/timekit"
 )
 
-type RateLimiter interface {
+type Limiter interface {
 	IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool
+}
+
+type LimiterFunc func(topic string, count int, maxTokenIfNotExist int32) bool
+
+func (fn LimiterFunc) IsHitLimit(topic string, count int, maxTokenIfNotExist int32) bool {
+	return fn(topic, count, maxTokenIfNotExist)
+}
+
+type RateLimiter interface {
+	Limiter
 	Start()
 	Stop()
 	IsStart() bool
