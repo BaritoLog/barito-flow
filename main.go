@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 
+	"net/http/pprof"
 	_ "net/http/pprof"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -69,6 +70,12 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Command not found: '%s'. Please use '%s -h' to view usage\n", command, Name)
 		},
 	}
+
+	http.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	http.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	http.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	http.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	http.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 
 	http.Handle("/metrics", promhttp.Handler())
 	exporterPort, exists := os.LookupEnv("EXPORTER_PORT")
