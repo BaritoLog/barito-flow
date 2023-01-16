@@ -244,6 +244,8 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeSyncProducerFunc_AlwaysError("some-error")
 
+	limiter := NewDummyRateLimiter()
+
 	producerParams := map[string]interface{}{
 		"factory":                factory,
 		"grpcAddr":               "grpc",
@@ -255,6 +257,7 @@ func TestProducerService_Start_ErrorMakeSyncProducer(t *testing.T) {
 		"newEventTopic":          "new_topic_events",
 		"grpcMaxRecvMsgSize":     20000000,
 		"ignoreKafkaOptions":     false,
+		"limiter":                limiter,
 	}
 
 	service := NewProducerService(producerParams)
@@ -273,6 +276,8 @@ func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_AlwaysError("some-error")
 
+	limiter := NewDummyRateLimiter()
+
 	producerParams := map[string]interface{}{
 		"factory":                factory,
 		"grpcAddr":               "grpc",
@@ -284,6 +289,7 @@ func TestProducerService_Start_ErrorMakeKafkaAdmin(t *testing.T) {
 		"newEventTopic":          "new_topic_events",
 		"grpcMaxRecvMsgSize":     20000000,
 		"ignoreKafkaOptions":     false,
+		"limiter":                limiter,
 	}
 
 	service := NewProducerService(producerParams)
@@ -299,11 +305,14 @@ func TestProducerService_Start(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeKafkaAdmin_ProducerServiceSuccess(ctrl, []string{})
 
+	limiter := NewDummyRateLimiter()
+
 	service := &producerService{
 		factory:       factory,
 		grpcAddr:      ":24400",
 		topicSuffix:   "_logs",
 		newEventTopic: "new_topic_event",
+		limiter:       limiter,
 	}
 
 	var err error
