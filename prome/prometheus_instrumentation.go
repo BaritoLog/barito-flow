@@ -1,13 +1,16 @@
 package prome
 
 import (
-	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (
@@ -24,6 +27,7 @@ var producerKafkaMessageStoredTotal *prometheus.CounterVec
 var producerTPSExceededCounter *prometheus.CounterVec
 var producerSendToKafkaTimeSecond *prometheus.SummaryVec
 var producerKafkaClientFailed *prometheus.CounterVec
+var producerTotalLogBytesIngested *prometheus.CounterVec
 
 var indexDatePattern *regexp.Regexp = regexp.MustCompile(`-\d{4}\.\d{2}\.\d{2}$`)
 
@@ -82,10 +86,21 @@ func InitProducerInstrumentation() {
 		Help:       "Send to Kafka time in second",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, []string{"topic"})
+	producerTotalLogBytesIngested = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_producer_produced_total_log_bytes",
+		Help: "Total log bytes being ingested by the producer",
+	}, []string{"app_name"})
 }
 
 func IncreaseConsumerTimberConvertError(index string) {
 	consumerTimberConvertError.WithLabelValues(index).Inc()
+}
+
+func ObserveByteIngestion(topic string, suffix string, timber *pb.Timber) {
+	re := regexp.MustCompile(suffix + "$")
+	appName := re.ReplaceAllString(topic, "")
+	b, _ := proto.Marshal(timber)
+	producerTotalLogBytesIngested.WithLabelValues(appName).Add(float64(len(b)))
 }
 
 func IncreaseLogStoredCounter(index string, result string, status int, errorMessage string) {

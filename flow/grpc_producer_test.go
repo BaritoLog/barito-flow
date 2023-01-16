@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,6 +14,7 @@ import (
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
@@ -314,6 +316,102 @@ func TestProducerService_Start(t *testing.T) {
 
 	timekit.Sleep("1ms")
 	FatalIf(t, !service.limiter.IsStart(), "rate limiter must be start")
+}
+
+func TestProducerService_Produce_OnByteIngested(t *testing.T) {
+	resetPrometheusMetrics()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	admin := mock.NewMockKafkaAdmin(ctrl)
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+
+	producer := mock.NewMockSyncProducer(ctrl)
+	producer.EXPECT().SendMessage(gomock.Any()).AnyTimes()
+
+	limiter := NewDummyRateLimiter()
+
+	srv := &producerService{
+		producer:           producer,
+		topicSuffix:        "_logs",
+		admin:              admin,
+		limiter:            limiter,
+		kafkaMaxRetry:      5,
+		kafkaRetryInterval: 10,
+	}
+
+	sampleTimber := pb.SampleTimberProto()
+	sampleTimber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+
+	resp, err := srv.Produce(nil, sampleTimber)
+	FatalIfError(t, err)
+	FatalIf(t, resp.GetTopic() != "some_topic_logs", "wrong result.Topic")
+
+	expectedByte, _ := proto.Marshal(sampleTimber)
+	expectedByteSize := float64(len(expectedByte))
+
+	expected := fmt.Sprintf(`
+		# HELP barito_producer_produced_total_log_bytes Total log bytes being ingested by the producer
+		# TYPE barito_producer_produced_total_log_bytes counter
+		barito_producer_produced_total_log_bytes{app_name="some_topic"} %f
+	`, expectedByteSize)
+
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_produced_total_log_bytes"))
+}
+
+func TestProducerService_ProduceBatch_OnByteIngested(t *testing.T) {
+	resetPrometheusMetrics()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	admin := mock.NewMockKafkaAdmin(ctrl)
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+	admin.EXPECT().Exist(gomock.Any()).Return(false)
+	admin.EXPECT().CreateTopic(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+	admin.EXPECT().AddTopic(gomock.Any())
+
+	producer := mock.NewMockSyncProducer(ctrl)
+	producer.EXPECT().SendMessage(gomock.Any()).AnyTimes()
+
+	limiter := NewDummyRateLimiter()
+
+	srv := &producerService{
+		producer:    producer,
+		topicSuffix: "_logs",
+		admin:       admin,
+		limiter:     limiter,
+	}
+
+	sampleTimberCollection := pb.SampleTimberCollectionProto()
+	var expectedByteSize float64
+
+	for _, sampleTimber := range sampleTimberCollection.GetItems() {
+		sampleTimber.Context = sampleTimberCollection.GetContext()
+		sampleTimber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+		expectedByte, _ := proto.Marshal(sampleTimber)
+		expectedByteSize += float64(len(expectedByte))
+	}
+
+	resp, err := srv.ProduceBatch(nil, sampleTimberCollection)
+	FatalIfError(t, err)
+	FatalIf(t, resp.GetTopic() != "some_topic_logs", "wrong result.Topic")
+
+	expected := fmt.Sprintf(`
+		# HELP barito_producer_produced_total_log_bytes Total log bytes being ingested by the producer
+		# TYPE barito_producer_produced_total_log_bytes counter
+		barito_producer_produced_total_log_bytes{app_name="some_topic"} %f
+	`, expectedByteSize)
+
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_produced_total_log_bytes"))
 }
 
 func FatalIfWrongGrpcError(t *testing.T, expected error, actual error) {
