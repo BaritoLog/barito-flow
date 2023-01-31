@@ -10,7 +10,6 @@ import (
 
 const (
 	RetrieveMessageFailedError  = errkit.Error("Retrieve message failed")
-	TimberConvertErrorIndexName = "no_index"
 )
 
 type ConsumerWorker interface {
