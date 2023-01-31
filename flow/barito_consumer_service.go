@@ -28,6 +28,7 @@ const (
 	ErrHaltWorker            = errkit.Error("Consumer Worker Halted")
 
 	PrefixEventGroupID = "nte"
+	TimberConvertErrorIndexName = "no_index"
 )
 
 type BaritoConsumerService interface {
@@ -116,6 +117,8 @@ func (s *baritoConsumerService) Start() (err error) {
 			err := s.spawnLogsWorker(topic, sarama.OffsetNewest)
 			if err != nil {
 				s.logError(errkit.Concat(ErrSpawnWorker, err))
+				prome.IncreaseConsumerTimberConvertError(TimberConvertErrorIndexName)
+				worker.Stop()
 			}
 		}
 	}

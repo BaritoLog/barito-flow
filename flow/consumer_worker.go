@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	RetrieveMessageFailedError = errkit.Error("Retrieve message failed")
+	RetrieveMessageFailedError  = errkit.Error("Retrieve message failed")
+	TimberConvertErrorIndexName = "no_index"
 )
 
 type ConsumerWorker interface {
@@ -92,6 +93,10 @@ func (w *consumerWorker) loopMain() {
 				w.consumer.MarkOffset(message, "")
 				w.fireSuccess(message)
 				log.Infof("Mark Offset, %v", message)
+			} else {
+				prome.IncreaseConsumerTimberConvertError(TimberConvertErrorIndexName)
+				log.Warnf("failed to receive incoming message")
+				w.Stop()
 			}
 		case <-w.stop:
 			w.isStart = false
