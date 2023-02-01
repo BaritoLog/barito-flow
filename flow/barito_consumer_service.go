@@ -107,6 +107,8 @@ func (s *baritoConsumerService) Start() (err error) {
 	worker, err := s.initNewTopicWorker(s.eventWorkerGroupID)
 	if err != nil {
 		err = errkit.Concat(ErrMakeNewTopicWorker, err)
+		s.logError(err)
+		prome.IncreaseConsumerTimberConvertError(TimberConvertErrorIndexName)
 		return
 	}
 
@@ -117,6 +119,8 @@ func (s *baritoConsumerService) Start() (err error) {
 			err := s.spawnLogsWorker(topic, sarama.OffsetNewest)
 			if err != nil {
 				s.logError(errkit.Concat(ErrSpawnWorker, err))
+				prome.IncreaseConsumerTimberConvertError(topic + "_" + ErrSpawnWorker.Error())
+				s.Close()
 			}
 		}
 	}
@@ -182,11 +186,9 @@ func (s baritoConsumerService) Close() {
 }
 
 func (s *baritoConsumerService) spawnLogsWorker(topic string, initialOffset int64) (err error) {
-
 	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic, initialOffset)
 	if err != nil {
-		err = errkit.Concat(ErrConsumerWorker, err)
-		return
+		return errkit.Concat(ErrConsumerWorker, err)
 	}
 
 	worker := NewConsumerWorker(topic, consumer)
@@ -253,8 +255,9 @@ func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage)
 	err := s.spawnLogsWorker(topic, sarama.OffsetOldest)
 
 	if err != nil {
-		s.logError(errkit.Concat(ErrSpawnWorkerOnNewTopic, err))
-		prome.IncreaseConsumerTimberConvertError(topic)
+		err = errkit.Concat(ErrSpawnWorkerOnNewTopic, err)
+		s.logError(err)
+		prome.IncreaseConsumerTimberConvertError(topic + "_" + ErrSpawnWorkerOnNewTopic.Error())
 		s.Close()
 		return
 	}
