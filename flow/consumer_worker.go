@@ -93,7 +93,7 @@ func (w *consumerWorker) loopMain() {
 				w.fireSuccess(message)
 				log.Infof("Mark Offset, %v", message)
 			} else {
-				prome.IncreaseConsumerTimberConvertError(TimberConvertErrorIndexName)
+				prome.IncreaseConsumerTimberConvertError(TimberConvertErrorIndexName + "_" + "loopMain")
 				log.Warnf("failed to receive incoming message")
 				w.Stop()
 			}
