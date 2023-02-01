@@ -117,8 +117,6 @@ func (s *baritoConsumerService) Start() (err error) {
 			err := s.spawnLogsWorker(topic, sarama.OffsetNewest)
 			if err != nil {
 				s.logError(errkit.Concat(ErrSpawnWorker, err))
-				prome.IncreaseConsumerTimberConvertError(TimberConvertErrorIndexName + "_" + topic)
-				worker.Stop()
 			}
 		}
 	}
@@ -256,6 +254,7 @@ func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage)
 
 	if err != nil {
 		s.logError(errkit.Concat(ErrSpawnWorkerOnNewTopic, err))
+		prome.IncreaseConsumerTimberConvertError(topic)
 		return
 	}
 
