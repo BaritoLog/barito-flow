@@ -255,6 +255,7 @@ func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage)
 	if err != nil {
 		s.logError(errkit.Concat(ErrSpawnWorkerOnNewTopic, err))
 		prome.IncreaseConsumerTimberConvertError(topic)
+		s.Close()
 		return
 	}
 
