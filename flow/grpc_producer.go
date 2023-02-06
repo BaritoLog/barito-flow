@@ -302,6 +302,7 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 		prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "send_log")
 		return
 	}
+	prome.ObserveByteIngestion(topic, s.topicSuffix, timber)
 
 	prome.IncreaseKafkaMessagesStoredTotal(topic)
 	return
