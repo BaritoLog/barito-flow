@@ -42,6 +42,9 @@ const (
 	EnvConsumerElasticsearchRetrierInterval = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_INTERVAL"
 	EnvConsumerElasticsearchRetrierMaxRetry = "BARITO_CONSUMER_ELASTICSEARCH_RETRIER_MAX_RETRY"
 	EnvConsumerRebalancingStrategy          = "BARITO_CONSUMER_REBALANCING_STRATEGY"
+	EnvConsumerGroupSessionTimeout          = "BARITO_CONSUMER_GROUP_SESSION_TIMEOUT"
+	EnvConsumerGroupHeartbeatInterval       = "BARITO_CONSUMER_GROUP_HEARTBEAT_INTERVAL"
+	EnvConsumerMaxProcessingTime            = "BARITO_CONSUMER_MAX_PROCESSING_TIME"
 
 	EnvPrintTPS = "BARITO_PRINT_TPS"
 
@@ -80,13 +83,16 @@ var (
 	DefaultProducerRateLimitResetInterval = 10
 	DefaultProducerIgnoreKafkaOptions     = "false"
 
-	DefaultNewTopicEventName            = "new_topic_events"
-	DefaultElasticsearchRetrierInterval = "30s"
-	DefaultElasticsearchRetrierMaxRetry = 10
-	DefaultConsumerRebalancingStrategy  = "RoundRobin"
-	DefaultEsIndexMethod                = "BulkProcessor"
-	DefaultEsBulkSize                   = 100
-	DefaultEsFlushIntervalMs            = 500
+	DefaultNewTopicEventName              = "new_topic_events"
+	DefaultElasticsearchRetrierInterval   = "30s"
+	DefaultElasticsearchRetrierMaxRetry   = 10
+	DefaultConsumerRebalancingStrategy    = "RoundRobin"
+	DefaultEsIndexMethod                  = "BulkProcessor"
+	DefaultEsBulkSize                     = 100
+	DefaultEsFlushIntervalMs              = 500
+	DefaultConsumerGroupSessionTimeout    = 20
+	DefaultConsumerGroupHeartbeatInterval = 6
+	DefaultConsumerMaxProcessingTime      = 500
 
 	DefaultPrintTPS = "false"
 
@@ -233,6 +239,18 @@ func configElasticsearchRetrierMaxRetry() int {
 
 func configConsumerRebalancingStrategy() string {
 	return stringEnvOrDefault(EnvConsumerRebalancingStrategy, DefaultConsumerRebalancingStrategy)
+}
+
+func configConsumerGroupSessionTimeout() int {
+	return intEnvOrDefault(EnvConsumerGroupSessionTimeout, DefaultConsumerGroupSessionTimeout)
+}
+
+func configConsumerGroupHeartbeatInterval() int {
+	return intEnvOrDefault(EnvConsumerGroupHeartbeatInterval, DefaultConsumerGroupHeartbeatInterval)
+}
+
+func configConsumerMaxProcessingTime() int {
+	return intEnvOrDefault(EnvConsumerMaxProcessingTime, DefaultConsumerMaxProcessingTime)
 }
 
 func configPrintTPS() bool {

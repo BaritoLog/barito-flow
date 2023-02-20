@@ -131,3 +131,27 @@ func TestGetConsumerElasticsearchRetrierInterval(t *testing.T) {
 	defer os.Clearenv()
 	FatalIf(t, configElasticsearchRetrierInterval() != "30s", "should get from env variable")
 }
+
+func TestConfigConsumerGroupSessionTimeout(t *testing.T) {
+	FatalIf(t, configConsumerGroupSessionTimeout() != DefaultConsumerGroupSessionTimeout, "should return default ")
+
+	os.Setenv(EnvConsumerGroupSessionTimeout, "100")
+	defer os.Clearenv()
+	FatalIf(t, configConsumerGroupSessionTimeout() != 100, "should get from env variable")
+}
+
+func TestConfigConsumerGroupHeartbeatInterval(t *testing.T) {
+	FatalIf(t, configConsumerGroupHeartbeatInterval() != DefaultConsumerGroupHeartbeatInterval, "should return default ")
+
+	os.Setenv(EnvConsumerGroupHeartbeatInterval, "30")
+	defer os.Clearenv()
+	FatalIf(t, configConsumerGroupHeartbeatInterval() != 30, "should get from env variable")
+}
+
+func TestConfigConsumerMaxProcessingTime(t *testing.T) {
+	FatalIf(t, configConsumerMaxProcessingTime() != DefaultConsumerMaxProcessingTime, "should return default ")
+
+	os.Setenv(EnvConsumerMaxProcessingTime, "600")
+	defer os.Clearenv()
+	FatalIf(t, configConsumerMaxProcessingTime() != 600, "should get from env variable")
+}
