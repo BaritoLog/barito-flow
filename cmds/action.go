@@ -3,8 +3,9 @@ package cmds
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 
 	"github.com/BaritoLog/barito-flow/prome"
 
@@ -46,6 +47,9 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	config := sarama.NewConfig()
 	config.Consumer.Offsets.CommitInterval = time.Second
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
+	config.Consumer.Group.Session.Timeout = time.Duration(configConsumerGroupSessionTimeout()) * time.Second
+	config.Consumer.Group.Heartbeat.Interval = time.Duration(configConsumerGroupHeartbeatInterval()) * time.Second
+	config.Consumer.MaxProcessingTime = time.Duration(configConsumerMaxProcessingTime()) * time.Millisecond
 	if configConsumerRebalancingStrategy() == "RoundRobin" {
 		config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
 	} else if configConsumerRebalancingStrategy() == "Range" {
