@@ -1,6 +1,7 @@
 package prome
 
 import (
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -101,7 +102,7 @@ func ObserveByteIngestion(topic string, suffix string, timber *pb.Timber) {
 	re := regexp.MustCompile(suffix + "$")
 	appName := re.ReplaceAllString(topic, "")
 	b, _ := proto.Marshal(timber)
-	producerTotalLogBytesIngested.WithLabelValues(appName).Add(float64(len(b)))
+	producerTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(b))))
 }
 
 func IncreaseLogStoredCounter(index string, result string, status int, errorMessage string) {
