@@ -206,6 +206,9 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
 		prome.IncreaseProducerTPSExceededCounter(topic, 1)
+
+		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+		prome.ObserveTPSExceededBytes(topic, s.topicSuffix, timber)
 		return
 	}
 
@@ -229,6 +232,12 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 	if s.limiter.IsHitLimit(topic, lengthMessages, maxTokenIfNotExist) {
 		err = onLimitExceededGrpc()
 		prome.IncreaseProducerTPSExceededCounter(topic, lengthMessages)
+
+		for _, timber := range timberCollection.GetItems() {
+			timber.Context = timberCollection.GetContext()
+			timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+			prome.ObserveTPSExceededBytes(topic, s.topicSuffix, timber)
+		}
 		return
 	}
 
