@@ -423,6 +423,84 @@ func TestProducerService_ProduceBatch_OnByteIngested(t *testing.T) {
 	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_produced_total_log_bytes"))
 }
 
+func TestProducerService_Produce_TPSExceededBytes(t *testing.T) {
+	resetPrometheusMetrics()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	admin := mock.NewMockKafkaAdmin(ctrl)
+	producer := mock.NewMockSyncProducer(ctrl)
+
+	limiter := NewDummyRateLimiter()
+	limiter.Expect_IsHitLimit_AlwaysTrue()
+
+	srv := &producerService{
+		producer:           producer,
+		topicSuffix:        "_logs",
+		admin:              admin,
+		limiter:            limiter,
+	}
+
+	sampleTimber := pb.SampleTimberProto()
+	sampleTimber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+
+	_, err := srv.Produce(nil, sampleTimber)
+	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
+
+	expectedByte, _ := proto.Marshal(sampleTimber)
+	expectedByteSize := float64(len(expectedByte))
+
+	expected := fmt.Sprintf(`
+		# HELP barito_producer_tps_exceeded_log_bytes Log bytes of TPS exceeded requests
+		# TYPE barito_producer_tps_exceeded_log_bytes counter
+		barito_producer_tps_exceeded_log_bytes{app_name="some_topic"} %f
+	`, expectedByteSize)
+
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_tps_exceeded_log_bytes"))
+}
+
+func TestProducerService_ProduceBatch_TPSExceededBytes(t *testing.T) {
+	resetPrometheusMetrics()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	admin := mock.NewMockKafkaAdmin(ctrl)
+	producer := mock.NewMockSyncProducer(ctrl)
+
+	limiter := NewDummyRateLimiter()
+	limiter.Expect_IsHitLimit_AlwaysTrue()
+
+	srv := &producerService{
+		producer:    producer,
+		topicSuffix: "_logs",
+		admin:       admin,
+		limiter:     limiter,
+	}
+
+	sampleTimberCollection := pb.SampleTimberCollectionProto()
+	var expectedByteSize float64
+
+	for _, sampleTimber := range sampleTimberCollection.GetItems() {
+		sampleTimber.Context = sampleTimberCollection.GetContext()
+		sampleTimber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+		expectedByte, _ := proto.Marshal(sampleTimber)
+		expectedByteSize += float64(len(expectedByte))
+	}
+
+	_, err := srv.ProduceBatch(nil, sampleTimberCollection)
+	FatalIfWrongGrpcError(t, onLimitExceededGrpc(), err)
+
+	expected := fmt.Sprintf(`
+		# HELP barito_producer_tps_exceeded_log_bytes Log bytes of TPS exceeded requests
+		# TYPE barito_producer_tps_exceeded_log_bytes counter
+		barito_producer_tps_exceeded_log_bytes{app_name="some_topic"} %f
+	`, expectedByteSize)
+
+	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_tps_exceeded_log_bytes"))
+}
+
 func FatalIfWrongGrpcError(t *testing.T, expected error, actual error) {
 	expFields := strings.Fields(expected.Error())[:5]
 	expStr := strings.Join(expFields, " ")

@@ -29,6 +29,7 @@ var producerTPSExceededCounter *prometheus.CounterVec
 var producerSendToKafkaTimeSecond *prometheus.SummaryVec
 var producerKafkaClientFailed *prometheus.CounterVec
 var producerTotalLogBytesIngested *prometheus.CounterVec
+var producerTPSExceededLogBytes *prometheus.CounterVec
 
 var indexDatePattern *regexp.Regexp = regexp.MustCompile(`-\d{4}\.\d{2}\.\d{2}$`)
 
@@ -92,6 +93,10 @@ func InitProducerInstrumentation() {
 		Name: "barito_producer_produced_total_log_bytes",
 		Help: "Total log bytes being ingested by the producer",
 	}, []string{"app_name"})
+	producerTPSExceededLogBytes = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_producer_tps_exceeded_log_bytes",
+		Help: "Log bytes of TPS exceeded requests",
+	}, []string{"app_name"})
 }
 
 func IncreaseConsumerTimberConvertError(index string) {
@@ -103,6 +108,13 @@ func ObserveByteIngestion(topic string, suffix string, timber *pb.Timber) {
 	appName := re.ReplaceAllString(topic, "")
 	b, _ := proto.Marshal(timber)
 	producerTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(b))))
+}
+
+func ObserveTPSExceededBytes(topic string, suffix string, timber *pb.Timber) {
+	re := regexp.MustCompile(suffix + "$")
+	appName := re.ReplaceAllString(topic, "")
+	b, _ := proto.Marshal(timber)
+	producerTPSExceededLogBytes.WithLabelValues(appName).Add(math.Round(float64(len(b))))
 }
 
 func IncreaseLogStoredCounter(index string, result string, status int, errorMessage string) {
