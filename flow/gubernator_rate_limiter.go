@@ -10,14 +10,16 @@ import (
 // GubernatorRateLimiter is a RateLimiter implementation
 // which depends on Redis as a remote storage
 type GubernatorRateLimiter struct {
+	gubernatorDaemon   *gubernator.Daemon
 	gubernatorInstance *gubernator.V1Instance
 	rateLimitInterval  int
 }
 
 // NewGubernatorRateLimiter creates *GubernatorRateLimiter
-func NewGubernatorRateLimiter(gubernatorInstance *gubernator.V1Instance, rateLimitInterval int) *GubernatorRateLimiter {
+func NewGubernatorRateLimiter(gubernatorDaemon *gubernator.Daemon, rateLimitInterval int) *GubernatorRateLimiter {
 	g := &GubernatorRateLimiter{
-		gubernatorInstance: gubernatorInstance,
+		gubernatorDaemon:   gubernatorDaemon,
+		gubernatorInstance: gubernatorDaemon.V1Server,
 		rateLimitInterval:  rateLimitInterval,
 	}
 	return g
@@ -51,9 +53,8 @@ func (d *GubernatorRateLimiter) Start() {
 	// no-op
 }
 
-// Deprecated: no-op
 func (d *GubernatorRateLimiter) Stop() {
-	// no-op
+	d.gubernatorDaemon.Close()
 }
 
 // Deprecated: no-op, always return true
