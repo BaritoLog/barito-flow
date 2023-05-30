@@ -207,7 +207,7 @@ func setupGubernatorRateLimiter(ctx context.Context, rateLimitResetInterval int)
 		return nil, fmt.Errorf("failed to initiate gubernator. %w", err)
 	}
 
-	return flow.NewGubernatorRateLimiter(daemon.V1Server, rateLimitResetInterval), nil
+	return flow.NewGubernatorRateLimiter(daemon, rateLimitResetInterval), nil
 }
 
 func setupRedisRateLimiter(_ context.Context,
