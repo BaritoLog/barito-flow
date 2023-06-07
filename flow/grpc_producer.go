@@ -13,6 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vwidjaya/barito-proto/producer"
 	"google.golang.org/grpc"
+
+	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 const (
