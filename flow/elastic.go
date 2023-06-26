@@ -60,6 +60,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		elastic.SetHealthcheck(false),
 		elastic.SetRetrier(retrierFunc),
 		elastic.SetBasicAuth(elasticUsername, elasticPassword),
+		elastic.SetGzip(true),
 	)
 
 	if err != nil {
