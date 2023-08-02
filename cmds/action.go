@@ -31,6 +31,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	brokers := configKafkaBrokers()
 	groupID := configKafkaGroupId()
 	esUrls := configElasticsearchUrls()
+	topicPrefix := configKafkaTopicPrefix()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
 	kafkaRetryInterval := configKafkaRetryInterval()
@@ -69,6 +70,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"factory":                factory,
 		"groupID":                groupID,
 		"elasticUrls":            esUrls,
+		"topicPrefix":            topicPrefix,
 		"topicSuffix":            topicSuffix,
 		"kafkaMaxRetry":          kafkaMaxRetry,
 		"kafkaRetryInterval":     kafkaRetryInterval,
@@ -108,6 +110,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	maxRetry := configProducerMaxRetry()
 	rateLimitResetInterval := configProducerRateLimitResetInterval()
 	ignoreKafkaOptions := configProducerIgnoreKafkaOptions()
+	topicPrefix := configKafkaTopicPrefix()
 	topicSuffix := configKafkaTopicSuffix()
 	kafkaMaxRetry := configKafkaMaxRetry()
 	kafkaRetryInterval := configKafkaRetryInterval()
@@ -160,6 +163,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"factory":            factory,
 		"grpcAddr":           grpcAddr,
 		"restAddr":           restAddr,
+		"topicPrefix":        topicPrefix,
 		"topicSuffix":        topicSuffix,
 		"kafkaMaxRetry":      kafkaMaxRetry,
 		"kafkaRetryInterval": kafkaRetryInterval,
