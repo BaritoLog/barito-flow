@@ -11,6 +11,7 @@ import (
 const (
 	EnvKafkaBrokers       = "BARITO_KAFKA_BROKERS"
 	EnvKafkaGroupID       = "BARITO_KAFKA_GROUP_ID"
+	EnvKafkaTopicPrefix   = "BARITO_KAFKA_TOPIC_PREFIX"
 	EnvKafkaTopicSuffix   = "BARITO_KAFKA_TOPIC_SUFFIX"
 	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
 	EnvKafkaRetryInterval = "BARITO_KAFKA_RETRY_INTERVAL"
@@ -63,6 +64,7 @@ var (
 	DefaultConsulRedisName         = "redis"
 
 	DefaultKafkaBrokers       = []string{"localhost:9092"}
+	DefaultKafkaTopicPrefix   = ""
 	DefaultKafkaTopicSuffix   = "_logs"
 	DefaultKafkaGroupID       = "barito-group"
 	DefaultKafkaMaxRetry      = 0
@@ -222,6 +224,10 @@ func configConsulUrl() (s string) {
 
 func configKafkaTopicSuffix() string {
 	return stringEnvOrDefault(EnvKafkaTopicSuffix, DefaultKafkaTopicSuffix)
+}
+
+func configKafkaTopicPrefix() string {
+	return stringEnvOrDefault(EnvKafkaTopicPrefix, DefaultKafkaTopicPrefix)
 }
 
 func configNewTopicEvent() string {

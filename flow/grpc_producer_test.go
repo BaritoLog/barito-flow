@@ -91,6 +91,7 @@ func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
 
 	srv := &producerService{
 		producer:    producer,
+		topicPrefix: "prefix_",
 		topicSuffix: "_logs",
 		admin:       admin,
 		limiter:     limiter,
@@ -102,7 +103,7 @@ func TestProducerService_Produce_OnCreateTopicError(t *testing.T) {
 	expected := `
 		# HELP barito_producer_kafka_message_stored_total Number of message stored to kafka
 		# TYPE barito_producer_kafka_message_stored_total counter
-		barito_producer_kafka_message_stored_total{error_type="create_topic",topic="some_topic_logs"} 1
+		barito_producer_kafka_message_stored_total{error_type="create_topic",topic="prefix_some_topic_logs"} 1
 	`
 	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_kafka_message_stored_total"))
 }
@@ -159,6 +160,7 @@ func TestProducerService_Produce_OnSuccess(t *testing.T) {
 
 	srv := &producerService{
 		producer:           producer,
+		topicPrefix:        "prefix_",
 		topicSuffix:        "_logs",
 		admin:              admin,
 		limiter:            limiter,
@@ -173,7 +175,7 @@ func TestProducerService_Produce_OnSuccess(t *testing.T) {
 	expected := `
 		# HELP barito_producer_kafka_message_stored_total Number of message stored to kafka
 		# TYPE barito_producer_kafka_message_stored_total counter
-		barito_producer_kafka_message_stored_total{error_type="",topic="some_topic_logs"} 1
+		barito_producer_kafka_message_stored_total{error_type="",topic="prefix_some_topic_logs"} 1
 	`
 	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_producer_kafka_message_stored_total"))
 }
@@ -197,6 +199,7 @@ func TestProducerService_Produce_IgnoreKafkaOptions(t *testing.T) {
 
 	srv := &producerService{
 		producer:           producer,
+		topicPrefix:        "prefix_",
 		topicSuffix:        "_logs",
 		admin:              admin,
 		limiter:            limiter,
@@ -436,10 +439,10 @@ func TestProducerService_Produce_TPSExceededBytes(t *testing.T) {
 	limiter.Expect_IsHitLimit_AlwaysTrue()
 
 	srv := &producerService{
-		producer:           producer,
-		topicSuffix:        "_logs",
-		admin:              admin,
-		limiter:            limiter,
+		producer:    producer,
+		topicSuffix: "_logs",
+		admin:       admin,
+		limiter:     limiter,
 	}
 
 	sampleTimber := pb.SampleTimberProto()
