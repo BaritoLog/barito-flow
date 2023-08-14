@@ -11,6 +11,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	import _ "net/http/pprof"
 )
 
 const (
