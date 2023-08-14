@@ -10,8 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 
+	_ "net/http/pprof"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	import _ "net/http/pprof"
 )
 
 const (
