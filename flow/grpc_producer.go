@@ -36,6 +36,7 @@ type producerService struct {
 	factory            KafkaFactory
 	grpcAddr           string
 	restAddr           string
+	topicPrefix        string
 	topicSuffix        string
 	kafkaMaxRetry      int
 	kafkaRetryInterval int
@@ -56,6 +57,7 @@ func NewProducerService(params map[string]interface{}) ProducerService {
 		factory:            params["factory"].(KafkaFactory),
 		grpcAddr:           params["grpcAddr"].(string),
 		restAddr:           params["restAddr"].(string),
+		topicPrefix:        params["topicPrefix"].(string),
 		topicSuffix:        params["topicSuffix"].(string),
 		kafkaMaxRetry:      params["kafkaMaxRetry"].(int),
 		kafkaRetryInterval: params["kafkaRetryInterval"].(int),
@@ -202,7 +204,7 @@ func (s *producerService) Close() {
 }
 
 func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *pb.ProduceResult, err error) {
-	topic := timber.GetContext().GetKafkaTopic() + s.topicSuffix
+	topic := s.topicPrefix + timber.GetContext().GetKafkaTopic() + s.topicSuffix
 
 	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
 	if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
@@ -227,7 +229,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 }
 
 func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
-	topic := timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
+	topic := s.topicPrefix + timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
 
 	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
 	lengthMessages := len(timberCollection.GetItems())

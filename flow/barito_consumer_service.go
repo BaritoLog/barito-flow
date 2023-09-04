@@ -27,7 +27,7 @@ const (
 	ErrSpawnWorker           = errkit.Error("Span worker failed")
 	ErrHaltWorker            = errkit.Error("Consumer Worker Halted")
 
-	PrefixEventGroupID = "nte"
+	PrefixEventGroupID          = "nte"
 	TimberConvertErrorIndexName = "no_index"
 )
 
@@ -43,6 +43,7 @@ type baritoConsumerService struct {
 	groupID            string
 	elasticUrls        []string
 	esClient           *elasticClient
+	topicPrefix        string
 	topicSuffix        string
 	kafkaMaxRetry      int
 	kafkaRetryInterval int
@@ -69,6 +70,7 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		factory:                params["factory"].(KafkaFactory),
 		groupID:                params["groupID"].(string),
 		elasticUrls:            params["elasticUrls"].([]string),
+		topicPrefix:            params["topicPrefix"].(string),
 		topicSuffix:            params["topicSuffix"].(string),
 		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
 		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
@@ -115,7 +117,7 @@ func (s *baritoConsumerService) Start() (err error) {
 	worker.Start()
 
 	for _, topic := range admin.Topics() {
-		if strings.HasSuffix(topic, s.topicSuffix) {
+		if strings.HasPrefix(topic, s.topicPrefix) && strings.HasSuffix(topic, s.topicSuffix) {
 			err := s.spawnLogsWorker(topic, sarama.OffsetNewest)
 			if err != nil {
 				s.logError(errkit.Concat(ErrSpawnWorker, err))
@@ -249,6 +251,10 @@ func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage)
 
 	_, ok := s.workerMap[topic]
 	if ok {
+		return
+	}
+
+	if !strings.HasPrefix(topic, s.topicPrefix) {
 		return
 	}
 
