@@ -1,10 +1,10 @@
 package flow
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 	"time"
 
@@ -50,15 +50,16 @@ type GCS struct {
 	flushMaxTime  time.Duration
 
 	// TODO: use file
-	buffer      *bytes.Buffer
+	buffer      io.ReadWriteCloser
 	onFlushFunc []func() error
 
 	uploadFunc func() error
 
-	logger *log.Logger
-	mu     sync.Mutex
-	isStop bool
-	clock  Clock
+	logger       *log.Logger
+	mu           sync.Mutex
+	isStop       bool
+	clock        Clock
+	bytesCounter int
 }
 
 func NewGCSFromEnv(name string) *GCS {
@@ -76,10 +77,17 @@ func NewGCSFromEnv(name string) *GCS {
 	)
 
 	if err != nil {
+		// TODO: should not panic
 		panic(err)
 	}
 
 	logger.Info("Created GCS client")
+
+	buffer, err := NewFileBuffer(name)
+	if err != nil {
+		// TODO: should not panic
+		panic(err)
+	}
 
 	g := &GCS{
 		name:          name,
@@ -92,7 +100,7 @@ func NewGCSFromEnv(name string) *GCS {
 		clock:         &realClock{},
 		storageClient: storageClient,
 
-		buffer:      bytes.NewBuffer([]byte{}),
+		buffer:      buffer,
 		onFlushFunc: make([]func() error, 0),
 	}
 	g.uploadFunc = g.uploadToGCS
@@ -114,12 +122,13 @@ func (g *GCS) OnMessage(msg []byte) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.buffer.Len() >= g.flushMaxBytes {
+	if g.bytesCounter >= g.flushMaxBytes {
 		return ErrorGCSBufferFull
 	}
 
-	_, err := g.buffer.Write(msg)
-	g.buffer.WriteString("\n")
+	n, err := g.buffer.Write(msg)
+	g.bytesCounter += n
+	g.buffer.Write([]byte("\n"))
 	return err
 }
 
@@ -141,7 +150,7 @@ func (g *GCS) Start() error {
 		}
 
 		g.mu.Lock()
-		numBytes = g.buffer.Len()
+		numBytes = g.bytesCounter
 		g.logger.Warn("buffer size: ", numBytes)
 		g.mu.Unlock()
 
@@ -187,7 +196,7 @@ func (g *GCS) Flush() {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.buffer.Len() == 0 {
+	if g.bytesCounter == 0 {
 		g.logger.Info("buffer is empty, skip flushing")
 		return
 	}
@@ -206,5 +215,42 @@ func (g *GCS) Flush() {
 		}
 	}
 
-	g.buffer.Reset()
+	// close the current buffer, and create new one
+	g.buffer.Close()
+	g.bytesCounter = 0
+	for {
+		g.buffer, err = NewFileBuffer(g.name)
+		if err == nil {
+			break
+		}
+		g.logger.Error(fmt.Errorf("Failed to create new buffer: %s", err))
+		time.Sleep(time.Second)
+	}
+
+}
+
+type FileBuffer struct {
+	f *os.File
+}
+
+func NewFileBuffer(name string) (*FileBuffer, error) {
+	file, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("consumer-buffer-%s", name))
+	if err != nil {
+		return nil, err
+	}
+	return &FileBuffer{f: file}, nil
+}
+
+func (f *FileBuffer) Read(b []byte) (n int, err error) {
+	return f.f.Read(b)
+}
+
+// TODO: use bufio
+func (f *FileBuffer) Write(b []byte) (n int, err error) {
+	return f.f.Write(b)
+}
+
+func (f *FileBuffer) Close() error {
+	f.f.Close()
+	return os.Remove(f.f.Name())
 }
