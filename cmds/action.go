@@ -184,6 +184,43 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	return
 }
 
+func ActionBaritoConsumerGCSService(c *cli.Context) (err error) {
+	if c.Bool("verbose") == true {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.WarnLevel)
+	}
+
+	prome.InitConsumerInstrumentation()
+
+	brokers := configKafkaBrokers()
+
+	config := sarama.NewConfig()
+	// we want to use manual commit
+	// so use high interval to avoid auto commit
+	config.Consumer.Offsets.CommitInterval = 999999 * time.Hour
+	config.Version = sarama.V2_6_0_0 // TODO: get version from env
+	config.Consumer.Group.Session.Timeout = time.Duration(configConsumerGroupSessionTimeout()) * time.Second
+	config.Consumer.Group.Heartbeat.Interval = time.Duration(configConsumerGroupHeartbeatInterval()) * time.Second
+	config.Consumer.MaxProcessingTime = time.Duration(configConsumerMaxProcessingTime()) * time.Millisecond
+	config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
+
+	kafkaFactory := flow.NewKafkaFactory(brokers, config)
+	consumerOutputFactory := flow.NewConsumerOutputFactory()
+
+	service := flow.NewBaritoKafkaConsumerGCSFromEnv(kafkaFactory, consumerOutputFactory)
+
+	callbackInstrumentation()
+
+	if err = service.Start(); err != nil {
+		return
+	}
+
+	srvkit.GracefullShutdown(service.Close)
+
+	return
+}
+
 func callbackInstrumentation() bool {
 	pushMetricUrl := configPushMetricUrl()
 	pushMetricInterval := configPushMetricInterval()

@@ -3,13 +3,14 @@ package flow
 import (
 	"testing"
 
+	"github.com/BaritoLog/barito-flow/flow/types"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/Shopify/sarama"
 )
 
 func TestDummyKafkaFactory(t *testing.T) {
 	var v interface{} = NewDummyKafkaFactory()
-	factory, ok := v.(KafkaFactory)
+	factory, ok := v.(types.KafkaFactory)
 
 	FatalIf(t, !ok, "factory must be implement fo KafkaFactory")
 

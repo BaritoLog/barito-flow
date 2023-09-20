@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/prome"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
@@ -34,12 +35,12 @@ const (
 type BaritoConsumerService interface {
 	Start() error
 	Close()
-	WorkerMap() map[string]ConsumerWorker
-	NewTopicEventWorker() ConsumerWorker
+	WorkerMap() map[string]types.ConsumerWorker
+	NewTopicEventWorker() types.ConsumerWorker
 }
 
 type baritoConsumerService struct {
-	factory            KafkaFactory
+	factory            types.KafkaFactory
 	groupID            string
 	elasticUrls        []string
 	esClient           *elasticClient
@@ -49,9 +50,9 @@ type baritoConsumerService struct {
 	kafkaRetryInterval int
 	newTopicEventName  string
 
-	workerMap           map[string]ConsumerWorker
-	admin               KafkaAdmin
-	newTopicEventWorker ConsumerWorker
+	workerMap           map[string]types.ConsumerWorker
+	admin               types.KafkaAdmin
+	newTopicEventWorker types.ConsumerWorker
 	eventWorkerGroupID  string
 
 	lastError              error
@@ -67,7 +68,7 @@ type baritoConsumerService struct {
 
 func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerService {
 	s := &baritoConsumerService{
-		factory:                params["factory"].(KafkaFactory),
+		factory:                params["factory"].(types.KafkaFactory),
 		groupID:                params["groupID"].(string),
 		elasticUrls:            params["elasticUrls"].([]string),
 		topicPrefix:            params["topicPrefix"].(string),
@@ -75,7 +76,7 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
 		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
 		newTopicEventName:      params["newTopicEventName"].(string),
-		workerMap:              make(map[string]ConsumerWorker),
+		workerMap:              make(map[string]types.ConsumerWorker),
 		elasticRetrierInterval: params["elasticRetrierInterval"].(string),
 		elasticRetrierMaxRetry: params["elasticRetrierMaxRetry"].(int),
 		elasticUsername:        params["elasticUsername"].(string),
@@ -130,7 +131,7 @@ func (s *baritoConsumerService) Start() (err error) {
 	return
 }
 
-func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
+func (s *baritoConsumerService) initAdmin() (admin types.KafkaAdmin, err error) {
 	finish := false
 	retry := 0
 	for !finish {
@@ -156,7 +157,7 @@ func (s *baritoConsumerService) initAdmin() (admin KafkaAdmin, err error) {
 	return
 }
 
-func (s *baritoConsumerService) initNewTopicWorker(groupID string) (worker ConsumerWorker, err error) { // TODO: return worker
+func (s *baritoConsumerService) initNewTopicWorker(groupID string) (worker types.ConsumerWorker, err error) { // TODO: return worker
 	topic := s.newTopicEventName
 
 	consumer, err := s.factory.MakeClusterConsumer(groupID, topic, sarama.OffsetNewest)
@@ -271,11 +272,11 @@ func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage)
 	s.logNewTopic(topic)
 }
 
-func (s *baritoConsumerService) WorkerMap() map[string]ConsumerWorker {
+func (s *baritoConsumerService) WorkerMap() map[string]types.ConsumerWorker {
 	return s.workerMap
 }
 
-func (s *baritoConsumerService) NewTopicEventWorker() ConsumerWorker {
+func (s *baritoConsumerService) NewTopicEventWorker() types.ConsumerWorker {
 	return s.newTopicEventWorker
 }
 

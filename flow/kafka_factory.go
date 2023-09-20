@@ -1,29 +1,24 @@
 package flow
 
 import (
+	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 )
-
-type KafkaFactory interface {
-	MakeKafkaAdmin() (admin KafkaAdmin, err error)
-	MakeClusterConsumer(groupID, topic string, initialOffset int64) (worker ClusterConsumer, err error)
-	MakeSyncProducer() (producer sarama.SyncProducer, err error)
-}
 
 type kafkaFactory struct {
 	brokers []string
 	config  *sarama.Config
 }
 
-func NewKafkaFactory(brokers []string, config *sarama.Config) KafkaFactory {
+func NewKafkaFactory(brokers []string, config *sarama.Config) types.KafkaFactory {
 	return &kafkaFactory{
 		brokers: brokers,
 		config:  config,
 	}
 }
 
-func (f kafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
+func (f kafkaFactory) MakeKafkaAdmin() (admin types.KafkaAdmin, err error) {
 	client, err := sarama.NewClient(f.brokers, f.config)
 	if err != nil {
 		return nil, err
@@ -37,7 +32,7 @@ func (f kafkaFactory) MakeKafkaAdmin() (admin KafkaAdmin, err error) {
 	return
 }
 
-func (f kafkaFactory) MakeClusterConsumer(groupID, topic string, initialOffset int64) (consumer ClusterConsumer, err error) {
+func (f kafkaFactory) MakeClusterConsumer(groupID, topic string, initialOffset int64) (consumer types.ClusterConsumer, err error) {
 
 	config := *f.config
 	config.Consumer.Offsets.Initial = initialOffset
@@ -55,4 +50,8 @@ func (f kafkaFactory) MakeClusterConsumer(groupID, topic string, initialOffset i
 func (f kafkaFactory) MakeSyncProducer() (producer sarama.SyncProducer, err error) {
 	producer, err = sarama.NewSyncProducer(f.brokers, f.config)
 	return
+}
+
+func (f kafkaFactory) MakeConsumerWorker(name string, consumer types.ClusterConsumer) types.ConsumerWorker {
+	return NewConsumerWorker(name, consumer)
 }

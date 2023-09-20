@@ -1,6 +1,9 @@
 package flow
 
 import (
+	"fmt"
+
+	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
@@ -9,23 +12,13 @@ import (
 )
 
 const (
-	RetrieveMessageFailedError  = errkit.Error("Retrieve message failed")
+	RetrieveMessageFailedError = errkit.Error("Retrieve message failed")
 )
-
-type ConsumerWorker interface {
-	Start()
-	Stop()
-	Halt()
-	IsStart() bool
-	OnError(f func(error))
-	OnSuccess(f func(*sarama.ConsumerMessage))
-	OnNotification(f func(*cluster.Notification))
-}
 
 type consumerWorker struct {
 	name               string
 	isStart            bool
-	consumer           ClusterConsumer
+	consumer           types.ClusterConsumer
 	onErrorFunc        func(error)
 	onSuccessFunc      func(*sarama.ConsumerMessage)
 	onNotificationFunc func(*cluster.Notification)
@@ -33,7 +26,7 @@ type consumerWorker struct {
 	lastMessage        *sarama.ConsumerMessage
 }
 
-func NewConsumerWorker(name string, consumer ClusterConsumer) ConsumerWorker {
+func NewConsumerWorker(name string, consumer types.ClusterConsumer) types.ConsumerWorker {
 	return &consumerWorker{
 		name:     name,
 		consumer: consumer,
@@ -82,6 +75,15 @@ func (w *consumerWorker) OnNotification(f func(*cluster.Notification)) {
 	w.onNotificationFunc = f
 }
 
+func (w *consumerWorker) OnConsumerFlush() error {
+	log.Warn("OnConsumerFlush")
+	err := w.consumer.CommitOffsets()
+	if err != nil {
+		log.Error(fmt.Errorf("Commit offset failed: %s", err))
+	}
+	return err
+}
+
 func (w *consumerWorker) loopMain() {
 	w.isStart = true
 	for {
@@ -89,9 +91,8 @@ func (w *consumerWorker) loopMain() {
 		case message, ok := <-w.consumer.Messages():
 			if ok {
 				prome.IncreaseKafkaMessagesIncoming(message.Topic)
-				w.consumer.MarkOffset(message, "")
 				w.fireSuccess(message)
-				log.Infof("Mark Offset, %v", message)
+				w.consumer.MarkOffset(message, "")
 			}
 		case <-w.stop:
 			w.isStart = false

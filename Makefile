@@ -16,3 +16,6 @@ $(BINARY): main.go
 docker: docker/Dockerfile
 	@printf "Building docker image \033[31;1m%s\033[0m...\n" $(DOCKER_TAG)
 	$(DOCKER) build -f $^ -t $(DOCKER_TAG) --build-arg COMMIT=$(COMMIT) .
+
+mockgen:
+	mockgen -source=./flow/types/types.go -package=mock  -destination=./mock/flow_types.go
