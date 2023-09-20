@@ -245,7 +245,17 @@ func NewFileBuffer(name string) (*FileBuffer, error) {
 }
 
 func (f *FileBuffer) Read(b []byte) (n int, err error) {
-	return f.f.Read(b)
+	panic("should not be called")
+}
+
+// can't used same file handler for read and write,
+// because of offset
+func (f *FileBuffer) WriteTo(w io.Writer) (n int64, err error) {
+	temp, err := os.Open(f.f.Name())
+	if err != nil {
+		return 0, err
+	}
+	return io.Copy(w, temp)
 }
 
 // TODO: use bufio

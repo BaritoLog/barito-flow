@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -142,7 +143,7 @@ func TestGCS_uploadToGCS(t *testing.T) {
 
 	require.Equal(t, 1, called, "should be called")
 	require.Equal(t, "/upload/storage/v1/b/foo/o", path, "should be called with correct path")
-	//require.Contains(t, string(payload), "test1\ntest2\ntest3", "should be called with correct payload")
+	require.Contains(t, string(payload), "test1\ntest2\ntest3", "should be called with correct payload")
 	require.Contains(t, queryString, fmt.Sprintf(`name=%%2Fbar%%2Fauthorization-service%%2Fauthorization-service-%s.log`, url.QueryEscape(g.clock.Now().Format(time.RFC3339))), "should be called with correct query string")
 }
 
@@ -158,4 +159,12 @@ func newTestGCS() *GCS {
 	}
 	g.uploadFunc = g.uploadToGCS
 	return g
+}
+
+func TestFileBuffer(t *testing.T) {
+	dest := bytes.Buffer{}
+	b, _ := NewFileBuffer("test")
+	b.Write([]byte("foo"))
+	io.Copy(&dest, b)
+	require.Equal(t, "foo", dest.String())
 }
