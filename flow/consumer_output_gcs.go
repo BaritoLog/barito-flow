@@ -57,6 +57,7 @@ type GCS struct {
 
 	uploadFunc func() error
 
+	logger *log.Logger
 	mu     sync.Mutex
 	isStop bool
 	clock  Clock
@@ -86,6 +87,7 @@ func NewGCSFromEnv(name string) *GCS {
 		bucketPath:    settings.BucketPath,
 		flushMaxBytes: settings.FlushMaxBytes,
 		flushMaxTime:  time.Duration(settings.FlushMaxTimeSeconds) * time.Second,
+		logger:        log.New().WithField("component", "GCS").WithField("name", name).Logger,
 		clock:         &realClock{},
 		storageClient: storageClient,
 
@@ -122,7 +124,7 @@ func (g *GCS) OnMessage(msg []byte) error {
 
 // stopping the output, and flush the buffer
 func (g *GCS) Stop() {
-	log.Info("Stopping GCS, flushing")
+	g.logger.Info("Stopping GCS, flushing")
 	g.isStop = true
 	g.Flush()
 }
@@ -139,11 +141,11 @@ func (g *GCS) Start() error {
 
 		g.mu.Lock()
 		numBytes = g.buffer.Len()
-		log.Warn("GCS buffer size: ", numBytes)
+		g.logger.Warn("buffer size: ", numBytes)
 		g.mu.Unlock()
 
 		if g.flushMaxBytes > 0 && numBytes >= g.flushMaxBytes {
-			log.Info("GCS buffer is full, flushing")
+			g.logger.Info("buffer is full, flushing")
 			g.Flush()
 			ticker.Reset(g.flushMaxTime)
 			continue
@@ -152,7 +154,7 @@ func (g *GCS) Start() error {
 		// check if flush is needed depend of max item, max bytes, and max time
 		select {
 		case <-ticker.C:
-			log.Info("GCS max time reached, flushing")
+			g.logger.Info("max time reached, flushing")
 			g.Flush()
 			ticker.Reset(g.flushMaxTime)
 		default:
@@ -172,35 +174,34 @@ func (g *GCS) uploadToGCS() error {
 	defer w.Close()
 
 	if _, err := io.Copy(w, g.buffer); err != nil {
-		log.Error(err)
+		g.logger.Error(err)
 		return err
 	}
-	w.Close()
-
-	return nil
+	return w.Close()
 }
 
 // will call the uploadFunc and onFlushFunc, and then reset the buffer
 func (g *GCS) Flush() {
-	log.Info("Flushing GCS")
+	g.logger.Info("Flushing GCS")
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	if g.buffer.Len() == 0 {
-		log.Info("GCS buffer is empty, skip flushing")
+		g.logger.Info("buffer is empty, skip flushing")
 		return
 	}
 
+	// TODO: retry indefinitely
 	err := g.uploadFunc()
 	if err != nil {
-		log.Error(err)
+		g.logger.Error(err)
 		return
 	}
 
 	for _, f := range g.onFlushFunc {
 		err := f()
 		if err != nil {
-			log.Error(err.Error())
+			g.logger.Error(err.Error())
 		}
 	}
 
