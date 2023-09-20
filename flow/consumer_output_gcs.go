@@ -73,6 +73,8 @@ func NewGCSFromEnv(name string) *GCS {
 		panic(err)
 	}
 
+	logger := log.New().WithField("component", "GCS").WithField("name", name).Logger
+
 	storageClient, err := storage.NewClient(
 		context.Background(),
 		option.WithCredentialsFile(settings.ServiceAccountPath),
@@ -87,6 +89,8 @@ func NewGCSFromEnv(name string) *GCS {
 		panic(err)
 	}
 
+	logger.Info("Create GCS client with serviceAccountPath", settings.ServiceAccountPath)
+
 	g := &GCS{
 		name:          name,
 		projectID:     settings.ProjectID,
@@ -94,7 +98,7 @@ func NewGCSFromEnv(name string) *GCS {
 		bucketPath:    settings.BucketPath,
 		flushMaxBytes: settings.FlushMaxBytes,
 		flushMaxTime:  time.Duration(settings.FlushMaxTimeSeconds) * time.Second,
-		logger:        log.New().WithField("component", "GCS").WithField("name", name).Logger,
+		logger:        logger,
 		clock:         &realClock{},
 		storageClient: storageClient,
 
