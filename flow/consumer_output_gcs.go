@@ -139,7 +139,7 @@ func (g *GCS) Start() error {
 
 		g.mu.Lock()
 		numBytes = g.buffer.Len()
-		log.Debug("GCS buffer size: ", numBytes)
+		log.Warn("GCS buffer size: ", numBytes)
 		g.mu.Unlock()
 
 		if g.flushMaxBytes > 0 && numBytes >= g.flushMaxBytes {

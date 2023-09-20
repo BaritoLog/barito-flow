@@ -185,11 +185,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 }
 
 func ActionBaritoConsumerGCSService(c *cli.Context) (err error) {
-	if c.Bool("verbose") == true {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.WarnLevel)
-	}
+	log.SetLevel(log.DebugLevel)
 
 	prome.InitConsumerInstrumentation()
 
