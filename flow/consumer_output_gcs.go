@@ -3,8 +3,10 @@ package flow
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
+	"net/http"
 	"sync"
 	"time"
 
@@ -74,6 +76,11 @@ func NewGCSFromEnv(name string) *GCS {
 	storageClient, err := storage.NewClient(
 		context.Background(),
 		option.WithCredentialsFile(settings.ServiceAccountPath),
+		option.WithHTTPClient(&http.Client{
+			Timeout: 60 * time.Second,
+			// FIXME: should not use insecure
+			Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+		}),
 	)
 
 	if err != nil {
