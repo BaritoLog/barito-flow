@@ -3,15 +3,12 @@ package flow
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
-	"net/http"
 	"sync"
 	"time"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/api/option"
 
 	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/kelseyhightower/envconfig"
@@ -32,10 +29,9 @@ type realClock struct{}
 func (realClock) Now() time.Time { return time.Now() }
 
 type GCSSettings struct {
-	ProjectID          string `envconfig:"project_id" required:"true"`
-	BucketName         string `envconfig:"bucket_name" required:"true" `
-	BucketPath         string `envconfig:"bucket_path" required:"true"`
-	ServiceAccountPath string `envconfig:"service_account_path" required:"true"`
+	ProjectID  string `envconfig:"project_id" required:"true"`
+	BucketName string `envconfig:"bucket_name" required:"true" `
+	BucketPath string `envconfig:"bucket_path" required:"true"`
 
 	// TODO: increase this after tests
 	FlushMaxBytes       int `envconfig:"flush_max_bytes" default:"52428800"` // 50MB
@@ -77,19 +73,13 @@ func NewGCSFromEnv(name string) *GCS {
 
 	storageClient, err := storage.NewClient(
 		context.Background(),
-		option.WithCredentialsFile(settings.ServiceAccountPath),
-		option.WithHTTPClient(&http.Client{
-			Timeout: 60 * time.Second,
-			// FIXME: should not use insecure
-			Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
-		}),
 	)
 
 	if err != nil {
 		panic(err)
 	}
 
-	logger.Info("Create GCS client with serviceAccountPath", settings.ServiceAccountPath)
+	logger.Info("Created GCS client")
 
 	g := &GCS{
 		name:          name,
