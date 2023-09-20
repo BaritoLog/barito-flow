@@ -183,10 +183,13 @@ func (g *GCS) uploadToGCS() error {
 	w := obj.NewWriter(ctx)
 	defer w.Close()
 
-	if _, err := io.Copy(w, g.buffer); err != nil {
+	n, err := io.Copy(w, g.buffer)
+	if err != nil {
 		g.logger.Error(err)
 		return err
 	}
+
+	g.logger.Infof("Uploaded %s, %d bytes", filename, n)
 	return w.Close()
 }
 
