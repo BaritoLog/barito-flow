@@ -195,6 +195,7 @@ func ActionBaritoConsumerGCSService(c *cli.Context) (err error) {
 	// we want to use manual commit
 	// so use high interval to avoid auto commit
 	config.Consumer.Offsets.CommitInterval = 999999 * time.Hour
+	config.Consumer.Offsets.AutoCommit.Enable = false
 	config.Version = sarama.V2_6_0_0 // TODO: get version from env
 	config.Consumer.Group.Session.Timeout = time.Duration(configConsumerGroupSessionTimeout()) * time.Second
 	config.Consumer.Group.Heartbeat.Interval = time.Duration(configConsumerGroupHeartbeatInterval()) * time.Second
