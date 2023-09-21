@@ -158,6 +158,7 @@ func (g *GCS) Start() error {
 			g.logger.Info("buffer is full, flushing")
 			g.Flush()
 			ticker.Reset(g.flushMaxTime)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
@@ -210,15 +211,19 @@ func (g *GCS) Flush() {
 		g.logger.Error(err)
 		return
 	}
+	g.logger.Warn("flushed to GCS")
 
+	g.logger.Warn("calling onFlushFunc...")
 	for _, f := range g.onFlushFunc {
 		err := f()
 		if err != nil {
 			g.logger.Error(err.Error())
 		}
 	}
+	g.logger.Warn("onFlushFuncs called")
 
 	// close the current buffer, and create new one
+	g.logger.Debug("recreating the buffer")
 	g.buffer.Close()
 	g.bytesCounter = 0
 	for {
@@ -229,6 +234,7 @@ func (g *GCS) Flush() {
 		g.logger.Error(fmt.Errorf("Failed to create new buffer: %s", err))
 		time.Sleep(time.Second)
 	}
+	g.logger.Debug("buffer recreated")
 
 }
 
