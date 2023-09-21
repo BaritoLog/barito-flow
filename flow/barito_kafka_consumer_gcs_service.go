@@ -167,9 +167,10 @@ func (s *baritoKafkaConsumerGCSService) Close() {
 		g.Stop()
 	}
 
-	for _, w := range s.workerMap {
-		w.Stop()
-	}
+	// FIXME: currently the worker will autocommit the offset when it's stopped
+	//for _, w := range s.workerMap {
+	//w.Stop()
+	//}
 }
 
 func (s *baritoKafkaConsumerGCSService) WorkerMap() map[string]types.ConsumerWorker {
