@@ -156,7 +156,7 @@ func (g *GCS) Start() error {
 		g.mu.Lock()
 		numBytes = g.bytesCounter
 		g.logger.Warn("buffer size: ", numBytes)
-		prome.SetConsumerGCSBufferSize(g.name, g.projectID, g.bucketName, g.bucketPath, numBytes)
+		prome.SetConsumerGCSBufferSize(g.name, g.projectID, g.bucketName, g.bucketPath, int64(numBytes))
 		g.mu.Unlock()
 
 		if g.flushMaxBytes > 0 && numBytes >= g.flushMaxBytes {
