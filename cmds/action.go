@@ -188,6 +188,7 @@ func ActionBaritoConsumerGCSService(c *cli.Context) (err error) {
 	log.SetLevel(log.DebugLevel)
 
 	prome.InitConsumerInstrumentation()
+	prome.InitGCSConsumerInstrumentation()
 
 	brokers := configKafkaBrokers()
 

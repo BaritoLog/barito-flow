@@ -1,6 +1,7 @@
 package prome
 
 import (
+	"fmt"
 	"math"
 	"regexp"
 	"strconv"
@@ -24,6 +25,13 @@ var consumerLogStoredCounter *prometheus.CounterVec
 var consumerBulkProcessTimeSecond prometheus.Summary
 var consumerKafkaMessagesIncomingCounter *prometheus.CounterVec
 var consumerElasticsearchClientFailed *prometheus.CounterVec
+var consumerCustomErrorTotal *prometheus.CounterVec
+
+var consumerGCSInfo *prometheus.GaugeVec
+var consumerGCSBufferSize *prometheus.GaugeVec
+var consumerGCSUploadAttemptTotal *prometheus.CounterVec
+var consumerGCSUploadedTotalBytes *prometheus.CounterVec
+
 var producerKafkaMessageStoredTotal *prometheus.CounterVec
 var producerTPSExceededCounter *prometheus.CounterVec
 var producerSendToKafkaTimeSecond *prometheus.SummaryVec
@@ -69,6 +77,24 @@ func InitConsumerInstrumentation() {
 		Name: "barito_consumer_elasticsearch_client_failed",
 		Help: "Number of elasticsearch client failed",
 	}, []string{"phase"})
+	consumerCustomErrorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_consumer_custom_error_total",
+	}, []string{"operation"})
+}
+
+func InitGCSConsumerInstrumentation() {
+	consumerGCSInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "barito_consumer_gcs_info",
+	}, []string{"name", "project_id", "bucket", "path"})
+	consumerGCSUploadAttemptTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_consumer_gcs_upload_attempt_total",
+	}, []string{"success", "name", "project_id", "bucket", "path"})
+	consumerGCSUploadedTotalBytes = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_consumer_gcs_uploaded_total_bytes",
+	}, []string{"name", "project_id", "bucket", "path"})
+	consumerGCSBufferSize = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "barito_consumer_gcs_buffer_size",
+	}, []string{"name", "project_id", "bucket", "path"})
 }
 
 func InitProducerInstrumentation() {
@@ -167,4 +193,28 @@ func ObserveSendToKafkaTime(topic string, elapsedTime float64) {
 
 func IncreaseProducerKafkaClientFailed() {
 	producerKafkaClientFailed.WithLabelValues().Inc()
+}
+
+func IncreaseConsumerGCSUploadAttemptTotal(name string, projectId string, bucket string, path string, success string) {
+	consumerGCSUploadAttemptTotal.WithLabelValues(success, name, projectId, bucket, path).Inc()
+}
+
+func IncreaseConsumerGCSUploadedTotalBytes(name string, projectId string, bucket string, path string, size int64) {
+	consumerGCSUploadedTotalBytes.WithLabelValues(name, projectId, bucket, path).Add(float64(size))
+}
+
+func SetConsumerGCSInfo(name string, projectId string, bucket string, path string) {
+	consumerGCSInfo.WithLabelValues(name, projectId, bucket, path).Set(1)
+}
+
+func IncreaseConsumerCustomErrorTotal(operation string) {
+	consumerCustomErrorTotal.WithLabelValues(operation).Inc()
+}
+
+func IncreaseConsumerCustomErrorTotalf(format string, args ...interface{}) {
+	consumerCustomErrorTotal.WithLabelValues(fmt.Sprintf(format, args...)).Inc()
+}
+
+func SetConsumerGCSBufferSize(name string, projectId string, bucket string, path string, size int64) {
+	consumerGCSBufferSize.WithLabelValues(name, projectId, bucket, path).Set(float64(size))
 }

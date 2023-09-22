@@ -11,6 +11,7 @@ import (
 	"cloud.google.com/go/storage"
 
 	"github.com/BaritoLog/barito-flow/flow/types"
+	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/kelseyhightower/envconfig"
 	log "github.com/sirupsen/logrus"
 )
@@ -105,6 +106,8 @@ func NewGCSFromEnv(name string) *GCS {
 	}
 	g.uploadFunc = g.uploadToGCS
 
+	prome.SetConsumerGCSInfo(name, settings.ProjectID, settings.BucketName, settings.BucketPath)
+
 	return g
 }
 
@@ -123,6 +126,7 @@ func (g *GCS) OnMessage(msg []byte) error {
 	defer g.mu.Unlock()
 
 	if g.bytesCounter >= g.flushMaxBytes {
+		prome.IncreaseConsumerCustomErrorTotalf("gcs_buffer_full: %s", g.name)
 		return ErrorGCSBufferFull
 	}
 
@@ -152,6 +156,7 @@ func (g *GCS) Start() error {
 		g.mu.Lock()
 		numBytes = g.bytesCounter
 		g.logger.Warn("buffer size: ", numBytes)
+		prome.SetConsumerGCSBufferSize(g.name, g.projectID, g.bucketName, g.bucketPath, numBytes)
 		g.mu.Unlock()
 
 		if g.flushMaxBytes > 0 && numBytes >= g.flushMaxBytes {
@@ -182,16 +187,24 @@ func (g *GCS) uploadToGCS() error {
 	bucket := g.storageClient.Bucket(g.bucketName)
 	obj := bucket.Object(filename)
 	w := obj.NewWriter(ctx)
-	defer w.Close()
 
 	n, err := io.Copy(w, g.buffer)
 	if err != nil {
 		g.logger.Error(err)
+		prome.IncreaseConsumerCustomErrorTotalf("gcs_copy_buffer_failed: %s", g.name)
 		return err
 	}
 
 	g.logger.Infof("Uploaded %s, %d bytes", filename, n)
-	return w.Close()
+	err = w.Close()
+	if err != nil {
+		g.logger.Error(err)
+		prome.IncreaseConsumerGCSUploadAttemptTotal(g.name, g.projectID, g.bucketName, g.bucketPath, "failed")
+		return err
+	}
+	prome.IncreaseConsumerGCSUploadedTotalBytes(g.name, g.projectID, g.bucketName, g.bucketPath, n)
+	prome.IncreaseConsumerGCSUploadAttemptTotal(g.name, g.projectID, g.bucketName, g.bucketPath, "success")
+	return nil
 }
 
 // will call the uploadFunc and onFlushFunc, and then reset the buffer
@@ -217,6 +230,7 @@ func (g *GCS) Flush() {
 	for _, f := range g.onFlushFunc {
 		err := f()
 		if err != nil {
+			prome.IncreaseConsumerCustomErrorTotalf("gcs_on_flush_func_failed: %s", g.name)
 			g.logger.Error(err.Error())
 		}
 	}
@@ -232,6 +246,7 @@ func (g *GCS) Flush() {
 			break
 		}
 		g.logger.Error(fmt.Errorf("Failed to create new buffer: %s", err))
+		prome.IncreaseConsumerCustomErrorTotalf("gcs_buffer_recreate_failed: %s", g.name)
 		time.Sleep(time.Second)
 	}
 	g.logger.Debug("buffer recreated")

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/BaritoLog/barito-flow/flow/types"
+	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/jsonpb"
@@ -67,6 +68,7 @@ func (s *baritoKafkaConsumerGCSService) Start() error {
 
 			err := s.kafkaAdmin.RefreshTopics()
 			if err != nil {
+				prome.IncreaseConsumerCustomErrorTotal("kafka_admin_refresh_topics")
 				s.logger.Error(err)
 			}
 			for _, topic := range s.kafkaAdmin.Topics() {
@@ -84,6 +86,7 @@ func (s *baritoKafkaConsumerGCSService) Start() error {
 				// initiate kafka consumer and gcs types.ConsumerOutput
 				err := s.spawnLogsWorker(topic, sarama.OffsetOldest)
 				if err != nil {
+					prome.IncreaseConsumerCustomErrorTotalf("spawn_logs_worker_%s", topic)
 					s.logger.WithField("topic", topic).Error(err)
 					continue
 				}
@@ -144,6 +147,7 @@ func (s *baritoKafkaConsumerGCSService) spawnLogsWorker(topic string, initialOff
 			if err == nil {
 				break
 			}
+			prome.IncreaseConsumerCustomErrorTotalf("gcs_on_message: %s", topic)
 			time.Sleep(1 * time.Second)
 		}
 	})
