@@ -56,7 +56,7 @@ type GCS struct {
 
 	uploadFunc func() error
 
-	logger       *log.Logger
+	logger       *log.Entry
 	mu           sync.Mutex
 	isStop       bool
 	clock        Clock
@@ -71,7 +71,7 @@ func NewGCSFromEnv(name string) *GCS {
 		panic(err)
 	}
 
-	logger := log.New().WithField("component", "GCS").WithField("name", name).Logger
+	logger := log.New().WithField("component", "GCS").WithField("name", name)
 
 	storageClient, err := storage.NewClient(
 		context.Background(),

@@ -31,7 +31,7 @@ type baritoKafkaConsumerGCSService struct {
 	consumerOuputFactory types.ConsumerOutputFactory
 	marshaler            *jsonpb.Marshaler
 
-	logger *log.Logger
+	logger *log.Entry
 	isStop bool
 }
 
@@ -53,7 +53,7 @@ func NewBaritoKafkaConsumerGCSFromEnv(kafkaFactory types.KafkaFactory, consumerO
 		workerMap:            make(map[string]types.ConsumerWorker),
 		gcsOutputMap:         make(map[string]types.ConsumerOutput),
 		marshaler:            &jsonpb.Marshaler{},
-		logger:               log.New().WithField("component", "BaritoKafkaConsumerGCS").Logger,
+		logger:               log.New().WithField("component", "BaritoKafkaConsumerGCS"),
 	}
 	return s
 }

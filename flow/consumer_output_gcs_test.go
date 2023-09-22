@@ -155,7 +155,7 @@ func newTestGCS() *GCS {
 		flushMaxBytes: 100,
 		buffer:        buffer,
 		onFlushFunc:   []func() error{},
-		logger:        log.New(),
+		logger:        log.New().WithContext(context.Background()),
 	}
 	g.uploadFunc = g.uploadToGCS
 	return g
