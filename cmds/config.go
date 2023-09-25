@@ -11,6 +11,7 @@ import (
 const (
 	EnvKafkaBrokers       = "BARITO_KAFKA_BROKERS"
 	EnvKafkaGroupID       = "BARITO_KAFKA_GROUP_ID"
+	EnvKafkaUniqueGroupID = "BARITO_KAFKA_UNIQUE_GROUP_ID"
 	EnvKafkaTopicPrefix   = "BARITO_KAFKA_TOPIC_PREFIX"
 	EnvKafkaTopicSuffix   = "BARITO_KAFKA_TOPIC_SUFFIX"
 	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
@@ -67,6 +68,7 @@ var (
 	DefaultKafkaTopicPrefix   = ""
 	DefaultKafkaTopicSuffix   = "_logs"
 	DefaultKafkaGroupID       = "barito-group"
+	DefaultUniqueGroupID      = false
 	DefaultKafkaMaxRetry      = 0
 	DefaultKafkaRetryInterval = 10
 
@@ -168,6 +170,10 @@ func configConsulElasticsearchName() (s string) {
 
 func configKafkaGroupId() (s string) {
 	return stringEnvOrDefault(EnvKafkaGroupID, DefaultKafkaGroupID)
+}
+
+func configUniqueGroupID() (s bool) {
+	return boolEnvOrDefault(EnvKafkaUniqueGroupID, DefaultUniqueGroupID)
 }
 
 func configKafkaMaxRetry() (i int) {
@@ -311,6 +317,17 @@ func stringEnvOrDefault(key, defaultValue string) string {
 	if len(s) > 0 {
 		logConfig("env", key, s)
 		return s
+	}
+
+	logConfig("default", key, defaultValue)
+	return defaultValue
+}
+
+func boolEnvOrDefault(key string, defaultValue bool) bool {
+	s := os.Getenv(key)
+	if len(s) > 0 {
+		logConfig("env", key, s)
+		return s == "true"
 	}
 
 	logConfig("default", key, defaultValue)
