@@ -45,6 +45,7 @@ var logStoredErrorMap map[string]string = map[string]string{
 	"no such shard":               "no_such_shard",
 	"index read-only":             "index_read_only",
 	"Limit of total fields":       "limit_of_total_fields_excedeed",
+	"maximum shards open":         "maximum_shards_open",
 }
 
 func InitConsumerInstrumentation() {
