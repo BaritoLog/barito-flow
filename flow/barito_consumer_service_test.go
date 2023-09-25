@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
+	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
@@ -230,7 +231,7 @@ func TestBaritoConsumerService_onNewTopicEvent(t *testing.T) {
 
 	service := &baritoConsumerService{
 		factory:   factory,
-		workerMap: make(map[string]ConsumerWorker),
+		workerMap: make(map[string]types.ConsumerWorker),
 	}
 	defer service.Close()
 
@@ -250,7 +251,7 @@ func TestBaritoConsumerService_onNewTopicEvent_ErrorSpawnWorker(t *testing.T) {
 
 	service := &baritoConsumerService{
 		factory:   factory,
-		workerMap: make(map[string]ConsumerWorker),
+		workerMap: make(map[string]types.ConsumerWorker),
 	}
 	defer service.Close()
 
@@ -272,7 +273,7 @@ func TestBaritoConsumerService_onNewTopicEvent_IgnoreIfTopicExist(t *testing.T) 
 	worker := mock.NewMockConsumerWorker(ctrl)
 	worker.EXPECT().Stop().AnyTimes()
 
-	workerMap := map[string]ConsumerWorker{
+	workerMap := map[string]types.ConsumerWorker{
 		"topic001": worker,
 	}
 

@@ -59,6 +59,18 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:      "consumer for GCS",
+				ShortName: "consumer-gcs",
+				Usage:     "start barito-flow as consumer for GCS",
+				Action:    cmds.ActionBaritoConsumerGCSService,
+				Flags: []cli.Flag{
+					cli.BoolFlag{
+						Name:  "verbose, V",
+						Usage: "Enable verbose mode",
+					},
+				},
+			},
 		},
 		UsageText: "barito-flow [commands]",
 		Before: func(c *cli.Context) error {

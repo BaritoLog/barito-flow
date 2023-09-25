@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
@@ -33,7 +34,7 @@ type ProducerService interface {
 }
 
 type producerService struct {
-	factory            KafkaFactory
+	factory            types.KafkaFactory
 	grpcAddr           string
 	restAddr           string
 	topicPrefix        string
@@ -45,7 +46,7 @@ type producerService struct {
 	ignoreKafkaOptions bool
 
 	producer sarama.SyncProducer
-	admin    KafkaAdmin
+	admin    types.KafkaAdmin
 	limiter  RateLimiter
 
 	grpcServer   *grpc.Server
@@ -54,7 +55,7 @@ type producerService struct {
 
 func NewProducerService(params map[string]interface{}) ProducerService {
 	return &producerService{
-		factory:            params["factory"].(KafkaFactory),
+		factory:            params["factory"].(types.KafkaFactory),
 		grpcAddr:           params["grpcAddr"].(string),
 		restAddr:           params["restAddr"].(string),
 		topicPrefix:        params["topicPrefix"].(string),

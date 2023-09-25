@@ -3,19 +3,10 @@ package flow
 import (
 	"sync"
 
+	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 )
-
-type KafkaAdmin interface {
-	RefreshTopics() error
-	SetTopics([]string)
-	Topics() []string
-	AddTopic(topic string)
-	Exist(topic string) bool
-	CreateTopic(topic string, numPartitions int32, replicationFactor int16) error
-	Close()
-}
 
 type kafkaAdmin struct {
 	topics       []string
@@ -24,7 +15,7 @@ type kafkaAdmin struct {
 	refreshMutex sync.Mutex
 }
 
-func NewKafkaAdmin(client sarama.Client) (admin KafkaAdmin, err error) {
+func NewKafkaAdmin(client sarama.Client) (admin types.KafkaAdmin, err error) {
 	var brokers []string
 	for _, broker := range client.Brokers() {
 		brokers = append(brokers, broker.Addr())
