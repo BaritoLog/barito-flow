@@ -13,6 +13,7 @@ import (
 	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/klauspost/compress/zstd"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,7 +35,8 @@ type GCSSettings struct {
 	BucketName string `envconfig:"bucket_name" required:"true" `
 	BucketPath string `envconfig:"bucket_path" required:"true"`
 
-	// TODO: increase this after tests
+	Compressor string `envconfig:"compressor"`
+
 	FlushMaxBytes       int `envconfig:"flush_max_bytes" default:"52428800"` // 50MB
 	FlushMaxTimeSeconds int `envconfig:"flush_max_time" default:"3600"`      // 1 hour
 }
@@ -50,11 +52,10 @@ type GCS struct {
 	flushMaxBytes int
 	flushMaxTime  time.Duration
 
-	// TODO: use file
 	buffer      io.ReadWriteCloser
 	onFlushFunc []func() error
-
-	uploadFunc func() error
+	uploadFunc  func() error
+	compressor  string
 
 	logger       *log.Entry
 	mu           sync.Mutex
@@ -90,6 +91,10 @@ func NewGCSFromEnv(name string) *GCS {
 		panic(err)
 	}
 
+	if settings.Compressor != "zstd" && settings.Compressor != "" {
+		panic(fmt.Sprintf("Compressor %s is not supported", settings.Compressor))
+	}
+
 	g := &GCS{
 		name:          name,
 		projectID:     settings.ProjectID,
@@ -100,6 +105,7 @@ func NewGCSFromEnv(name string) *GCS {
 		logger:        logger,
 		clock:         &realClock{},
 		storageClient: storageClient,
+		compressor:    settings.Compressor,
 
 		buffer:      buffer,
 		onFlushFunc: make([]func() error, 0),
@@ -179,14 +185,24 @@ func (g *GCS) Start() error {
 	}
 }
 
-// TODO: use compression
 func (g *GCS) uploadToGCS() error {
 	ctx := context.TODO()
 
 	filename := fmt.Sprintf("%s/%s/%s-%s.log", g.bucketPath, g.name, g.name, g.clock.Now().Format(time.RFC3339))
+	// TODO: use dependency injection
+	if g.compressor == "zstd" {
+		filename = filename + ".zst"
+	}
 	bucket := g.storageClient.Bucket(g.bucketName)
 	obj := bucket.Object(filename)
-	w := obj.NewWriter(ctx)
+	objWriter := obj.NewWriter(ctx)
+	var w io.WriteCloser
+	w = objWriter
+
+	// TODO: use dependency injection
+	if g.compressor == "zstd" {
+		w, _ = zstd.NewWriter(w)
+	}
 
 	n, err := io.Copy(w, g.buffer)
 	if err != nil {
@@ -196,7 +212,19 @@ func (g *GCS) uploadToGCS() error {
 	}
 
 	g.logger.Infof("Uploaded %s, %d bytes", filename, n)
-	err = w.Close()
+
+	// close the compressor
+	if g.compressor != "" {
+		err = w.Close()
+		if err != nil {
+			g.logger.Error(err)
+			prome.IncreaseConsumerGCSUploadAttemptTotal(g.name, g.projectID, g.bucketName, g.bucketPath, "failed")
+			return err
+		}
+	}
+
+	// close the object writer to trigger upload
+	err = objWriter.Close()
 	if err != nil {
 		g.logger.Error(err)
 		prome.IncreaseConsumerGCSUploadAttemptTotal(g.name, g.projectID, g.bucketName, g.bucketPath, "failed")
