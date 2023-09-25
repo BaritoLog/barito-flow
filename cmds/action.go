@@ -30,6 +30,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 
 	brokers := configKafkaBrokers()
 	groupID := configKafkaGroupId()
+	uniqueGroupID := configUniqueGroupID()
 	esUrls := configElasticsearchUrls()
 	topicPrefix := configKafkaTopicPrefix()
 	topicSuffix := configKafkaTopicSuffix()
@@ -69,6 +70,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	consumerParams := map[string]interface{}{
 		"factory":                factory,
 		"groupID":                groupID,
+		"uniqueGroupID":          uniqueGroupID,
 		"elasticUrls":            esUrls,
 		"topicPrefix":            topicPrefix,
 		"topicSuffix":            topicSuffix,
