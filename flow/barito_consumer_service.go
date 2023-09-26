@@ -42,6 +42,7 @@ type BaritoConsumerService interface {
 type baritoConsumerService struct {
 	factory            types.KafkaFactory
 	groupID            string
+	uniqueGroupID      bool
 	elasticUrls        []string
 	esClient           *elasticClient
 	topicPrefix        string
@@ -70,6 +71,7 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 	s := &baritoConsumerService{
 		factory:                params["factory"].(types.KafkaFactory),
 		groupID:                params["groupID"].(string),
+		uniqueGroupID:          params["uniqueGroupID"].(bool),
 		elasticUrls:            params["elasticUrls"].([]string),
 		topicPrefix:            params["topicPrefix"].(string),
 		topicSuffix:            params["topicSuffix"].(string),
@@ -189,7 +191,11 @@ func (s baritoConsumerService) Close() {
 }
 
 func (s *baritoConsumerService) spawnLogsWorker(topic string, initialOffset int64) (err error) {
-	consumer, err := s.factory.MakeClusterConsumer(s.groupID, topic, initialOffset)
+	groupID := s.groupID
+	if s.uniqueGroupID {
+		groupID = fmt.Sprintf("%s_%s", s.groupID, topic)
+	}
+	consumer, err := s.factory.MakeClusterConsumer(groupID, topic, initialOffset)
 	if err != nil {
 		return errkit.Concat(ErrConsumerWorker, err)
 	}
