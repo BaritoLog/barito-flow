@@ -259,6 +259,8 @@ func (s *baritoConsumerService) onStoreTimber(esClient *elasticClient) func(mess
 			s.logError(errkit.Concat(ErrStore, err))
 			return
 		}
+		// FIXME: remove after test
+		fmt.Println("onStoreTimber using ES: ", esClient)
 
 		s.logTimber(timber)
 	}
