@@ -21,6 +21,7 @@ const (
 	EnvEsIndexMethod     = "BARITO_ELASTICSEARCH_INDEX_METHOD"
 	EnvEsBulkSize        = "BARITO_ELASTICSEARCH_BULK_SIZE"
 	EnvEsFlushIntervalMs = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
+	EnvEsDedicatedClient = "BARITO_ELASTICSEARCH_DEDICATED_CLIENT"
 
 	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
 
@@ -72,7 +73,8 @@ var (
 	DefaultKafkaMaxRetry      = 0
 	DefaultKafkaRetryInterval = 10
 
-	DefaultElasticsearchUrls = []string{"http://localhost:9200"}
+	DefaultElasticsearchUrls      = []string{"http://localhost:9200"}
+	DefaultElasticDedicatedClient = false
 
 	DefaultGrpcMaxRecvMsgSize = 20 * 1000 * 1000
 
@@ -174,6 +176,10 @@ func configKafkaGroupId() (s string) {
 
 func configUniqueGroupID() (s bool) {
 	return boolEnvOrDefault(EnvKafkaUniqueGroupID, DefaultUniqueGroupID)
+}
+
+func configDedicatedESClient() (s bool) {
+	return boolEnvOrDefault(EnvEsDedicatedClient, DefaultElasticDedicatedClient)
 }
 
 func configKafkaMaxRetry() (i int) {

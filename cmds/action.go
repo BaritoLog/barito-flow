@@ -31,6 +31,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	brokers := configKafkaBrokers()
 	groupID := configKafkaGroupId()
 	uniqueGroupID := configUniqueGroupID()
+	dedicatedESClient := configDedicatedESClient()
 	esUrls := configElasticsearchUrls()
 	topicPrefix := configKafkaTopicPrefix()
 	topicSuffix := configKafkaTopicSuffix()
@@ -75,6 +76,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"topicPrefix":            topicPrefix,
 		"topicSuffix":            topicSuffix,
 		"kafkaMaxRetry":          kafkaMaxRetry,
+		"dedicatedESClient":      dedicatedESClient,
 		"kafkaRetryInterval":     kafkaRetryInterval,
 		"newTopicEventName":      newTopicEventName,
 		"elasticRetrierInterval": elasticRetrierInterval,
