@@ -113,7 +113,8 @@ func TestBaritoConsumerService_OnElasticRetry(t *testing.T) {
 	defer service.Close()
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
 
-	service.onStoreTimber(&sarama.ConsumerMessage{
+	esClient := service.esClientFactory()
+	service.onStoreTimber(esClient)(&sarama.ConsumerMessage{
 		Value: timberBytes,
 	})
 	FatalIf(t, service.lastError == nil, "Should return error because ES is stopped")
@@ -124,6 +125,33 @@ func TestBaritoConsumerService_OnElasticRetry(t *testing.T) {
 		barito_consumer_elasticsearch_client_failed{phase="retry"} 5
 	`
 	FatalIfError(t, testutil.GatherAndCompare(prometheus.DefaultGatherer, strings.NewReader(expected), "barito_consumer_elasticsearch_client_failed"))
+}
+
+func TestBaritoConsumerService_SpawnWorkerSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	factory := NewDummyKafkaFactory()
+	factory.Expect_MakeKafkaAdmin_ConsumerServiceSuccess(ctrl, []string{"abc_logs"})
+	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
+
+	service := &baritoConsumerService{
+		factory:           factory,
+		newTopicEventName: "new_topic_events",
+		workerMap:         make(map[string]types.ConsumerWorker),
+	}
+	counter := 0
+	service.esClientFactory = func() *elasticClient {
+		counter++
+		return nil
+	}
+
+	err := service.Start()
+	FatalIfError(t, err)
+
+	defer service.Close()
+
+	FatalIf(t, counter != 1, "esClientFactory should be called once")
 }
 
 func TestBaritoConsumerService_SpawnWorkerError(t *testing.T) {
@@ -160,7 +188,7 @@ func TestBaritoConsumerService_onStoreTimber_ErrorConvertKafkaMessage(t *testing
 		Value: []byte(`invalid_proto`),
 	}
 
-	service.onStoreTimber(invalidKafkaMessage)
+	service.onStoreTimber(nil)(invalidKafkaMessage)
 	FatalIfWrongError(t, service.lastError, string(ErrConvertKafkaMessage))
 }
 
@@ -173,20 +201,17 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 	defer ts.Close()
 
 	elasticUrls := []string{ts.URL}
-	elasticUsername := ""
-	elasticPassword := ""
 	service := &baritoConsumerService{
 		elasticUrls: elasticUrls,
 	}
 
-	retrier := service.elasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
-	service.esClient = &elastic
-
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
 
-	service.onStoreTimber(&sarama.ConsumerMessage{
+	retrier := service.elasticRetrier(1, "1")
+	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, "", "")
+
+	service.onStoreTimber(&elastic)(&sarama.ConsumerMessage{
 		Value: timberBytes,
 	})
 	FatalIfWrongError(t, service.lastError, string(ErrStore))
@@ -204,16 +229,16 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	elasticUsername := ""
 	elasticPassword := ""
 
-	retrier := service.elasticRetrier()
+	retrier := service.elasticRetrier(1, "1")
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
 	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
-	service.esClient = &elastic
 
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
 
-	service.onStoreTimber(&sarama.ConsumerMessage{
-		Value: timberBytes,
-	})
+	service.onStoreTimber(&elastic)(
+		&sarama.ConsumerMessage{
+			Value: timberBytes,
+		})
 	FatalIfError(t, service.lastError)
 
 	nilTimber := pb.Timber{}
@@ -229,10 +254,10 @@ func TestBaritoConsumerService_onNewTopicEvent(t *testing.T) {
 	factory := NewDummyKafkaFactory()
 	factory.Expect_MakeClusterConsumer_AlwaysSuccess(ctrl)
 
-	service := &baritoConsumerService{
-		factory:   factory,
-		workerMap: make(map[string]types.ConsumerWorker),
-	}
+	consumerParams := SampleConsumerParams(factory)
+	service := NewBaritoConsumerService(consumerParams).(*baritoConsumerService)
+	service.factory = factory
+	service.workerMap = make(map[string]types.ConsumerWorker)
 	defer service.Close()
 
 	service.onNewTopicEvent(&sarama.ConsumerMessage{
@@ -278,8 +303,9 @@ func TestBaritoConsumerService_onNewTopicEvent_IgnoreIfTopicExist(t *testing.T) 
 	}
 
 	service := &baritoConsumerService{
-		factory:   factory,
-		workerMap: workerMap,
+		factory:         factory,
+		workerMap:       workerMap,
+		esClientFactory: func() *elasticClient { return nil },
 	}
 	defer service.Close()
 
@@ -344,7 +370,10 @@ func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
 	return map[string]interface{}{
 		"factory":                factory,
 		"groupID":                "",
+		"uniqueGroupID":          false,
+		"dedicatedESClient":      false,
 		"elasticUrls":            []string{""},
+		"topicPrefix":            "",
 		"topicSuffix":            "_logs",
 		"kafkaMaxRetry":          1,
 		"kafkaRetryInterval":     10,

@@ -44,7 +44,6 @@ type baritoConsumerService struct {
 	groupID            string
 	uniqueGroupID      bool
 	elasticUrls        []string
-	esClient           *elasticClient
 	topicPrefix        string
 	topicSuffix        string
 	kafkaMaxRetry      int
@@ -56,42 +55,50 @@ type baritoConsumerService struct {
 	newTopicEventWorker types.ConsumerWorker
 	eventWorkerGroupID  string
 
-	lastError              error
-	lastTimber             pb.Timber
-	lastNewTopic           string
-	isHalt                 bool
-	elasticRetrierInterval string
-	elasticRetrierMaxRetry int
+	lastError    error
+	lastTimber   pb.Timber
+	lastNewTopic string
+	isHalt       bool
 
-	elasticUsername string
-	elasticPassword string
+	esClientFactory func() *elasticClient
 }
 
 func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerService {
 	s := &baritoConsumerService{
-		factory:                params["factory"].(types.KafkaFactory),
-		groupID:                params["groupID"].(string),
-		uniqueGroupID:          params["uniqueGroupID"].(bool),
-		elasticUrls:            params["elasticUrls"].([]string),
-		topicPrefix:            params["topicPrefix"].(string),
-		topicSuffix:            params["topicSuffix"].(string),
-		kafkaMaxRetry:          params["kafkaMaxRetry"].(int),
-		kafkaRetryInterval:     params["kafkaRetryInterval"].(int),
-		newTopicEventName:      params["newTopicEventName"].(string),
-		workerMap:              make(map[string]types.ConsumerWorker),
-		elasticRetrierInterval: params["elasticRetrierInterval"].(string),
-		elasticRetrierMaxRetry: params["elasticRetrierMaxRetry"].(int),
-		elasticUsername:        params["elasticUsername"].(string),
-		elasticPassword:        params["elasticPassword"].(string),
+		factory:            params["factory"].(types.KafkaFactory),
+		groupID:            params["groupID"].(string),
+		uniqueGroupID:      params["uniqueGroupID"].(bool),
+		topicPrefix:        params["topicPrefix"].(string),
+		topicSuffix:        params["topicSuffix"].(string),
+		kafkaMaxRetry:      params["kafkaMaxRetry"].(int),
+		kafkaRetryInterval: params["kafkaRetryInterval"].(int),
+		newTopicEventName:  params["newTopicEventName"].(string),
+		workerMap:          make(map[string]types.ConsumerWorker),
 	}
 
-	retrier := s.elasticRetrier()
+	dedicatedESClient := params["dedicatedESClient"].(bool)
+	elasticUrls := params["elasticUrls"].([]string)
+	elasticRetrierInterval := params["elasticRetrierInterval"].(string)
+	elasticRetrierMaxRetry := params["elasticRetrierMaxRetry"].(int)
+	elasticUsername := params["elasticUsername"].(string)
+	elasticPassword := params["elasticPassword"].(string)
 	esConfig := params["esConfig"].(esConfig)
-	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword)
-	s.esClient = &elastic
+	retrier := s.elasticRetrier(elasticRetrierMaxRetry, elasticRetrierInterval)
+	defaultESClient, err := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
 	if err != nil {
 		s.logError(errkit.Concat(ErrElasticsearchClient, err))
-		prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseInit)
+	}
+
+	s.esClientFactory = func() *elasticClient {
+		if !dedicatedESClient {
+			return &defaultESClient
+		}
+
+		elastic, err := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
+		if err != nil {
+			s.logError(errkit.Concat(ErrElasticsearchClient, err))
+		}
+		return &elastic
 	}
 
 	return s
@@ -200,9 +207,11 @@ func (s *baritoConsumerService) spawnLogsWorker(topic string, initialOffset int6
 		return errkit.Concat(ErrConsumerWorker, err)
 	}
 
+	esClient := s.esClientFactory()
+
 	worker := NewConsumerWorker(topic, consumer)
 	worker.OnError(s.logError)
-	worker.OnSuccess(s.onStoreTimber)
+	worker.OnSuccess(s.onStoreTimber(esClient))
 	worker.Start()
 
 	s.workerMap[topic] = worker
@@ -234,23 +243,25 @@ func (s *baritoConsumerService) onElasticMaxRetryReached() {
 	s.HaltAllWorker()
 }
 
-func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
-	// convert kafka message
-	timber, err := ConvertKafkaMessageToTimber(message)
-	if err != nil {
-		s.logError(errkit.Concat(ErrConvertKafkaMessage, err))
-		return
-	}
+func (s *baritoConsumerService) onStoreTimber(esClient *elasticClient) func(message *sarama.ConsumerMessage) {
+	return func(message *sarama.ConsumerMessage) {
+		// convert kafka message
+		timber, err := ConvertKafkaMessageToTimber(message)
+		if err != nil {
+			s.logError(errkit.Concat(ErrConvertKafkaMessage, err))
+			return
+		}
 
-	// store to elasticsearch
-	ctx := context.Background()
-	err = s.esClient.Store(ctx, timber)
-	if err != nil {
-		s.logError(errkit.Concat(ErrStore, err))
-		return
-	}
+		// store to elasticsearch
+		ctx := context.Background()
+		err = esClient.Store(ctx, timber)
+		if err != nil {
+			s.logError(errkit.Concat(ErrStore, err))
+			return
+		}
 
-	s.logTimber(timber)
+		s.logTimber(timber)
+	}
 }
 
 func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {
@@ -294,10 +305,10 @@ func (s *baritoConsumerService) HaltAllWorker() {
 	}
 }
 
-func (s *baritoConsumerService) elasticRetrier() *ElasticRetrier {
+func (s *baritoConsumerService) elasticRetrier(maxRetry int, retrierInterval string) *ElasticRetrier {
 	return NewElasticRetrier(
-		timekit.Duration(s.elasticRetrierInterval),
-		s.elasticRetrierMaxRetry,
+		timekit.Duration(retrierInterval),
+		maxRetry,
 		s.onElasticRetry,
 		s.onElasticMaxRetryReached,
 	)
