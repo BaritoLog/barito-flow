@@ -1,6 +1,9 @@
 package flow
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/jsonpb"
@@ -15,6 +18,12 @@ const (
 	TimberContentMissing = errkit.Error("Timber Content Missing Error")
 	TimberFieldsMissing  = errkit.Error("Timber Field Missing Error")
 )
+
+type LogFormatGcsSimpler struct {
+	Message interface{} `json:"message"`
+	LogTag  string      `json:"log_tag"`
+	LogTime string      `json:"log_time"`
+}
 
 func ConvertTimberToKafkaMessage(timber *pb.Timber, topic string) *sarama.ProducerMessage {
 	b, _ := proto.Marshal(timber)
@@ -33,6 +42,62 @@ func ConvertKafkaMessageToTimber(message *sarama.ConsumerMessage) (timber pb.Tim
 	}
 
 	return
+}
+
+func ConvertTimberToLogFormatGCSSimpleString(timber pb.Timber) (string, error) {
+	doc := timber.GetContent()
+
+	if doc == nil {
+		return "", TimberContentMissing
+	}
+
+	if doc.Fields == nil {
+		return "", TimberFieldsMissing
+	}
+
+	metadata, ok := doc.Fields["k8s_metadata"]
+	if !ok || metadata == nil {
+		return "", TimberFieldsMissing
+	}
+	fmt.Println("metadata: ", metadata)
+
+	containerName, ok := metadata.GetStructValue().Fields["container_name"]
+	if !ok || containerName == nil {
+		return "", TimberFieldsMissing
+	}
+
+	fmt.Println("containerName: ", containerName)
+
+	obj := &LogFormatGcsSimpler{
+		LogTag:  containerName.GetStringValue(),
+		LogTime: doc.Fields["@timestamp"].GetStringValue(),
+	}
+
+	messageString := doc.Fields["@message"].GetStringValue()
+	if len(messageString) == 0 {
+		return "", TimberFieldsMissing
+	}
+	if messageString[0] == '{' {
+		o := map[string]interface{}{}
+		err := json.Unmarshal([]byte(messageString), &o)
+		if err != nil {
+			return "", err
+		}
+		obj.Message = o
+	} else if messageString[0] == '[' {
+		o := []interface{}{}
+		err := json.Unmarshal([]byte(messageString), &o)
+		if err != nil {
+			return "", err
+		}
+		obj.Message = o
+	} else {
+		obj.Message = messageString
+	}
+
+	objStr, err := json.Marshal(obj)
+	return string(objStr), err
+
 }
 
 func ConvertTimberToEsDocumentString(timber pb.Timber, m *jsonpb.Marshaler) (string, error) {
