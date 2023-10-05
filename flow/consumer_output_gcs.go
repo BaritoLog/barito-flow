@@ -92,7 +92,7 @@ func NewGCSFromEnv(name string) *GCS {
 		panic(err)
 	}
 
-	if settings.Compressor != "zstd" && settings.Compressor != "" {
+	if settings.Compressor != "zstd" && settings.Compressor != "gzip" && settings.Compressor != "" {
 		panic(fmt.Sprintf("Compressor %s is not supported", settings.Compressor))
 	}
 

@@ -15,9 +15,9 @@ import (
 )
 
 type KafkaConsumerGCSSettings struct {
-	GroupIDPrefix    string `envconfig:"kafka_group_id_prefix" required:"true"` // consumer_group name
-	TopicPattern     string `envconfig:"kafka_topic_pattern" required:"true"`   // topic pattern to be consumed, regex
-	UseSimplerFormat bool   `envconfig:"use_simpler_format" default:"false"`    // use simpler format for GCS
+	GroupIDPrefix         string `envconfig:"kafka_group_id_prefix" required:"true"`    // consumer_group name
+	TopicPattern          string `envconfig:"kafka_topic_pattern" required:"true"`      // topic pattern to be consumed, regex
+	TimberToSimplerFormat bool   `envconfig:"timber_to_simpler_format" default:"false"` // use simpler format for GCS
 }
 
 type baritoKafkaConsumerGCSService struct {
@@ -27,11 +27,11 @@ type baritoKafkaConsumerGCSService struct {
 	workerMap    map[string]types.ConsumerWorker
 	gcsOutputMap map[string]types.ConsumerOutput
 
-	kafkaAdmin           types.KafkaAdmin
-	kafkaFactory         types.KafkaFactory
-	consumerOuputFactory types.ConsumerOutputFactory
-	marshaler            *jsonpb.Marshaler
-	useSimplerFormat     bool
+	kafkaAdmin            types.KafkaAdmin
+	kafkaFactory          types.KafkaFactory
+	consumerOuputFactory  types.ConsumerOutputFactory
+	marshaler             *jsonpb.Marshaler
+	timberToSimplerFormat bool
 
 	logger *log.Entry
 	isStop bool
@@ -47,16 +47,16 @@ func NewBaritoKafkaConsumerGCSFromEnv(kafkaFactory types.KafkaFactory, consumerO
 	}
 
 	s := &baritoKafkaConsumerGCSService{
-		groupIDPrefix:        settings.GroupIDPrefix,
-		topicPatternRegex:    *regexp.MustCompile(settings.TopicPattern),
-		kafkaAdmin:           kafkaAdmin,
-		kafkaFactory:         kafkaFactory,
-		consumerOuputFactory: consumerOutputFactory,
-		workerMap:            make(map[string]types.ConsumerWorker),
-		gcsOutputMap:         make(map[string]types.ConsumerOutput),
-		marshaler:            &jsonpb.Marshaler{},
-		useSimplerFormat:     settings.UseSimplerFormat,
-		logger:               log.New().WithField("component", "BaritoKafkaConsumerGCS"),
+		groupIDPrefix:         settings.GroupIDPrefix,
+		topicPatternRegex:     *regexp.MustCompile(settings.TopicPattern),
+		kafkaAdmin:            kafkaAdmin,
+		kafkaFactory:          kafkaFactory,
+		consumerOuputFactory:  consumerOutputFactory,
+		workerMap:             make(map[string]types.ConsumerWorker),
+		gcsOutputMap:          make(map[string]types.ConsumerOutput),
+		marshaler:             &jsonpb.Marshaler{},
+		timberToSimplerFormat: settings.TimberToSimplerFormat,
+		logger:                log.New().WithField("component", "BaritoKafkaConsumerGCS"),
 	}
 	return s
 }
@@ -139,11 +139,8 @@ func (s *baritoKafkaConsumerGCSService) spawnLogsWorker(topic string, initialOff
 			return
 		}
 
-		fmt.Println("timber.GetContent(): ", timber.GetContent().Fields["@message"].GetStringValue())
-		fmt.Println("++++++++")
-
 		var content string
-		if s.useSimplerFormat {
+		if s.timberToSimplerFormat {
 			content, err = ConvertTimberToLogFormatGCSSimpleString(timber)
 		} else {
 			content, err = s.marshaler.MarshalToString(timber.GetContent())

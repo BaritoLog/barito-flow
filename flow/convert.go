@@ -2,7 +2,6 @@ package flow
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
@@ -59,14 +58,11 @@ func ConvertTimberToLogFormatGCSSimpleString(timber pb.Timber) (string, error) {
 	if !ok || metadata == nil {
 		return "", TimberFieldsMissing
 	}
-	fmt.Println("metadata: ", metadata)
 
 	containerName, ok := metadata.GetStructValue().Fields["container_name"]
 	if !ok || containerName == nil {
 		return "", TimberFieldsMissing
 	}
-
-	fmt.Println("containerName: ", containerName)
 
 	obj := &LogFormatGcsSimpler{
 		LogTag:  containerName.GetStringValue(),
