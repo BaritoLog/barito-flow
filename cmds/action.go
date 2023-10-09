@@ -84,6 +84,13 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"elasticPassword":        elasticPassword,
 	}
 
+	// if elasticsearch using mTLS
+	if elasticCaCrt := configElasticCaCrt(); elasticCaCrt != "" {
+		consumerParams["elasticCaCrt"] = elasticCaCrt
+		consumerParams["elasticClientCrt"] = configElasticClientCrt()
+		consumerParams["elasticClientKey"] = configElasticClientKey()
+	}
+
 	service := flow.NewBaritoConsumerService(consumerParams)
 
 	callbackInstrumentation()

@@ -3,6 +3,7 @@ package flow
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/BaritoLog/barito-flow/prome"
@@ -52,7 +53,10 @@ func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printT
 	}
 }
 
-func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, elasticUsername string, elasticPassword string) (client elasticClient, err error) {
+func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, elasticUsername string, elasticPassword string, httpClient *http.Client) (client elasticClient, err error) {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
 
 	c, err := elastic.NewClient(
 		elastic.SetURL(urls...),
@@ -61,6 +65,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		elastic.SetRetrier(retrierFunc),
 		elastic.SetBasicAuth(elasticUsername, elasticPassword),
 		elastic.SetGzip(true),
+		elastic.SetHttpClient(httpClient),
 	)
 
 	if err != nil {
