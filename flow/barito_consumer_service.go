@@ -90,7 +90,7 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		elasticPassword:        params["elasticPassword"].(string),
 	}
 
-	httpClient := http.DefaultClient
+        httpClient := &http.Client{}
 	// if using mTLS, create new http client with tls config
 	if _, ok := params["elasticCaCrt"]; ok {
 		httpClient = s.newHttpClientWithTLS(params["elasticCaCrt"].(string), params["elasticClientCrt"].(string), params["elasticClientKey"].(string))
