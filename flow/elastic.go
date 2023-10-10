@@ -55,7 +55,7 @@ func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printT
 
 func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, elasticUsername string, elasticPassword string, httpClient *http.Client) (client elasticClient, err error) {
 	if httpClient == nil {
-		httpClient = http.DefaultClient
+		httpClient = &http.Client{}
 	}
 
 	c, err := elastic.NewClient(
