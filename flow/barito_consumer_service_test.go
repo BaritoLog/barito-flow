@@ -181,7 +181,7 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword, nil)
 	service.esClient = &elastic
 
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())
@@ -206,7 +206,7 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 
 	retrier := service.elasticRetrier()
 	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
-	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword)
+	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword, nil)
 	service.esClient = &elastic
 
 	timberBytes, _ := proto.Marshal(pb.SampleTimberProto())

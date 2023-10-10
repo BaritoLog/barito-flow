@@ -2,7 +2,12 @@ package flow
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -85,9 +90,15 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		elasticPassword:        params["elasticPassword"].(string),
 	}
 
+        httpClient := &http.Client{}
+	// if using mTLS, create new http client with tls config
+	if _, ok := params["elasticCaCrt"]; ok {
+		httpClient = s.newHttpClientWithTLS(params["elasticCaCrt"].(string), params["elasticClientCrt"].(string), params["elasticClientKey"].(string))
+	}
+
 	retrier := s.elasticRetrier()
 	esConfig := params["esConfig"].(esConfig)
-	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword)
+	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword, httpClient)
 	s.esClient = &elastic
 	if err != nil {
 		s.logError(errkit.Concat(ErrElasticsearchClient, err))
@@ -95,6 +106,29 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 	}
 
 	return s
+}
+
+func (s *baritoConsumerService) newHttpClientWithTLS(caCrt, clientCrt, clientKey string) *http.Client {
+	caCert, _ := os.ReadFile(caCrt)
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	cert, err := tls.LoadX509KeyPair(clientCrt, clientKey)
+	if err != nil {
+		s.logError(errkit.Concat(errors.New("Failed to create http client with tls"), err))
+		panic(err)
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs:      caCertPool,
+				Certificates: []tls.Certificate{cert},
+			},
+		},
+	}
+
+	return client
 }
 
 func (s *baritoConsumerService) Start() (err error) {

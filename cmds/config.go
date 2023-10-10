@@ -50,8 +50,11 @@ const (
 
 	EnvPrintTPS = "BARITO_PRINT_TPS"
 
-	EnvElasticUsername = "ELASTIC_USERNAME"
-	EnvElasticPassword = "ELASTIC_PASSWORD"
+	EnvElasticUsername  = "ELASTIC_USERNAME"
+	EnvElasticPassword  = "ELASTIC_PASSWORD"
+	EnvElasticCaCrt     = "BARITO_CONSUMER_ELASTICSEARCH_CA_CERT"
+	EnvElasticClientCrt = "BARITO_CONSUMER_ELASTICSEARCH_CLIENT_CERT"
+	EnvElasticClientKey = "BARITO_CONSUMER_ELASTICSEARCH_CLIENT_KEY"
 
 	EnvRateLimiterOpt = "BARITO_RATE_LIMITER_OPT"
 	EnvRedisUrl       = "BARITO_REDIS_URL"
@@ -275,6 +278,18 @@ func configElasticUsername() (s string) {
 
 func configElasticPassword() (s string) {
 	return stringEnvOrDefault(EnvElasticPassword, DefaultElasticPassword)
+}
+
+func configElasticCaCrt() (s string) {
+	return stringEnvOrDefault(EnvElasticCaCrt, "")
+}
+
+func configElasticClientCrt() (s string) {
+	return stringEnvOrDefault(EnvElasticClientCrt, "")
+}
+
+func configElasticClientKey() (s string) {
+	return stringEnvOrDefault(EnvElasticClientKey, "")
 }
 
 func configRateLimiterOpt() RateLimiterOpt {
