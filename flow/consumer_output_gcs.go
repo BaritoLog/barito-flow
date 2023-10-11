@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -91,7 +92,7 @@ func NewGCSFromEnv(name string) *GCS {
 		panic(err)
 	}
 
-	if settings.Compressor != "zstd" && settings.Compressor != "" {
+	if settings.Compressor != "zstd" && settings.Compressor != "gzip" && settings.Compressor != "" {
 		panic(fmt.Sprintf("Compressor %s is not supported", settings.Compressor))
 	}
 
@@ -192,6 +193,8 @@ func (g *GCS) uploadToGCS() error {
 	// TODO: use dependency injection
 	if g.compressor == "zstd" {
 		filename = filename + ".zst"
+	} else if g.compressor == "gzip" {
+		filename = filename + ".gz"
 	}
 	bucket := g.storageClient.Bucket(g.bucketName)
 	obj := bucket.Object(filename)
@@ -202,6 +205,8 @@ func (g *GCS) uploadToGCS() error {
 	// TODO: use dependency injection
 	if g.compressor == "zstd" {
 		w, _ = zstd.NewWriter(w)
+	} else {
+		w = gzip.NewWriter(w)
 	}
 
 	n, err := io.Copy(w, g.buffer)
