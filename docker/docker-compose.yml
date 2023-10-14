@@ -2,13 +2,20 @@ version: "3.7"
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.1
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - 9200:9200
       - 9300:9300
-    
+
   kafka:
-    image: spotify/kafka
+    image: spotify/kafka # not working on arm
+#    image: ghcr.io/clavinjune/kafka # arm enabled
+    environment:
+      - "ADVERTISED_HOST=kafka"
+      - "ADVERTISED_PORT=9092"
     ports:
       - 9092:9092
       - 2181:2181
