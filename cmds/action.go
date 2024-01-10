@@ -80,6 +80,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"elasticRetrierInterval": elasticRetrierInterval,
 		"elasticRetrierMaxRetry": elasticRetrierMaxRetry,
 		"esConfig":               esConfig,
+		"esNumWorker":            configEsNumWorker(),
 		"elasticUsername":        elasticUsername,
 		"elasticPassword":        elasticPassword,
 	}

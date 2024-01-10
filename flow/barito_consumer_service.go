@@ -96,13 +96,16 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		httpClient = s.newHttpClientWithTLS(params["elasticCaCrt"].(string), params["elasticClientCrt"].(string), params["elasticClientKey"].(string))
 	}
 
-	retrier := s.elasticRetrier()
-	esConfig := params["esConfig"].(esConfig)
-	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword, httpClient)
-	s.esClients = []*elasticClient{&elastic}
-	if err != nil {
-		s.logError(errkit.Concat(ErrElasticsearchClient, err))
-		prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseInit)
+	s.esClients = []*elasticClient{}
+	for i := 0; i < params["esNumWorker"].(int); i++ {
+		retrier := s.elasticRetrier()
+		esConfig := params["esConfig"].(esConfig)
+		elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword, httpClient)
+		s.esClients = append(s.esClients, &elastic)
+		if err != nil {
+			s.logError(errkit.Concat(ErrElasticsearchClient, err))
+			prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseInit)
+		}
 	}
 
 	return s

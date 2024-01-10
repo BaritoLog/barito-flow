@@ -21,6 +21,7 @@ const (
 	EnvEsIndexMethod     = "BARITO_ELASTICSEARCH_INDEX_METHOD"
 	EnvEsBulkSize        = "BARITO_ELASTICSEARCH_BULK_SIZE"
 	EnvEsFlushIntervalMs = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
+	EnvEsNumWorker       = "BARITO_ELASTICSEARCH_NUM_WORKER"
 
 	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
 
@@ -97,6 +98,7 @@ var (
 	DefaultEsIndexMethod                  = "BulkProcessor"
 	DefaultEsBulkSize                     = 100
 	DefaultEsFlushIntervalMs              = 500
+	DefaultEsNumWorker                    = 5
 	DefaultConsumerGroupSessionTimeout    = 20
 	DefaultConsumerGroupHeartbeatInterval = 6
 	DefaultConsumerMaxProcessingTime      = 500
@@ -153,6 +155,10 @@ func configElasticsearchUrls() (urls []string) {
 
 func configEsIndexMethod() (s string) {
 	return stringEnvOrDefault(EnvEsIndexMethod, DefaultEsIndexMethod)
+}
+
+func configEsNumWorker() (i int) {
+	return intEnvOrDefault(EnvEsNumWorker, DefaultEsNumWorker)
 }
 
 func configEsBulkSize() (i int) {
