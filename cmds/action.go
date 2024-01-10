@@ -3,6 +3,7 @@ package cmds
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -20,6 +21,7 @@ import (
 )
 
 func ActionBaritoConsumerService(c *cli.Context) (err error) {
+	runtime.SetBlockProfileRate(1)
 	if c.Bool("verbose") == true {
 		log.SetLevel(log.DebugLevel)
 	} else {
