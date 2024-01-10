@@ -49,7 +49,7 @@ type baritoConsumerService struct {
 	groupID            string
 	uniqueGroupID      bool
 	elasticUrls        []string
-	esClient           *elasticClient
+	esClients          []*elasticClient
 	topicPrefix        string
 	topicSuffix        string
 	kafkaMaxRetry      int
@@ -90,7 +90,7 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		elasticPassword:        params["elasticPassword"].(string),
 	}
 
-        httpClient := &http.Client{}
+	httpClient := &http.Client{}
 	// if using mTLS, create new http client with tls config
 	if _, ok := params["elasticCaCrt"]; ok {
 		httpClient = s.newHttpClientWithTLS(params["elasticCaCrt"].(string), params["elasticClientCrt"].(string), params["elasticClientKey"].(string))
@@ -99,7 +99,7 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 	retrier := s.elasticRetrier()
 	esConfig := params["esConfig"].(esConfig)
 	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword, httpClient)
-	s.esClient = &elastic
+	s.esClients = []*elasticClient{&elastic}
 	if err != nil {
 		s.logError(errkit.Concat(ErrElasticsearchClient, err))
 		prome.IncreaseConsumerElasticsearchClientFailed(prome.ESClientFailedPhaseInit)
@@ -278,13 +278,18 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
 	// store to elasticsearch
 	ctx := context.Background()
-	err = s.esClient.Store(ctx, timber)
+	s.getRandomElasticClient().Store(ctx, timber)
 	if err != nil {
 		s.logError(errkit.Concat(ErrStore, err))
 		return
 	}
 
 	s.logTimber(timber)
+}
+
+func (s *baritoConsumerService) getRandomElasticClient() *elasticClient {
+	randomIndex := time.Now().UnixNano() % int64(len(s.esClients))
+	return s.esClients[randomIndex]
 }
 
 func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {
