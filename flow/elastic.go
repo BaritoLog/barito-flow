@@ -111,13 +111,13 @@ func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []
 		diff := float64(time.Now().Sub(start).Nanoseconds()) / float64(1000000000)
 		prome.ObserveBulkProcessTime(diff)
 
-		for _, response := range response.Items {
-			for _, responseItem := range response {
+		for x, response := range response.Items {
+			for y, responseItem := range response {
 				errorReason := ""
 				if responseItem.Error != nil {
 					errorReason = responseItem.Error.Reason
 					if enableLogOnError {
-						log.Errorf("Error when consumer fail: %s", errorReason, requests)
+						log.Errorf("Error when consumer fail: %s", errorReason, x, y, responseItem, requests)
 					}
 				}
 				prome.IncreaseLogStoredCounter(responseItem.Index, responseItem.Result, responseItem.Status, errorReason)
