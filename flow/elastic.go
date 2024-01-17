@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/BaritoLog/barito-flow/prome"
@@ -102,6 +103,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 
 func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []elastic.BulkableRequest, *elastic.BulkResponse, error)) {
 	var start time.Time
+	enableLogOnError := os.Getenv("ENABLE_LOG_ON_ERROR") == "true"
 	beforeCommitCallback := func(executionId int64, requests []elastic.BulkableRequest) {
 		start = time.Now()
 	}
@@ -114,6 +116,9 @@ func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []
 				errorReason := ""
 				if responseItem.Error != nil {
 					errorReason = responseItem.Error.Reason
+					if enableLogOnError {
+						log.Errorf("Error when consumer fail: %s", errorReason, requests)
+					}
 				}
 				prome.IncreaseLogStoredCounter(responseItem.Index, responseItem.Result, responseItem.Status, errorReason)
 			}
