@@ -14,6 +14,8 @@ import (
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/vwidjaya/barito-proto/producer"
+
+	"github.com/zekroTJA/timedmap"
 )
 
 var counter int = 0
@@ -29,11 +31,12 @@ type Elastic interface {
 }
 
 type elasticClient struct {
-	client        *elastic.Client
-	bulkProcessor *elastic.BulkProcessor
-	onFailureFunc func(*pb.Timber)
-	onStoreFunc   func(ctx context.Context, indexName, documentType, document string) (err error)
-	jspbMarshaler *jsonpb.Marshaler
+	client           *elastic.Client
+	bulkProcessor    *elastic.BulkProcessor
+	onFailureFunc    func(*pb.Timber)
+	onStoreFunc      func(ctx context.Context, indexName, documentType, document string) (err error)
+	jspbMarshaler    *jsonpb.Marshaler
+	indexExistsCache *timedmap.TimedMap
 }
 
 type esConfig struct {
@@ -86,9 +89,10 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 	}
 
 	client = elasticClient{
-		client:        c,
-		bulkProcessor: p,
-		jspbMarshaler: &jsonpb.Marshaler{},
+		client:           c,
+		bulkProcessor:    p,
+		jspbMarshaler:    &jsonpb.Marshaler{},
+		indexExistsCache: timedmap.New(1 * time.Minute),
 	}
 
 	if esConfig.indexMethod == "BulkProcessor" {
@@ -142,15 +146,19 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
 	appSecret := timber.GetContext().GetAppSecret()
-	exists, _ := e.client.IndexExists(indexName).Do(ctx)
 
-	if !exists {
-		log.Warnf("ES index '%s' is not exist", indexName)
-		_, err = e.client.CreateIndex(indexName).Do(ctx)
-		instruESCreateIndex(err)
-		if (err != nil) && (!strings.Contains(err.Error(), "resource_already_exists_exception")) {
-			return
+	indexCacheFound := e.indexExistsCache.GetValue(indexName)
+	if indexCacheFound == nil {
+		exists, _ := e.client.IndexExists(indexName).Do(ctx)
+		if !exists {
+			log.Warnf("ES index '%s' is not exist", indexName)
+			_, err = e.client.CreateIndex(indexName).Do(ctx)
+			instruESCreateIndex(err)
+			if (err != nil) && (!strings.Contains(err.Error(), "resource_already_exists_exception")) {
+				return
+			}
 		}
+		e.indexExistsCache.Set(indexName, true, 1*time.Minute)
 	}
 
 	document, err := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
