@@ -55,7 +55,19 @@ are mapped as if they are running on local machine.
 ### Run Unit Tests
 
 ```sh
-go run test ./flow
+make test
+```
+
+### Check Vulnerability
+
+```sh
+make vuln
+```
+
+### Check Deadcode
+
+```sh
+make deadcode
 ```
 
 ## Producer Mode

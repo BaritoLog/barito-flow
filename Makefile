@@ -19,3 +19,12 @@ docker: docker/Dockerfile
 
 mockgen:
 	mockgen -source=./flow/types/types.go -package=mock  -destination=./mock/flow_types.go
+
+test:
+	go test -v ./flow
+
+vuln:
+	go run golang.org/x/vuln/cmd/govulncheck@latest .
+
+deadcode:
+	go run golang.org/x/tools/cmd/deadcode@latest .
