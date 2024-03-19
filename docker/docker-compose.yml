@@ -6,7 +6,7 @@ services:
     ports:
       - 9200:9200
       - 9300:9300
-    
+
   kafka:
     image: spotify/kafka
     ports:
@@ -30,6 +30,9 @@ services:
       - 8080:8080
   consumer:
     image: baritolog/barito-flow
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     command: "consumer"
     environment:
       - BARITO_PRODUCER_ADDRESS=producer:8080
