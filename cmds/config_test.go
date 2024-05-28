@@ -97,6 +97,14 @@ func TestGetProducerMaxTPS(t *testing.T) {
 	FatalIf(t, configProducerMaxTPS() != 222, "should get from env variable")
 }
 
+func TestGetProducerMaxMessageBytes(t *testing.T) {
+	FatalIf(t, configProducerMaxMessageBytes() != DefaultProducerMaxMessageBytes, "should return default ")
+
+	os.Setenv(EnvProducerMaxMessageBytes, "2000000")
+	defer os.Clearenv()
+	FatalIf(t, configProducerMaxTPS() != 2000000, "should get from env variable")
+}
+
 func TestConfigConsulKafkaName(t *testing.T) {
 	FatalIf(t, configConsulKafkaName() != DefaultConsulKafkaName, "should return default ")
 

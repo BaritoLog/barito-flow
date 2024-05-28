@@ -126,6 +126,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	newTopicEventName := configNewTopicEvent()
 	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
 	rateLimiterOpt := configRateLimiterOpt()
+	maxMessageBytes := configProducerMaxMessageBytes()
 
 	if rateLimiterOpt == RateLimiterOptUndefined {
 		return fmt.Errorf("undefined rate limiter options, allowed options are %v", RateLimiterAllowedOpts)
@@ -138,6 +139,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	// kafka producer config
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = 1
+	config.Producer.MaxMessageBytes = maxMessageBytes
 	config.Producer.Retry.Max = maxRetry
 	config.Producer.Return.Successes = true
 	config.Producer.Compression = sarama.CompressionZSTD

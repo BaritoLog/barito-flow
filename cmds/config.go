@@ -34,6 +34,7 @@ const (
 	EnvProducerMaxTPS                 = "BARITO_PRODUCER_MAX_TPS"
 	EnvProducerRateLimitResetInterval = "BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL"
 	EnvProducerIgnoreKafkaOptions     = "BARITO_PRODUCER_IGNORE_KAFKA_OPTIONS"
+	EnvProducerMaxMessageBytes        = "BARITO_PRODUCER_MAX_MESSAGE_BYTES"
 
 	EnvConsulUrl               = "BARITO_CONSUL_URL"
 	EnvConsulKafkaName         = "BARITO_CONSUL_KAFKA_NAME"
@@ -89,6 +90,7 @@ var (
 	DefaultProducerMaxTPS                 = 100
 	DefaultProducerRateLimitResetInterval = 10
 	DefaultProducerIgnoreKafkaOptions     = "false"
+	DefaultProducerMaxMessageBytes = 1000000 // Should be set equal to or smaller than the broker's `message.max.bytes`.
 
 	DefaultNewTopicEventName              = "new_topic_events"
 	DefaultElasticsearchRetrierInterval   = "30s"
@@ -221,6 +223,10 @@ func configProducerRateLimitResetInterval() (i int) {
 
 func configProducerIgnoreKafkaOptions() bool {
 	return (stringEnvOrDefault(EnvProducerIgnoreKafkaOptions, DefaultProducerIgnoreKafkaOptions) == "true")
+}
+
+func configProducerMaxMessageBytes() (i int) {
+	return intEnvOrDefault(EnvProducerMaxMessageBytes, DefaultProducerMaxMessageBytes)
 }
 
 func configConsulKafkaName() (s string) {
