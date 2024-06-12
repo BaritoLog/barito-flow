@@ -6,21 +6,26 @@ Component for handling flow of logs within a cluster. Support 2 modes:
 - **Producer**, for receiving logs and forwarding it to Kafka
 - **Consumer**, for consuming from kafka and forwarding it to Elasticsearch
 
-Compatible with both gRPC and REST API. The use of REST API is optional and is implemented by using 
-[gRPC-gateway](https://github.com/grpc-ecosystem/grpc-gateway) which work like a reverse-proxy server 
+Compatible with both gRPC and REST API. The use of REST API is optional and is implemented by using
+[gRPC-gateway](https://github.com/grpc-ecosystem/grpc-gateway) which work like a reverse-proxy server
 to translate RESTful HTTP API into gRPC. Barito flow infrastructure consists of producer and consumer.
 
 Barito flow producer will turn on gRPC server and optionally REST gateway reverse proxy server.
 It will automatically create Kafka topic for the log if not exist yet.
 gRPC messages and services are declared in [barito-proto](https://github.com/vwidjaya/barito-proto) repository.
 
-Barito flow consumer will firstly create a topic event and generates the workers. Then based on the logs send, 
-each topic inside this event topic will be created a cluster consumer separately. This cluster consumer will 
-store the logs to Elasticsearch by calling a single store or bulk store Elasticsearch API. If the process has 
-failed, Elasticsearch will halt all the workers and retry again after some backoff period. The halted workers 
+Barito flow consumer will firstly create a topic event and generates the workers. Then based on the logs send,
+each topic inside this event topic will be created a cluster consumer separately. This cluster consumer will
+store the logs to Elasticsearch by calling a single store or bulk store Elasticsearch API. If the process has
+failed, Elasticsearch will halt all the workers and retry again after some backoff period. The halted workers
 only continue when the failed process success on the retry attempt.
 
-## Development Setup 
+## Development Setup
+
+If running on local machine with ARM (e.g. Apple M1, Apple M2) Chipset, run below command.
+```sh
+go env -w GOARCH=amd64
+```
 
 Fetch and build the project.
 ```sh
@@ -46,6 +51,24 @@ $ docker-compose -f docker/docker-compose.yml up -d
 
 This will pull Elasticsearch, Kafka, and build producer and consumer image. The ports
 are mapped as if they are running on local machine.
+
+### Run Unit Tests
+
+```sh
+make test
+```
+
+### Check Vulnerability
+
+```sh
+make vuln
+```
+
+### Check Deadcode
+
+```sh
+make deadcode
+```
 
 ## Producer Mode
 
@@ -160,7 +183,7 @@ These environment variables can be modified to customize its behaviour.
 | PushMetricUrl | push metric api url | BARITO_PUSH_METRIC_URL|   |
 | PushMetricInterval | push metric interval | BARITO_PUSH_METRIC_INTERVAL | 30s |
 
-**NOTE**  
+**NOTE**
 These following variables will be ignored if `BARITO_ELASTICSEARCH_INDEX_METHOD` is set to `SingleInsert`
 
 - `BARITO_ELASTICSEARCH_BULK_SIZE`
