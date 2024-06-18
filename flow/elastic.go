@@ -1,9 +1,12 @@
 package flow
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/BaritoLog/barito-flow/prome"
@@ -20,13 +23,25 @@ import (
 
 var counter int = 0
 
+var (
+	emailRegex       = regexp.MustCompile(`(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}`)
+	phoneRegex       = regexp.MustCompile(`\b\d{3}[-.]?\d{3}[-.]?\d{4}\b`)
+	addressRegex     = regexp.MustCompile(`(?i)(address|st|street|road|rd|avenue|ave|blvd|boulevard|lane|ln|dr|drive)\s+\d{1,5}\s+\w+(\s+\w+)*`)
+	nameRegex        = regexp.MustCompile(`(?i)\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b`)
+	dobRegex         = regexp.MustCompile(`\b\d{1,2}[-/]\d{1,2}[-/]\d{4}\b`)
+	documentRegex    = regexp.MustCompile(`\b[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{4}\b`)
+	bankAccountRegex = regexp.MustCompile(`\b\d{9,18}\b`)
+	creditScoreRegex = regexp.MustCompile(`(?i)\b(?:credit score|score|credit):?\s*\d{3}\b`)
+	sexRegex         = regexp.MustCompile(`\b(?:Male|Female|Other)\b`)
+)
+
 const (
 	DEFAULT_ELASTIC_DOCUMENT_TYPE = "_doc"
 )
 
 type Elastic interface {
 	OnFailure(f func(*pb.Timber))
-	Store(ctx context.Context, timber pb.Timber) error
+	Store(ctx context.Context, timber pb.Timber) (string, error)
 	NewClient()
 }
 
@@ -141,7 +156,7 @@ func printThroughputPerSecond() {
 	}()
 }
 
-func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
+func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (redactedDoc string, err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
@@ -164,14 +179,81 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 	document, err := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 	if err != nil {
 		prome.IncreaseConsumerTimberConvertError(indexPrefix)
-		return err
+		return "", err
 	}
 
-	err = e.onStoreFunc(ctx, indexName, documentType, document)
+	redactedDoc, err = redactJSONValuesStream(document)
+	if err != nil {
+		prome.IncreaseConsumerTimberConvertError(indexPrefix)
+		return "", fmt.Errorf("error in redacting doc, err: %s", err.Error())
+	}
+
+	err = e.onStoreFunc(ctx, indexName, documentType, redactedDoc)
 	counter++
 	instruESStore(appSecret, err)
 
 	return
+}
+
+func redactPIIData(jsonStr string) string {
+	redacted := emailRegex.ReplaceAllString(jsonStr, "[REDACTED]")
+	redacted = phoneRegex.ReplaceAllString(redacted, "[REDACTED]")
+	redacted = addressRegex.ReplaceAllString(redacted, "[REDACTED]")
+	redacted = nameRegex.ReplaceAllString(redacted, "[REDACTED]")
+	redacted = dobRegex.ReplaceAllString(redacted, "[REDACTED]")
+	redacted = documentRegex.ReplaceAllString(redacted, "[REDACTED]")
+	redacted = bankAccountRegex.ReplaceAllString(redacted, "[REDACTED]")
+	redacted = creditScoreRegex.ReplaceAllString(redacted, "[REDACTED]")
+	redacted = sexRegex.ReplaceAllString(redacted, "[REDACTED]")
+	return redacted
+}
+
+func redactJSONValuesStream(jsonStr string) (string, error) {
+	var buffer bytes.Buffer
+	decoder := json.NewDecoder(strings.NewReader(jsonStr))
+	firstToken, err := decoder.Token()
+	if err != nil {
+		return "", err
+	}
+	if firstToken != json.Delim('{') {
+		return "", fmt.Errorf("expected JSON object")
+	}
+
+	buffer.WriteString("{")
+	isKey := true
+
+	for decoder.More() {
+		t, err := decoder.Token()
+		if err != nil {
+			return "", err
+		}
+		switch v := t.(type) {
+		case string:
+			if isKey {
+				if !strings.HasPrefix(buffer.String(), "{") {
+					buffer.WriteString(",")
+				}
+				buffer.WriteString(fmt.Sprintf("%q:", v))
+				isKey = false
+			} else {
+				redactedValue := redactPIIData(v)
+				buffer.WriteString(fmt.Sprintf("%q", redactedValue))
+				buffer.WriteString(",")
+				isKey = true
+			}
+		default:
+			rawValue, err := json.Marshal(v)
+			if err != nil {
+				return "", err
+			}
+			buffer.Write(rawValue)
+		}
+	}
+
+	buffer.Truncate(buffer.Len() - 1)
+	buffer.WriteString("}")
+
+	return buffer.String(), nil
 }
 
 func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
