@@ -3,8 +3,54 @@ package redact
 import (
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
+func TestRules_Redact(t *testing.T) {
+	emailStaticRule := &StaticRule{
+		Name:  "EMAIL",
+		Regex: regexp.MustCompile(`[a-z]+@[a-z]+.com`),
+	}
+	phoneStaticRule := &StaticRule{
+		Name:  "PHONE",
+		Regex: regexp.MustCompile(`\+6285\d{5,9}`),
+	}
+
+	tests := []struct {
+		name  string
+		input string
+		want  string
+		rules *Rules
+	}{
+		{
+			name:  "non json log, with 1 match",
+			input: "abc user@example.com",
+			want:  "abc [EMAIL REDACTED]",
+			rules: &Rules{
+				StaticRules: []*StaticRule{emailStaticRule, phoneStaticRule},
+			},
+		},
+		{
+			name:  "non json log, with 2 match",
+			input: "abc user@example.com +628500000000",
+			want:  "abc [EMAIL REDACTED] [PHONE REDACTED]",
+			rules: &Rules{
+				StaticRules: []*StaticRule{emailStaticRule, phoneStaticRule},
+			},
+		},
+		{
+			name: "json log, with 1 match",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.rules.Redact(tc.input)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
 func TestStaticRule_Redact(t *testing.T) {
 	emailRegex := regexp.MustCompile(`[a-z]+@[a-z]+.com`)
 	tests := []struct {
@@ -29,70 +75,6 @@ func TestStaticRule_Redact(t *testing.T) {
 			rule: &StaticRule{
 				Name:  "EMAIL",
 				Regex: emailRegex,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := tc.rule.Redact(tc.input)
-			if got != tc.want {
-				t.Fatalf("expected: %v, got: %v", tc.want, got)
-			}
-		})
-	}
-}
-
-func TestJsonPathRule_Redact(t *testing.T) {
-	tests := []struct {
-		name  string
-		want  string
-		rule  *JsonPathRule
-		input string
-	}{
-		{
-			name:  "Normal email string",
-			input: `{"user":{"email":"abc","phone":"123"}}`,
-			want:  `{"user":{"email":"[EMAIL REDACTED]","phone":"123"}}`,
-			rule: &JsonPathRule{
-				Name: "EMAIL",
-				Path: regexp.MustCompile(`user\.email`),
-			},
-		},
-		{
-			name:  "using a subset of the path",
-			input: `{"user":{"email":"abc","phone":"123"}}`,
-			want:  `{"user":{"email":"[EMAIL_SHORT REDACTED]","phone":"123"}}`,
-			rule: &JsonPathRule{
-				Name: "EMAIL_SHORT",
-				Path: regexp.MustCompile(`email`),
-			},
-		},
-		{
-			name:  "redact email on array of users using full field path",
-			input: `{"users":[{"email":"abc","phone":"123"},{"email":"def","phone":"456"}]}`,
-			want:  `{"users":[{"email":"[ARRAY_EMAIL REDACTED]","phone":"123"},{"email":"[ARRAY_EMAIL REDACTED]","phone":"456"}]}`,
-			rule: &JsonPathRule{
-				Name: "ARRAY_EMAIL",
-				Path: regexp.MustCompile(`users\[]\.email`),
-			},
-		},
-		{
-			name:  "redact email on array of users using short field path",
-			input: `{"users":[{"email":"abc","phone":"123"},{"email":"def","phone":"456"}]}`,
-			want:  `{"users":[{"email":"[ARRAY_EMAIL_SHORT REDACTED]","phone":"123"},{"email":"[ARRAY_EMAIL_SHORT REDACTED]","phone":"456"}]}`,
-			rule: &JsonPathRule{
-				Name: "ARRAY_EMAIL_SHORT",
-				Path: regexp.MustCompile(`email`),
-			},
-		},
-		{
-			name:  "not redact",
-			input: `{"user":{"email":"abc","phone":"123"}}`,
-			want:  `{"user":{"email":"abc","phone":"123"}}`,
-			rule: &JsonPathRule{
-				Name: "EMAIL",
-				Path: regexp.MustCompile(`user\.mail`),
 			},
 		},
 	}

@@ -3,33 +3,21 @@ package redact
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 )
 
-type Rule interface {
-	Redact(string) string
+type Rules struct {
+	StaticRules   []*StaticRule
+	JsonPathRules []*JsonPathRule
 }
 
-type StaticRule struct {
-	Name  string
-	Regex *regexp.Regexp
-}
-
-func (r *StaticRule) Redact(s string) string {
-	return r.Regex.ReplaceAllString(s, fmt.Sprintf("[%s REDACTED]", r.Name))
-}
-
-type JsonPathRule struct {
-	Name string
-	Path *regexp.Regexp
-}
-
-func (r *JsonPathRule) traverseJSON(data interface{}, path string) interface{} {
+func (r *Rules) traverseJSON(data interface{}, path string) interface{} {
 	switch v := data.(type) {
 	case string:
-		if r.Path.MatchString(path) {
-			return fmt.Sprintf("[%s REDACTED]", r.Name)
+		for _, rule := range r.JsonPathRules {
+			if rule.Path.MatchString(path) {
+				return fmt.Sprintf("[%s REDACTED]", rule.Name)
+			}
 		}
 		return v
 	case float64:
@@ -49,18 +37,37 @@ func (r *JsonPathRule) traverseJSON(data interface{}, path string) interface{} {
 	}
 }
 
-func (r *JsonPathRule) Redact(s string) string {
+func (r *Rules) Redact(originalString string) string {
+	var s = originalString
 	var data interface{}
 
-	if err := json.Unmarshal([]byte(s), &data); err != nil {
-		log.Fatalf("Error unmarshalling JSON: %v", err)
+	if err := json.Unmarshal([]byte(s), &data); err == nil {
+		modifiedData := r.traverseJSON(data, "")
+		modifiedJSON, err := json.Marshal(modifiedData)
+		if err != nil {
+			// TODO: log error
+		} else {
+			s = string(modifiedJSON)
+		}
 	}
 
-	modifiedData := r.traverseJSON(data, "")
-	modifiedJSON, err := json.Marshal(modifiedData)
-	if err != nil {
-		log.Fatalf("Error marshalling modified JSON: %v", err)
+	// continue to static rules
+	for _, rule := range r.StaticRules {
+		s = rule.Redact(s)
 	}
+	return string(s)
+}
 
-	return string(modifiedJSON)
+type StaticRule struct {
+	Name  string
+	Regex *regexp.Regexp
+}
+
+func (r *StaticRule) Redact(s string) string {
+	return r.Regex.ReplaceAllString(s, fmt.Sprintf("[%s REDACTED]", r.Name))
+}
+
+type JsonPathRule struct {
+	Name string
+	Path *regexp.Regexp
 }
