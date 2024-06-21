@@ -16,6 +16,14 @@ func TestRules_Redact(t *testing.T) {
 		Name:  "PHONE",
 		Regex: regexp.MustCompile(`\+6285\d{5,9}`),
 	}
+	emailJsonPathRule := &JsonPathRule{
+		Name: "EMAIL",
+		Path: regexp.MustCompile("users.details.email"),
+	}
+	phoneJsonPathRule := &JsonPathRule{
+		Name: "PHONE",
+		Path: regexp.MustCompile("users.details.phone"),
+	}
 
 	tests := []struct {
 		name  string
@@ -24,7 +32,7 @@ func TestRules_Redact(t *testing.T) {
 		rules *Rules
 	}{
 		{
-			name:  "non json log, with 1 match",
+			name:  "non json log, with 1 match and static rules",
 			input: "abc user@example.com",
 			want:  "abc [EMAIL REDACTED]",
 			rules: &Rules{
@@ -32,7 +40,7 @@ func TestRules_Redact(t *testing.T) {
 			},
 		},
 		{
-			name:  "non json log, with 2 match",
+			name:  "non json log, with 2 match and static rules",
 			input: "abc user@example.com +628500000000",
 			want:  "abc [EMAIL REDACTED] [PHONE REDACTED]",
 			rules: &Rules{
@@ -40,7 +48,75 @@ func TestRules_Redact(t *testing.T) {
 			},
 		},
 		{
-			name: "json log, with 1 match",
+			name:  "json log, with 1 match and static rules",
+			input: `{"email":"user@example.com"}`,
+			want:  `{"email":"[EMAIL REDACTED]"}`,
+			rules: &Rules{
+				StaticRules: []*StaticRule{emailStaticRule, phoneStaticRule},
+			},
+		},
+		{
+			name:  "json log, with 2 match and static rules",
+			input: `{"email":"user@example.com","phone":"+6285848484844"}`,
+			want:  `{"email":"[EMAIL REDACTED]","phone":"[PHONE REDACTED]"}`,
+			rules: &Rules{
+				StaticRules: []*StaticRule{emailStaticRule, phoneStaticRule},
+			},
+		},
+		{
+			name:  "nested json log, with 2 match and static rules",
+			input: `{"users":{"details":{"email":"test@gmail.com","phone":"+6285848484844"}}}`,
+			want:  `{"users":{"details":{"email":"[EMAIL REDACTED]","phone":"[PHONE REDACTED]"}}}`,
+			rules: &Rules{
+				StaticRules: []*StaticRule{emailStaticRule, phoneStaticRule},
+			},
+		},
+		{
+			name:  "nested json log, with 1 match and jsonpath rules",
+			input: `{"users":{"details":{"email":"test@gmail.com","phone":"+6285848484844"}}}`,
+			want:  `{"users":{"details":{"email":"[EMAIL REDACTED]","phone":"+6285848484844"}}}`,
+			rules: &Rules{
+				JsonPathRules: []*JsonPathRule{emailJsonPathRule},
+			},
+		},
+		{
+			name:  "nested json log, with 2 match and jsonpath rules",
+			input: `{"users":{"details":{"email":"test@gmail.com","phone":"+6285848484844"}}}`,
+			want:  `{"users":{"details":{"email":"[EMAIL REDACTED]","phone":"[PHONE REDACTED]"}}}`,
+			rules: &Rules{
+				JsonPathRules: []*JsonPathRule{emailJsonPathRule, phoneJsonPathRule},
+			},
+		},
+		{
+			name:  "nested json log containing array, with 2 match and jsonpath rules",
+			input: `{"users":{"details":[{"email":"test@gmail.com","phone":"+6285848484844"},{"email":"test1@gmail.com","phone":"+6285848484864"}]}}`,
+			want:  `{"users":{"details":[{"email":"[EMAIL REDACTED]","phone":"[PHONE REDACTED]"},{"email":"[EMAIL REDACTED]","phone":"[PHONE REDACTED]"}]}}`,
+			rules: &Rules{
+				JsonPathRules: []*JsonPathRule{
+					&JsonPathRule{
+						Name: "EMAIL",
+						Path: regexp.MustCompile(`users.details\[]\.email`),
+					},
+					&JsonPathRule{
+						Name: "PHONE",
+						Path: regexp.MustCompile(`users.details\[]\.phone`),
+					},
+				},
+			},
+		},
+		{
+			name:  "nested json log containing array, with jsonpath and static rules",
+			input: `{"users":{"details":[{"email":"test@gmail.com","phone":"+6285848484844"},{"email":"test1@gmail.com","phone":"+6285848484864"}]}}`,
+			want:  `{"users":{"details":[{"email":"[EMAIL REDACTED]","phone":"[PHONE REDACTED]"},{"email":"[EMAIL REDACTED]","phone":"[PHONE REDACTED]"}]}}`,
+			rules: &Rules{
+				JsonPathRules: []*JsonPathRule{
+					&JsonPathRule{
+						Name: "EMAIL",
+						Path: regexp.MustCompile(`users.details\[]\.email`),
+					},
+				},
+				StaticRules: []*StaticRule{phoneStaticRule},
+			},
 		},
 	}
 

@@ -3,12 +3,31 @@ package redact
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 )
 
-type Rules struct {
-	StaticRules   []*StaticRule
-	JsonPathRules []*JsonPathRule
+func (r *StaticRule) Redact(s string) string {
+	return r.Regex.ReplaceAllString(s, fmt.Sprintf("[%s REDACTED]", r.Name))
+}
+
+func (r *Rules) Redact(originalString string) string {
+	var s = originalString
+	var data interface{}
+
+	if err := json.Unmarshal([]byte(s), &data); err == nil {
+		modifiedData := r.traverseJSON(data, "")
+		modifiedJSON, err := json.Marshal(modifiedData)
+		if err != nil {
+			// TODO: log error
+		} else {
+			s = string(modifiedJSON)
+		}
+	}
+
+	// continue to static rules
+	for _, rule := range r.StaticRules {
+		s = rule.Redact(s)
+	}
+	return string(s)
 }
 
 func (r *Rules) traverseJSON(data interface{}, path string) interface{} {
@@ -35,39 +54,4 @@ func (r *Rules) traverseJSON(data interface{}, path string) interface{} {
 	default:
 		return v
 	}
-}
-
-func (r *Rules) Redact(originalString string) string {
-	var s = originalString
-	var data interface{}
-
-	if err := json.Unmarshal([]byte(s), &data); err == nil {
-		modifiedData := r.traverseJSON(data, "")
-		modifiedJSON, err := json.Marshal(modifiedData)
-		if err != nil {
-			// TODO: log error
-		} else {
-			s = string(modifiedJSON)
-		}
-	}
-
-	// continue to static rules
-	for _, rule := range r.StaticRules {
-		s = rule.Redact(s)
-	}
-	return string(s)
-}
-
-type StaticRule struct {
-	Name  string
-	Regex *regexp.Regexp
-}
-
-func (r *StaticRule) Redact(s string) string {
-	return r.Regex.ReplaceAllString(s, fmt.Sprintf("[%s REDACTED]", r.Name))
-}
-
-type JsonPathRule struct {
-	Name string
-	Path *regexp.Regexp
 }
