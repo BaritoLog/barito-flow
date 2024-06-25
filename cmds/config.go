@@ -61,6 +61,8 @@ const (
 	EnvRedisUrl       = "BARITO_REDIS_URL"
 	EnvRedisPassword  = "BARITO_REDIS_PASSWORD"
 	EnvRedisKeyPrefix = "BARITO_REDIS_KEY_PREFIX"
+
+	EnvRedactorRulesMap = "REDACTOR_RULES_MAP"
 )
 
 var (
@@ -90,7 +92,7 @@ var (
 	DefaultProducerMaxTPS                 = 100
 	DefaultProducerRateLimitResetInterval = 10
 	DefaultProducerIgnoreKafkaOptions     = "false"
-	DefaultProducerMaxMessageBytes = 1000000 // Should be set equal to or smaller than the broker's `message.max.bytes`.
+	DefaultProducerMaxMessageBytes        = 1000000 // Should be set equal to or smaller than the broker's `message.max.bytes`.
 
 	DefaultNewTopicEventName              = "new_topic_events"
 	DefaultElasticsearchRetrierInterval   = "30s"
@@ -300,6 +302,10 @@ func configElasticClientKey() (s string) {
 
 func configRateLimiterOpt() RateLimiterOpt {
 	return NewRateLimiterOpt(stringEnvOrDefault(EnvRateLimiterOpt, DefaultRateLimiterOpt.String()))
+}
+
+func configRedactorRulesMap() (s string) {
+	return stringEnvOrDefault(EnvRedactorRulesMap, "")
 }
 
 func configRedisUrl() (url string) {

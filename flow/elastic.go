@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/BaritoLog/barito-flow/prome"
-	redact_pii "github.com/BaritoLog/barito-flow/redact_pii"
 
 	"time"
 
@@ -27,7 +26,7 @@ const (
 
 type Elastic interface {
 	OnFailure(f func(*pb.Timber))
-	Store(ctx context.Context, timber pb.Timber) (string, error)
+	Store(ctx context.Context, timber pb.Timber) error
 	NewClient()
 }
 
@@ -38,6 +37,18 @@ type elasticClient struct {
 	onStoreFunc      func(ctx context.Context, indexName, documentType, document string) (err error)
 	jspbMarshaler    *jsonpb.Marshaler
 	indexExistsCache *timedmap.TimedMap
+
+	redactor Redactor
+}
+
+type Redactor interface {
+	Redact(indexName, document string) (string, error)
+}
+
+type DummyRedactor struct{}
+
+func (r *DummyRedactor) Redact(indexName, document string) (string, error) {
+	return document, nil
 }
 
 type esConfig struct {
@@ -94,6 +105,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		bulkProcessor:    p,
 		jspbMarshaler:    &jsonpb.Marshaler{},
 		indexExistsCache: timedmap.New(1 * time.Minute),
+		redactor:         &DummyRedactor{},
 	}
 
 	if esConfig.indexMethod == "BulkProcessor" {
@@ -142,7 +154,12 @@ func printThroughputPerSecond() {
 	}()
 }
 
-func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (redactedDoc string, err error) {
+func (e *elasticClient) WithRedactor(r Redactor) *elasticClient {
+	e.redactor = r
+	return e
+}
+
+func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
@@ -165,16 +182,16 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (redactedDo
 	document, err := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 	if err != nil {
 		prome.IncreaseConsumerTimberConvertError(indexPrefix)
-		return "", err
+		return
 	}
 
-	redactedDoc, err = redact_pii.RedactJSONValues(document)
+	redactDocument, err := e.redactor.Redact(indexName, document)
 	if err != nil {
-		prome.IncreaseConsumerTimberConvertError(indexPrefix)
-		return "", fmt.Errorf("error in redacting doc, err: %s", err.Error())
+		log.Error("Error redacting document: ", err)
+		return
 	}
 
-	err = e.onStoreFunc(ctx, indexName, documentType, redactedDoc)
+	err = e.onStoreFunc(ctx, indexName, documentType, redactDocument)
 	counter++
 	instruESStore(appSecret, err)
 
