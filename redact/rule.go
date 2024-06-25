@@ -33,7 +33,13 @@ func (r *Rules) Redact(originalString string) string {
 func (r *Rules) traverseJSON(data interface{}, path string) interface{} {
 	switch v := data.(type) {
 	case string:
+		if r.JsonPathRules == nil {
+			return v
+		}
+
 		for _, rule := range r.JsonPathRules {
+			fmt.Println(rule.Name)
+			fmt.Println(rule.Path, path, v)
 			if rule.Path.MatchString(path) {
 				return fmt.Sprintf("[%s REDACTED]", rule.Name)
 			}
