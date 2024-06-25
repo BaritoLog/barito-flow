@@ -278,7 +278,7 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
 	// store to elasticsearch
 	ctx := context.Background()
-	err = s.esClient.Store(ctx, timber)
+	_, err = s.esClient.Store(ctx, timber)
 	if err != nil {
 		s.logError(errkit.Concat(ErrStore, err))
 		return

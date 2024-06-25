@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/BaritoLog/barito-flow/prome"
+	redact_pii "github.com/BaritoLog/barito-flow/redact_pii"
 
 	"time"
 
@@ -26,7 +27,7 @@ const (
 
 type Elastic interface {
 	OnFailure(f func(*pb.Timber))
-	Store(ctx context.Context, timber pb.Timber) error
+	Store(ctx context.Context, timber pb.Timber) (string, error)
 	NewClient()
 }
 
@@ -141,7 +142,7 @@ func printThroughputPerSecond() {
 	}()
 }
 
-func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
+func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (redactedDoc string, err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
 	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
@@ -164,10 +165,16 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 	document, err := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 	if err != nil {
 		prome.IncreaseConsumerTimberConvertError(indexPrefix)
-		return err
+		return "", err
 	}
 
-	err = e.onStoreFunc(ctx, indexName, documentType, document)
+	redactedDoc, err = redact_pii.RedactJSONValues(document)
+	if err != nil {
+		prome.IncreaseConsumerTimberConvertError(indexPrefix)
+		return "", fmt.Errorf("error in redacting doc, err: %s", err.Error())
+	}
+
+	err = e.onStoreFunc(ctx, indexName, documentType, redactedDoc)
 	counter++
 	instruESStore(appSecret, err)
 
