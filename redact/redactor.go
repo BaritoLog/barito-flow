@@ -2,6 +2,7 @@ package redact
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type Redactor struct {
@@ -31,6 +32,11 @@ func NewRedactorFromJSON(jsonRulesMap string) (redactor *Redactor, err error) {
 
 	redactor = &Redactor{
 		RulesMap: rulesMap,
+	}
+
+	fmt.Println("New redactor created with rules: ")
+	for name, rules := range rulesMap {
+		fmt.Println(name, rules)
 	}
 	return redactor, nil
 }
