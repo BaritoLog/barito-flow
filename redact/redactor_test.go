@@ -1,6 +1,7 @@
 package redact
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -23,14 +24,14 @@ func TestNewRedactorFromJSON(t *testing.T) {
 					"default": {
 						StaticRules: []*StaticRule{
 							{
-								Name:  "EMAIL",
-								Regex: regexp.MustCompile(`[a-z]+@[a-z]+\.com`),
+								Name:  "EMAI",
+								Regex: &Regexp{Regexp: regexp.MustCompile(`[a-z]+@[a-z]+\.com`)},
 							},
 						},
 						JsonPathRules: []*JsonPathRule{
 							{
 								Name: "EMAIL",
-								Path: regexp.MustCompile("email"),
+								Path: &Regexp{Regexp: regexp.MustCompile("email")},
 							},
 						},
 					},
@@ -38,7 +39,7 @@ func TestNewRedactorFromJSON(t *testing.T) {
 						StaticRules: []*StaticRule{
 							{
 								Name:  "auth-header",
-								Regex: regexp.MustCompile(`Bearer\s+[\w-]+`),
+								Regex: &Regexp{Regexp: regexp.MustCompile(`Bearer\s+[\w-]+`)},
 							},
 						},
 					},
@@ -55,9 +56,11 @@ func TestNewRedactorFromJSON(t *testing.T) {
 				assert.Contains(t, err.Error(), tt.errMsg)
 			} else {
 				assert.NoError(t, err)
-				wantJson, _ := tt.want.ToJson()
-				gotJson, _ := got.ToJson()
-				assert.Equal(t, wantJson, gotJson)
+				assert.Equal(t, tt.want, got)
+				fmt.Println(got.RulesMap["default"].StaticRules[0].Name)
+				fmt.Println(got.RulesMap["default"].StaticRules[0].Regex)
+				fmt.Println(got.RulesMap["default"].JsonPathRules[0].Name)
+				fmt.Println(got.RulesMap["default"].JsonPathRules[0].Path)
 			}
 		})
 	}
@@ -70,13 +73,13 @@ func TestRedactor_Redact(t *testing.T) {
 				StaticRules: []*StaticRule{
 					{
 						Name:  "EMAIL",
-						Regex: regexp.MustCompile(`[a-z]+@[a-z]+\.com`),
+						Regex: &Regexp{Regexp: regexp.MustCompile(`[a-z]+@[a-z]+\.com`)},
 					},
 				},
 				JsonPathRules: []*JsonPathRule{
 					{
 						Name: "EMAIL",
-						Path: regexp.MustCompile("email"),
+						Path: &Regexp{Regexp: regexp.MustCompile("email")},
 					},
 				},
 			},
@@ -84,7 +87,7 @@ func TestRedactor_Redact(t *testing.T) {
 				StaticRules: []*StaticRule{
 					{
 						Name:  "auth-header",
-						Regex: regexp.MustCompile(`Bearer\s+[\w-]+`),
+						Regex: &Regexp{Regexp: regexp.MustCompile(`Bearer\s+[\w-]+`)},
 					},
 				},
 			},

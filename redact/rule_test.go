@@ -10,19 +10,19 @@ import (
 func TestRules_Redact(t *testing.T) {
 	emailStaticRule := &StaticRule{
 		Name:  "EMAIL",
-		Regex: regexp.MustCompile(`[a-z]+@[a-z]+.com`),
+		Regex: &Regexp{Regexp: regexp.MustCompile(`[a-z]+@[a-z]+.com`)},
 	}
 	phoneStaticRule := &StaticRule{
 		Name:  "PHONE",
-		Regex: regexp.MustCompile(`\+6285\d{5,9}`),
+		Regex: &Regexp{Regexp: regexp.MustCompile(`\+6285\d{5,9}`)},
 	}
 	emailJsonPathRule := &JsonPathRule{
 		Name: "EMAIL",
-		Path: regexp.MustCompile("users.details.email"),
+		Path: &Regexp{Regexp: regexp.MustCompile("users.details.email")},
 	}
 	phoneJsonPathRule := &JsonPathRule{
 		Name: "PHONE",
-		Path: regexp.MustCompile("users.details.phone"),
+		Path: &Regexp{Regexp: regexp.MustCompile("users.details.phone")},
 	}
 
 	tests := []struct {
@@ -95,11 +95,11 @@ func TestRules_Redact(t *testing.T) {
 				JsonPathRules: []*JsonPathRule{
 					&JsonPathRule{
 						Name: "EMAIL",
-						Path: regexp.MustCompile(`users.details\[]\.email`),
+						Path: &Regexp{Regexp: regexp.MustCompile(`users.details\[]\.email`)},
 					},
 					&JsonPathRule{
 						Name: "PHONE",
-						Path: regexp.MustCompile(`users.details\[]\.phone`),
+						Path: &Regexp{Regexp: regexp.MustCompile(`users.details\[]\.phone`)},
 					},
 				},
 			},
@@ -112,7 +112,7 @@ func TestRules_Redact(t *testing.T) {
 				JsonPathRules: []*JsonPathRule{
 					&JsonPathRule{
 						Name: "EMAIL",
-						Path: regexp.MustCompile(`users.details\[]\.email`),
+						Path: &Regexp{Regexp: regexp.MustCompile(`users.details\[]\.email`)},
 					},
 				},
 				StaticRules: []*StaticRule{phoneStaticRule},
@@ -128,7 +128,7 @@ func TestRules_Redact(t *testing.T) {
 	}
 }
 func TestStaticRule_Redact(t *testing.T) {
-	emailRegex := regexp.MustCompile(`[a-z]+@[a-z]+.com`)
+	emailRegex := &Regexp{Regexp: regexp.MustCompile(`[a-z]+@[a-z]+.com`)}
 	tests := []struct {
 		name  string
 		want  string
