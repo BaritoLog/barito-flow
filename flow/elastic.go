@@ -185,7 +185,7 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 		return
 	}
 
-	redactDocument, err := e.redactor.Redact(indexName, document)
+	redactDocument, err := e.redactor.Redact(indexPrefix, document)
 	if err != nil {
 		log.Error("Error redacting document: ", err)
 		return
