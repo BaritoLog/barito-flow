@@ -25,11 +25,15 @@ func (r *Regexp) UnmarshalJSON(b []byte) error {
 }
 
 type StaticRule struct {
-	Name  string
-	Regex *Regexp
+	Name           string
+	Regex          *Regexp
+	HintCharsStart int
+	HintCharsEnd   int
 }
 
 type JsonPathRule struct {
-	Name string
-	Path *Regexp
+	Name           string
+	Path           *Regexp
+	HintCharsStart int
+	HintCharsEnd   int
 }

@@ -6,7 +6,32 @@ import (
 )
 
 func (r *StaticRule) Redact(s string) string {
-	return r.Regex.ReplaceAllString(s, fmt.Sprintf("[%s REDACTED]", r.Name))
+	return r.Regex.ReplaceAllStringFunc(s, func(match string) string {
+		if r.HintCharsStart > 0 {
+			if r.HintCharsEnd > 0 {
+				return fmt.Sprintf("%s[%s REDACTED]%s", match[:r.HintCharsStart], r.Name, match[len(match)-r.HintCharsEnd:])
+			}
+			return fmt.Sprintf("%s[%s REDACTED]", match[:r.HintCharsStart], r.Name)
+		}
+		if r.HintCharsEnd > 0 {
+			return fmt.Sprintf("[%s REDACTED]%s", r.Name, match[len(match)-r.HintCharsEnd:])
+		}
+		return fmt.Sprintf("[%s REDACTED]", r.Name)
+	})
+}
+
+func (r *JsonPathRule) Redact(s string) string {
+	if r.HintCharsStart > 0 {
+		if r.HintCharsEnd > 0 {
+			return fmt.Sprintf("%s[%s REDACTED]%s", s[:r.HintCharsStart], r.Name, s[len(s)-r.HintCharsEnd:])
+		}
+		return fmt.Sprintf("%s[%s REDACTED]", s[:r.HintCharsStart], r.Name)
+	}
+	if r.HintCharsEnd > 0 {
+		return fmt.Sprintf("[%s REDACTED]%s", r.Name, s[len(s)-r.HintCharsEnd:])
+	}
+
+	return fmt.Sprintf("[%s REDACTED]", r.Name)
 }
 
 func (r *Rules) Redact(originalString string) string {
@@ -38,10 +63,8 @@ func (r *Rules) traverseJSON(data interface{}, path string) interface{} {
 		}
 
 		for _, rule := range r.JsonPathRules {
-			fmt.Println(rule.Name)
-			fmt.Println(rule.Path, path, v)
 			if rule.Path.MatchString(path) {
-				return fmt.Sprintf("[%s REDACTED]", rule.Name)
+				return rule.Redact(v)
 			}
 		}
 		return v

@@ -24,6 +24,18 @@ func TestRules_Redact(t *testing.T) {
 		Name: "PHONE",
 		Path: &Regexp{Regexp: regexp.MustCompile("users.details.phone")},
 	}
+	emailStaticRuleHintStart := &StaticRule{
+		Name: emailStaticRule.Name, Regex: emailStaticRule.Regex, HintCharsStart: 4,
+	}
+	emailStaticRuleHintEnd := &StaticRule{
+		Name: emailStaticRule.Name, Regex: emailStaticRule.Regex, HintCharsEnd: 3,
+	}
+	emailJsonPathRuleHintStart := &JsonPathRule{
+		Name: emailJsonPathRule.Name, Path: emailJsonPathRule.Path, HintCharsStart: 4,
+	}
+	emailJsonPathRuleHintEnd := &JsonPathRule{
+		Name: emailJsonPathRule.Name, Path: emailJsonPathRule.Path, HintCharsEnd: 3,
+	}
 
 	tests := []struct {
 		name  string
@@ -37,6 +49,22 @@ func TestRules_Redact(t *testing.T) {
 			want:  "abc [EMAIL REDACTED]",
 			rules: &Rules{
 				StaticRules: []*StaticRule{emailStaticRule, phoneStaticRule},
+			},
+		},
+		{
+			name:  "non json log, with 1 match and static rules with hint start",
+			input: "abc user@example.com",
+			want:  "abc user[EMAIL REDACTED]",
+			rules: &Rules{
+				StaticRules: []*StaticRule{emailStaticRuleHintStart, phoneStaticRule},
+			},
+		},
+		{
+			name:  "non json log, with 1 match and static rules with hint end",
+			input: "abc user@example.com",
+			want:  "abc [EMAIL REDACTED]com",
+			rules: &Rules{
+				StaticRules: []*StaticRule{emailStaticRuleHintEnd, phoneStaticRule},
 			},
 		},
 		{
@@ -77,6 +105,22 @@ func TestRules_Redact(t *testing.T) {
 			want:  `{"users":{"details":{"email":"[EMAIL REDACTED]","phone":"+6285848484844"}}}`,
 			rules: &Rules{
 				JsonPathRules: []*JsonPathRule{emailJsonPathRule},
+			},
+		},
+		{
+			name:  "nested json log, with 1 match and jsonpath rules with hint start",
+			input: `{"users":{"details":{"email":"test@gmail.com","phone":"+6285848484844"}}}`,
+			want:  `{"users":{"details":{"email":"test[EMAIL REDACTED]","phone":"+6285848484844"}}}`,
+			rules: &Rules{
+				JsonPathRules: []*JsonPathRule{emailJsonPathRuleHintStart},
+			},
+		},
+		{
+			name:  "nested json log, with 1 match and jsonpath rules with hint end",
+			input: `{"users":{"details":{"email":"test@gmail.net","phone":"+6285848484844"}}}`,
+			want:  `{"users":{"details":{"email":"[EMAIL REDACTED]net","phone":"+6285848484844"}}}`,
+			rules: &Rules{
+				JsonPathRules: []*JsonPathRule{emailJsonPathRuleHintEnd},
 			},
 		},
 		{
