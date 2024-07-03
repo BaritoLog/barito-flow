@@ -38,13 +38,15 @@ func (r *Rules) Redact(originalString string) string {
 	var s = originalString
 	var data interface{}
 
-	if err := json.Unmarshal([]byte(s), &data); err == nil {
-		modifiedData := r.traverseJSON(data, "")
-		modifiedJSON, err := json.Marshal(modifiedData)
-		if err != nil {
-			// TODO: log error
-		} else {
-			s = string(modifiedJSON)
+	if len(r.JsonPathRules) != 0 {
+		if err := json.Unmarshal([]byte(s), &data); err == nil {
+			modifiedData := r.traverseJSON(data, "")
+			modifiedJSON, err := json.Marshal(modifiedData)
+			if err != nil {
+				// TODO: log error
+			} else {
+				s = string(modifiedJSON)
+			}
 		}
 	}
 
