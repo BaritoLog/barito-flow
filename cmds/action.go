@@ -10,6 +10,8 @@ import (
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/barito-flow/redact"
 
+	"os"
+
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
@@ -285,7 +287,9 @@ func setupRedactor() *redact.Redactor {
 	var redactor *redact.Redactor
 	var err error
 	if redactorRulesMap := configRedactorRulesMap(); redactorRulesMap != "" {
-		redactor, err = redact.NewRedactorFromJSON(redactorRulesMap)
+		marketEndpoint := os.Getenv("BARITO_MARKET_ENDPOINT")
+		clusterName := os.Getenv("CLUSTER_NAME")
+		redactor, err = redact.NewRedactorFromMarket(marketEndpoint, clusterName)
 		if err != nil {
 			return nil
 		}
