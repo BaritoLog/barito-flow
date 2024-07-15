@@ -83,10 +83,10 @@ func NewRedactorFromMarket(marketEndpoint, clusterName string) (redactor *Redact
 	return
 }
 
-func fetchRulesMapFromMarket(marketEndpint, clusterName string) (rulesMap map[string]Rules, err error) {
+func fetchRulesMapFromMarket(marketEndpoint, clusterName string) (rulesMap map[string]Rules, err error) {
 	rulesMap = make(map[string]Rules)
 
-	url := fmt.Sprintf("%s?cluster_name=%s", marketEndpint, clusterName)
+	url := fmt.Sprintf("%s?cluster_name=%s", marketEndpoint, clusterName)
 	response, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("Error get the rules")

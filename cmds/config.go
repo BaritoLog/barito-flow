@@ -24,7 +24,10 @@ const (
 
 	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
 
-	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
+	EnvPushMetricUrl   = "BARITO_PUSH_METRIC_URL"
+	EnvMarketRedactUrl = "BARITO_MARKET_REDACT_ENDPOINT_URL"
+	EnvClusterName     = "BARITO_CLUSTER_NAME"
+
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
 
 	EnvServeRestApi                   = "BARITO_PRODUCER_REST_API" // TODO: rename to better name
@@ -82,7 +85,10 @@ var (
 
 	DefaultGrpcMaxRecvMsgSize = 20 * 1000 * 1000
 
-	DefaultPushMetricUrl      = ""
+	DefaultPushMetricUrl   = ""
+	DefaultMarketRedactUrl = ""
+	DefaultClusterName     = ""
+
 	DefaultPushMetricInterval = "30s"
 
 	DefaultServeRestApi                   = "true"
@@ -193,6 +199,14 @@ func configKafkaRetryInterval() (i int) {
 
 func configPushMetricUrl() (s string) {
 	return stringEnvOrDefault(EnvPushMetricUrl, DefaultPushMetricUrl)
+}
+
+func configMarketRedactUrl() (s string) {
+	return stringEnvOrDefault(EnvMarketRedactUrl, DefaultMarketRedactUrl)
+}
+
+func configClusterName() (s string) {
+	return stringEnvOrDefault(EnvClusterName, DefaultClusterName)
 }
 
 func configPushMetricInterval() (s string) {
