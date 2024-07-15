@@ -87,17 +87,22 @@ func fetchRulesMapFromMarket(marketEndpoint, clusterName string) (rulesMap map[s
 	rulesMap = make(map[string]Rules)
 
 	url := fmt.Sprintf("%s?cluster_name=%s", marketEndpoint, clusterName)
+	fmt.Println("market url: ", url)
 	response, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("Error get the rules")
 		return
 	}
 
+	fmt.Println("market response: ", response)
+
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		fmt.Printf("Error reading response body: %v\n", err)
 		return
 	}
+
+	fmt.Println("market response body: ", body)
 
 	err = json.Unmarshal(body, &rulesMap)
 	if err != nil {
