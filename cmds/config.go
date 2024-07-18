@@ -66,6 +66,7 @@ const (
 	EnvRedisKeyPrefix = "BARITO_REDIS_KEY_PREFIX"
 
 	EnvRedactorRulesMap = "REDACTOR_RULES_MAP"
+	EnvMarketClientKey  = "MARKET_CLIENT_KEY"
 )
 
 var (
@@ -88,6 +89,7 @@ var (
 	DefaultPushMetricUrl   = ""
 	DefaultMarketRedactUrl = ""
 	DefaultClusterName     = ""
+	DefaultMarketClientKey = ""
 
 	DefaultPushMetricInterval = "30s"
 
@@ -207,6 +209,10 @@ func configMarketRedactUrl() (s string) {
 
 func configClusterName() (s string) {
 	return stringEnvOrDefault(EnvClusterName, DefaultClusterName)
+}
+
+func configMarketClientKey() (s string) {
+	return stringEnvOrDefault(EnvMarketClientKey, DefaultMarketClientKey)
 }
 
 func configPushMetricInterval() (s string) {

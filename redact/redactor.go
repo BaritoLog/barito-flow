@@ -56,8 +56,8 @@ func NewRedactorFromJSON(jsonRulesMap string) (redactor *Redactor, err error) {
 	return redactor, nil
 }
 
-func NewRedactorFromMarket(marketEndpoint, clusterName string) (redactor *Redactor, err error) {
-	rulesMap, err := fetchRulesMapFromMarket(marketEndpoint, clusterName)
+func NewRedactorFromMarket(marketEndpoint, clusterName, marketClientKey string) (redactor *Redactor, err error) {
+	rulesMap, err := fetchRulesMapFromMarket(marketEndpoint, clusterName, marketClientKey)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func NewRedactorFromMarket(marketEndpoint, clusterName string) (redactor *Redact
 	go func() {
 		for {
 			time.Sleep(time.Minute)
-			rulesMap, err := fetchRulesMapFromMarket(marketEndpoint, clusterName)
+			rulesMap, err := fetchRulesMapFromMarket(marketEndpoint, clusterName, marketClientKey)
 			if err != nil {
 				fmt.Println("Failed to fetch the rules", marketEndpoint, clusterName)
 				continue
@@ -83,10 +83,10 @@ func NewRedactorFromMarket(marketEndpoint, clusterName string) (redactor *Redact
 	return
 }
 
-func fetchRulesMapFromMarket(marketEndpoint, clusterName string) (rulesMap map[string]Rules, err error) {
+func fetchRulesMapFromMarket(marketEndpoint, clusterName, marketClientKey string) (rulesMap map[string]Rules, err error) {
 	rulesMap = make(map[string]Rules)
 
-	url := fmt.Sprintf("%s?cluster_name=%s", marketEndpoint, clusterName)
+	url := fmt.Sprintf("%s?cluster_name=%s&client_key=%s", marketEndpoint, clusterName, marketClientKey)
 	fmt.Println("market url: ", url)
 	response, err := http.Get(url)
 	if err != nil {

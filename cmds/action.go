@@ -287,7 +287,8 @@ func setupRedactor() *redact.Redactor {
 	if redactorRulesMap := configRedactorRulesMap(); redactorRulesMap != "" {
 		marketEndpoint := configMarketRedactUrl()
 		clusterName := configClusterName()
-		redactor, err = redact.NewRedactorFromMarket(marketEndpoint, clusterName)
+		marketClientKey := configMarketClientKey()
+		redactor, err = redact.NewRedactorFromMarket(marketEndpoint, clusterName, marketClientKey)
 		if err != nil {
 			return nil
 		}
