@@ -66,7 +66,7 @@ const (
 	EnvRedisKeyPrefix = "BARITO_REDIS_KEY_PREFIX"
 
 	EnvRedactorRulesMap = "REDACTOR_RULES_MAP"
-	EnvMarketClientKey  = "MARKET_CLIENT_KEY"
+	EnvMarketClientKey  = "MARKET_REDACT_CLIENT_KEY"
 )
 
 var (
