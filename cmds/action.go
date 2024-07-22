@@ -284,7 +284,7 @@ func setupRedisRateLimiter(_ context.Context,
 func setupRedactor() *redact.Redactor {
 	var redactor *redact.Redactor
 	var err error
-	if redactorRulesMap := configRedactorRulesMap(); redactorRulesMap != "" {
+	if redactorRulesMap := configRedactorRulesMap(); redactorRulesMap == "" {
 		marketEndpoint := configMarketRedactUrl()
 		clusterName := configClusterName()
 		marketClientKey := configMarketClientKey()
