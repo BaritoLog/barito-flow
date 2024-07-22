@@ -24,7 +24,10 @@ const (
 
 	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
 
-	EnvPushMetricUrl      = "BARITO_PUSH_METRIC_URL"
+	EnvPushMetricUrl   = "BARITO_PUSH_METRIC_URL"
+	EnvMarketRedactUrl = "BARITO_MARKET_REDACT_ENDPOINT_URL"
+	EnvClusterName     = "BARITO_CLUSTER_NAME"
+
 	EnvPushMetricInterval = "BARITO_PUSH_METRIC_INTERVAL"
 
 	EnvServeRestApi                   = "BARITO_PRODUCER_REST_API" // TODO: rename to better name
@@ -61,6 +64,9 @@ const (
 	EnvRedisUrl       = "BARITO_REDIS_URL"
 	EnvRedisPassword  = "BARITO_REDIS_PASSWORD"
 	EnvRedisKeyPrefix = "BARITO_REDIS_KEY_PREFIX"
+
+	EnvRedactorRulesMap = "REDACTOR_RULES_MAP"
+	EnvMarketClientKey  = "MARKET_CLIENT_KEY"
 )
 
 var (
@@ -80,7 +86,11 @@ var (
 
 	DefaultGrpcMaxRecvMsgSize = 20 * 1000 * 1000
 
-	DefaultPushMetricUrl      = ""
+	DefaultPushMetricUrl   = ""
+	DefaultMarketRedactUrl = ""
+	DefaultClusterName     = ""
+	DefaultMarketClientKey = ""
+
 	DefaultPushMetricInterval = "30s"
 
 	DefaultServeRestApi                   = "true"
@@ -90,7 +100,7 @@ var (
 	DefaultProducerMaxTPS                 = 100
 	DefaultProducerRateLimitResetInterval = 10
 	DefaultProducerIgnoreKafkaOptions     = "false"
-	DefaultProducerMaxMessageBytes = 1000000 // Should be set equal to or smaller than the broker's `message.max.bytes`.
+	DefaultProducerMaxMessageBytes        = 1000000 // Should be set equal to or smaller than the broker's `message.max.bytes`.
 
 	DefaultNewTopicEventName              = "new_topic_events"
 	DefaultElasticsearchRetrierInterval   = "30s"
@@ -191,6 +201,18 @@ func configKafkaRetryInterval() (i int) {
 
 func configPushMetricUrl() (s string) {
 	return stringEnvOrDefault(EnvPushMetricUrl, DefaultPushMetricUrl)
+}
+
+func configMarketRedactUrl() (s string) {
+	return stringEnvOrDefault(EnvMarketRedactUrl, DefaultMarketRedactUrl)
+}
+
+func configClusterName() (s string) {
+	return stringEnvOrDefault(EnvClusterName, DefaultClusterName)
+}
+
+func configMarketClientKey() (s string) {
+	return stringEnvOrDefault(EnvMarketClientKey, DefaultMarketClientKey)
 }
 
 func configPushMetricInterval() (s string) {
@@ -300,6 +322,10 @@ func configElasticClientKey() (s string) {
 
 func configRateLimiterOpt() RateLimiterOpt {
 	return NewRateLimiterOpt(stringEnvOrDefault(EnvRateLimiterOpt, DefaultRateLimiterOpt.String()))
+}
+
+func configRedactorRulesMap() (s string) {
+	return stringEnvOrDefault(EnvRedactorRulesMap, "")
 }
 
 func configRedisUrl() (url string) {

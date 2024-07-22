@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 
 	"github.com/BaritoLog/barito-flow/prome"
+	"github.com/BaritoLog/barito-flow/redact"
 
 	"github.com/BaritoLog/barito-flow/flow"
 	"github.com/BaritoLog/go-boilerplate/srvkit"
@@ -82,6 +83,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"esConfig":               esConfig,
 		"elasticUsername":        elasticUsername,
 		"elasticPassword":        elasticPassword,
+		"redactor":               setupRedactor(),
 	}
 
 	// if elasticsearch using mTLS
@@ -277,4 +279,19 @@ func setupRedisRateLimiter(_ context.Context,
 		flow.WithFallbackToLocal(flow.NewRateLimiter(rateLimitResetInterval)),
 		flow.WithMutex(),
 	), nil
+}
+
+func setupRedactor() *redact.Redactor {
+	var redactor *redact.Redactor
+	var err error
+	if redactorRulesMap := configRedactorRulesMap(); redactorRulesMap != "" {
+		marketEndpoint := configMarketRedactUrl()
+		clusterName := configClusterName()
+		marketClientKey := configMarketClientKey()
+		redactor, err = redact.NewRedactorFromMarket(marketEndpoint, clusterName, marketClientKey)
+		if err != nil {
+			return nil
+		}
+	}
+	return redactor
 }

@@ -55,6 +55,7 @@ type baritoConsumerService struct {
 	kafkaMaxRetry      int
 	kafkaRetryInterval int
 	newTopicEventName  string
+	redactor           Redactor
 
 	workerMap           map[string]types.ConsumerWorker
 	admin               types.KafkaAdmin
@@ -88,9 +89,10 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		elasticRetrierMaxRetry: params["elasticRetrierMaxRetry"].(int),
 		elasticUsername:        params["elasticUsername"].(string),
 		elasticPassword:        params["elasticPassword"].(string),
+		redactor:               params["redactor"].(Redactor),
 	}
 
-        httpClient := &http.Client{}
+	httpClient := &http.Client{}
 	// if using mTLS, create new http client with tls config
 	if _, ok := params["elasticCaCrt"]; ok {
 		httpClient = s.newHttpClientWithTLS(params["elasticCaCrt"].(string), params["elasticClientCrt"].(string), params["elasticClientKey"].(string))
@@ -99,6 +101,9 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 	retrier := s.elasticRetrier()
 	esConfig := params["esConfig"].(esConfig)
 	elastic, err := NewElastic(retrier, esConfig, s.elasticUrls, s.elasticUsername, s.elasticPassword, httpClient)
+	if s.redactor != nil {
+		elastic.WithRedactor(s.redactor)
+	}
 	s.esClient = &elastic
 	if err != nil {
 		s.logError(errkit.Concat(ErrElasticsearchClient, err))

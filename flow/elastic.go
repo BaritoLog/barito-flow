@@ -37,6 +37,18 @@ type elasticClient struct {
 	onStoreFunc      func(ctx context.Context, indexName, documentType, document string) (err error)
 	jspbMarshaler    *jsonpb.Marshaler
 	indexExistsCache *timedmap.TimedMap
+
+	redactor Redactor
+}
+
+type Redactor interface {
+	Redact(indexName, document string) (string, error)
+}
+
+type DummyRedactor struct{}
+
+func (r *DummyRedactor) Redact(indexName, document string) (string, error) {
+	return document, nil
 }
 
 type esConfig struct {
@@ -93,6 +105,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		bulkProcessor:    p,
 		jspbMarshaler:    &jsonpb.Marshaler{},
 		indexExistsCache: timedmap.New(1 * time.Minute),
+		redactor:         &DummyRedactor{},
 	}
 
 	if esConfig.indexMethod == "BulkProcessor" {
@@ -141,6 +154,11 @@ func printThroughputPerSecond() {
 	}()
 }
 
+func (e *elasticClient) WithRedactor(r Redactor) *elasticClient {
+	e.redactor = r
+	return e
+}
+
 func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
 	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
@@ -164,10 +182,16 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 	document, err := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
 	if err != nil {
 		prome.IncreaseConsumerTimberConvertError(indexPrefix)
-		return err
+		return
 	}
 
-	err = e.onStoreFunc(ctx, indexName, documentType, document)
+	redactDocument, err := e.redactor.Redact(indexPrefix, document)
+	if err != nil {
+		log.Error("Error redacting document: ", err)
+		return
+	}
+
+	err = e.onStoreFunc(ctx, indexName, documentType, redactDocument)
 	counter++
 	instruESStore(appSecret, err)
 
