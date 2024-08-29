@@ -3,7 +3,6 @@ package redact
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -98,6 +97,6 @@ func fetchRulesMapFromMarket(marketEndpoint, clusterName, marketClientKey string
 		fmt.Printf("error decoding response body: %+v\n", err)
 		return nil, err
 	}
-	
+
 	return rulesMap, nil
 }
