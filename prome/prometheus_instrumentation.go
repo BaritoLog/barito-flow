@@ -39,6 +39,8 @@ var producerKafkaClientFailed *prometheus.CounterVec
 var producerTotalLogBytesIngested *prometheus.CounterVec
 var producerTPSExceededLogBytes *prometheus.CounterVec
 
+var redactionEnabledTotal *prometheus.GaugeVec
+
 var indexDatePattern *regexp.Regexp = regexp.MustCompile(`-\d{4}\.\d{2}\.\d{2}$`)
 
 var logStoredErrorMap map[string]string = map[string]string{
@@ -54,6 +56,13 @@ var logStoredErrorMap map[string]string = map[string]string{
 	"index read-only":             "index_read_only",
 	"Limit of total fields":       "limit_of_total_fields_excedeed",
 	"maximum shards open":         "maximum_shards_open",
+}
+
+func InitRedactionInstrumentation() {
+	redactionEnabledTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "barito_redaction_status",
+		Help: "Number of appgroups with redaction status enabled",
+	}, []string{"clustername", "app_name", "type"})
 }
 
 func InitConsumerInstrumentation() {
@@ -124,6 +133,10 @@ func InitProducerInstrumentation() {
 		Name: "barito_producer_tps_exceeded_log_bytes",
 		Help: "Log bytes of TPS exceeded requests",
 	}, []string{"app_name"})
+}
+
+func SetRedactionEnabledTotal(clusterName, appName, ruleType string, count int) {
+	redactionEnabledTotal.WithLabelValues(clusterName, appName, ruleType).Set(float64(count))
 }
 
 func IncreaseConsumerTimberConvertError(index string) {

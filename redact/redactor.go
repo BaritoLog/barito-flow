@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/BaritoLog/barito-flow/prome"
 )
 
 type Redactor struct {
@@ -96,6 +98,14 @@ func fetchRulesMapFromMarket(marketEndpoint, clusterName, marketClientKey string
 	if err := json.NewDecoder(response.Body).Decode(&rulesMap); err != nil {
 		fmt.Printf("error decoding response body: %+v\n", err)
 		return nil, err
+	}
+
+	for appName, rules := range rulesMap {
+		staticRulesCount := len(rules.StaticRules)
+		prome.SetRedactionEnabledTotal(clusterName, appName, "StaticRules", staticRulesCount)
+
+		jsonPathRulesCount := len(rules.JsonPathRules)
+		prome.SetRedactionEnabledTotal(clusterName, appName, "JsonPathRules", jsonPathRulesCount)
 	}
 
 	return rulesMap, nil
