@@ -136,6 +136,10 @@ func InitProducerInstrumentation() {
 }
 
 func SetRedactionEnabledTotal(clusterName, appName, ruleType string, count int) {
+	if redactionEnabledTotal == nil {
+		log.Warn("redactionEnabledTotal is not initialized")
+		return
+	}
 	redactionEnabledTotal.WithLabelValues(clusterName, appName, ruleType).Set(float64(count))
 }
 
