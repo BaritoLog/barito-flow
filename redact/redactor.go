@@ -102,10 +102,10 @@ func fetchRulesMapFromMarket(marketEndpoint, clusterName, marketClientKey string
 
 	for appName, rules := range rulesMap {
 		staticRulesCount := len(rules.StaticRules)
-		prome.SetRedactionEnabledTotal(appName, "StaticRules", staticRulesCount)
+		prome.SetRedactionEnabledTotal(clusterName, appName, "StaticRules", staticRulesCount)
 
 		jsonPathRulesCount := len(rules.JsonPathRules)
-		prome.SetRedactionEnabledTotal(appName, "JsonPathRules", jsonPathRulesCount)
+		prome.SetRedactionEnabledTotal(clusterName, appName, "JsonPathRules", jsonPathRulesCount)
 	}
 
 	return rulesMap, nil
