@@ -8,6 +8,7 @@ import (
 
 	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/prome"
+	"github.com/BaritoLog/barito-flow/redact"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -51,6 +52,7 @@ type producerService struct {
 
 	grpcServer   *grpc.Server
 	reverseProxy *http.Server
+	redactor     *redact.Redactor
 }
 
 func NewProducerService(params map[string]interface{}) ProducerService {
@@ -319,5 +321,11 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 	prome.ObserveByteIngestion(topic, s.topicSuffix, timber)
 
 	prome.IncreaseKafkaMessagesStoredTotal(topic)
+
+	if s.redactor != nil {
+		for range s.redactor.RulesMap {
+			prome.ObserveRedactByteIngestion(topic, s.topicSuffix, timber)
+		}
+	}
 	return
 }
