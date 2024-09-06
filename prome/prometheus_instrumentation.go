@@ -58,13 +58,6 @@ var logStoredErrorMap map[string]string = map[string]string{
 	"maximum shards open":         "maximum_shards_open",
 }
 
-func InitRedactionInstrumentation() {
-	redactionEnabledTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "barito_redaction_status",
-		Help: "Number of appgroups with redaction status enabled",
-	}, []string{"clustername", "app_name", "type"})
-}
-
 func InitConsumerInstrumentation() {
 	consumerTimberConvertError = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_consumer_timber_convert_error",
@@ -90,6 +83,10 @@ func InitConsumerInstrumentation() {
 	consumerCustomErrorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_consumer_custom_error_total",
 	}, []string{"operation"})
+	redactionEnabledTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "barito_redaction_status",
+		Help: "Number of appgroups with redaction status enabled",
+	}, []string{"clustername", "app_name", "type"})
 }
 
 func InitGCSConsumerInstrumentation() {
