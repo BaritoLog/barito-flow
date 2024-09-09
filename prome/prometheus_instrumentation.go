@@ -31,6 +31,7 @@ var consumerGCSInfo *prometheus.GaugeVec
 var consumerGCSBufferSize *prometheus.GaugeVec
 var consumerGCSUploadAttemptTotal *prometheus.CounterVec
 var consumerGCSUploadedTotalBytes *prometheus.CounterVec
+var consumerRedactTotalLogBytesIngested *prometheus.CounterVec
 
 var producerKafkaMessageStoredTotal *prometheus.CounterVec
 var producerTPSExceededCounter *prometheus.CounterVec
@@ -38,7 +39,6 @@ var producerSendToKafkaTimeSecond *prometheus.SummaryVec
 var producerKafkaClientFailed *prometheus.CounterVec
 var producerTotalLogBytesIngested *prometheus.CounterVec
 var producerTPSExceededLogBytes *prometheus.CounterVec
-var producerRedactTotalLogBytesIngested *prometheus.CounterVec
 
 var redactionEnabledTotal *prometheus.GaugeVec
 
@@ -88,6 +88,10 @@ func InitConsumerInstrumentation() {
 		Name: "barito_redaction_status",
 		Help: "Number of appgroups with redaction status enabled",
 	}, []string{"app_name", "type"})
+	consumerRedactTotalLogBytesIngested = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_consumer_redact_produced_total_log_bytes",
+		Help: "Total log bytes being ingested by the consumer that redacted enabled",
+	}, []string{"app_name"})
 }
 
 func InitGCSConsumerInstrumentation() {
@@ -131,10 +135,6 @@ func InitProducerInstrumentation() {
 		Name: "barito_producer_tps_exceeded_log_bytes",
 		Help: "Log bytes of TPS exceeded requests",
 	}, []string{"app_name"})
-	producerRedactTotalLogBytesIngested = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "barito_producer_redact_produced_total_log_bytes",
-		Help: "Total log bytes being ingested by the producer that redacted enabled",
-	}, []string{"app_name"})
 }
 
 func SetRedactionEnabledTotal(clusterName, appName, ruleType string, count int) {
@@ -153,7 +153,7 @@ func ObserveByteIngestion(topic string, suffix string, timber *pb.Timber) {
 }
 
 func ObserveRedactByteIngestion(appName string, doc string) {
-	producerRedactTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(doc))))
+	consumerRedactTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(doc))))
 }
 
 func ObserveTPSExceededBytes(topic string, suffix string, timber *pb.Timber) {
