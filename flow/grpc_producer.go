@@ -319,6 +319,5 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 	prome.ObserveByteIngestion(topic, s.topicSuffix, timber)
 
 	prome.IncreaseKafkaMessagesStoredTotal(topic)
-
 	return
 }
