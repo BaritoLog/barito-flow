@@ -24,6 +24,7 @@ func (r *Redactor) Redact(appName, doc string) (redactedDoc string, err error) {
 	}
 
 	rules := r.RulesMap["default"]
+	prome.ObserveRedactByteIngestion(appName, doc)
 	return rules.Redact(doc), nil
 }
 

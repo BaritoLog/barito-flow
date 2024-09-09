@@ -38,7 +38,7 @@ var producerSendToKafkaTimeSecond *prometheus.SummaryVec
 var producerKafkaClientFailed *prometheus.CounterVec
 var producerTotalLogBytesIngested *prometheus.CounterVec
 var producerTPSExceededLogBytes *prometheus.CounterVec
-var redactProducerTotalLogBytesIngested *prometheus.CounterVec
+var producerRedactTotalLogBytesIngested *prometheus.CounterVec
 
 var redactionEnabledTotal *prometheus.GaugeVec
 
@@ -131,7 +131,7 @@ func InitProducerInstrumentation() {
 		Name: "barito_producer_tps_exceeded_log_bytes",
 		Help: "Log bytes of TPS exceeded requests",
 	}, []string{"app_name"})
-	redactProducerTotalLogBytesIngested = promauto.NewCounterVec(prometheus.CounterOpts{
+	producerRedactTotalLogBytesIngested = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_producer_redact_produced_total_log_bytes",
 		Help: "Total log bytes being ingested by the producer that redacted enabled",
 	}, []string{"app_name"})
@@ -152,11 +152,8 @@ func ObserveByteIngestion(topic string, suffix string, timber *pb.Timber) {
 	producerTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(b))))
 }
 
-func ObserveRedactByteIngestion(topic string, suffix string, timber *pb.Timber) {
-	re := regexp.MustCompile(suffix + "$")
-	appName := re.ReplaceAllString(topic, "")
-	b, _ := proto.Marshal(timber)
-	redactProducerTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(b))))
+func ObserveRedactByteIngestion(appName string, doc string) {
+	producerRedactTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(doc))))
 }
 
 func ObserveTPSExceededBytes(topic string, suffix string, timber *pb.Timber) {
