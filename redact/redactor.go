@@ -24,6 +24,7 @@ func (r *Redactor) Redact(appName, doc string) (redactedDoc string, err error) {
 	}
 
 	rules := r.RulesMap["default"]
+	prome.ObserveRedactByteIngestion(appName, doc)
 	return rules.Redact(doc), nil
 }
 
@@ -102,10 +103,10 @@ func fetchRulesMapFromMarket(marketEndpoint, clusterName, marketClientKey string
 
 	for appName, rules := range rulesMap {
 		staticRulesCount := len(rules.StaticRules)
-		prome.SetRedactionEnabledTotal(clusterName, appName, "StaticRules", staticRulesCount)
+		prome.SetRedactionEnabledTotal(appName, "StaticRules", staticRulesCount)
 
 		jsonPathRulesCount := len(rules.JsonPathRules)
-		prome.SetRedactionEnabledTotal(clusterName, appName, "JsonPathRules", jsonPathRulesCount)
+		prome.SetRedactionEnabledTotal(appName, "JsonPathRules", jsonPathRulesCount)
 	}
 
 	return rulesMap, nil
