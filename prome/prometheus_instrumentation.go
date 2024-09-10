@@ -137,8 +137,8 @@ func InitProducerInstrumentation() {
 	}, []string{"app_name"})
 }
 
-func SetRedactionEnabledTotal(clusterName, appName, ruleType string, count int) {
-	redactionEnabledTotal.WithLabelValues(clusterName, appName, ruleType).Set(float64(count))
+func SetRedactionEnabledTotal(appName, ruleType string, count int) {
+	redactionEnabledTotal.WithLabelValues(appName, ruleType).Set(float64(count))
 }
 
 func IncreaseConsumerTimberConvertError(index string) {
