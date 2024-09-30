@@ -19,13 +19,16 @@ func (r *Redactor) Redact(appName, doc string) (redactedDoc string, err error) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	if rules, ok := r.RulesMap[appName]; ok {
+	if r.RulesMap == nil || len(r.RulesMap) == 0 {
+		return doc, nil
+	} else {
+		prome.ObserveRedactByteIngestion(appName, doc)
+		if rules, ok := r.RulesMap[appName]; ok {
+			return rules.Redact(doc), nil
+		}
+		rules := r.RulesMap["default"]
 		return rules.Redact(doc), nil
 	}
-
-	rules := r.RulesMap["default"]
-	prome.ObserveRedactByteIngestion(appName, doc)
-	return rules.Redact(doc), nil
 }
 
 func (r *Redactor) ToJson() (string, error) {
