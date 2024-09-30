@@ -90,7 +90,7 @@ func InitConsumerInstrumentation() {
 	}, []string{"app_name", "type"})
 	consumerRedactTotalLogBytesIngested = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_consumer_redact_produced_total_log_bytes",
-		Help: "Total log bytes being ingested by the consumer that redacted enabled",
+		Help: "Total log bytes being ingested by the consumer having redaction enabled",
 	}, []string{"app_name"})
 }
 
