@@ -189,9 +189,9 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	service := flow.NewProducerService(producerParams)
 
 	go service.Start()
-	if configServeRestApi() {
-		go service.LaunchREST()
-	}
+	// if configServeRestApi() {
+	// 	go service.LaunchREST()
+	// }
 
 	srvkit.GracefullShutdown(service.Close)
 	return

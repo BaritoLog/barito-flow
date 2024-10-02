@@ -17,9 +17,9 @@ import (
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
+	pb "github.com/bentol/barito-proto/producer"
 	uuid "github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
-	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (

@@ -10,9 +10,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 
+	pb "github.com/bentol/barito-proto/producer"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (

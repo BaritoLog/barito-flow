@@ -13,9 +13,9 @@ import (
 	"github.com/BaritoLog/barito-flow/mock"
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
+	pb "github.com/bentol/barito-proto/producer"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
-	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func resetPrometheusMetrics() {

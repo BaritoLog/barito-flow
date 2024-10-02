@@ -10,9 +10,8 @@ import (
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	pb "github.com/bentol/barito-proto/producer"
 	log "github.com/sirupsen/logrus"
-	pb "github.com/vwidjaya/barito-proto/producer"
 	"google.golang.org/grpc"
 
 	_ "github.com/mostynb/go-grpc-compression/zstd"
@@ -24,16 +23,18 @@ const (
 	ErrInitGrpc               = errkit.Error("Failed to listen to gRPC address")
 	ErrRegisterGrpc           = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
 	ErrReverseProxy           = errkit.Error("Error serving REST reverse proxy")
+
+	RateLimitKeyAppGroup = "app_group"
 )
 
 type ProducerService interface {
-	pb.ProducerServer
 	Start() error
 	LaunchREST() error
 	Close()
 }
 
 type producerService struct {
+	pb.UnimplementedProducerServer
 	factory            types.KafkaFactory
 	grpcAddr           string
 	restAddr           string
@@ -53,19 +54,20 @@ type producerService struct {
 	reverseProxy *http.Server
 }
 
-func NewProducerService(params map[string]interface{}) ProducerService {
+func NewProducerService(params map[string]interface{}) *producerService {
 	return &producerService{
-		factory:            params["factory"].(types.KafkaFactory),
-		grpcAddr:           params["grpcAddr"].(string),
-		restAddr:           params["restAddr"].(string),
-		topicPrefix:        params["topicPrefix"].(string),
-		topicSuffix:        params["topicSuffix"].(string),
-		kafkaMaxRetry:      params["kafkaMaxRetry"].(int),
-		kafkaRetryInterval: params["kafkaRetryInterval"].(int),
-		newEventTopic:      params["newEventTopic"].(string),
-		grpcMaxRecvMsgSize: params["grpcMaxRecvMsgSize"].(int),
-		ignoreKafkaOptions: params["ignoreKafkaOptions"].(bool),
-		limiter:            params["limiter"].(RateLimiter),
+		UnimplementedProducerServer: pb.UnimplementedProducerServer{},
+		factory:                     params["factory"].(types.KafkaFactory),
+		grpcAddr:                    params["grpcAddr"].(string),
+		restAddr:                    params["restAddr"].(string),
+		topicPrefix:                 params["topicPrefix"].(string),
+		topicSuffix:                 params["topicSuffix"].(string),
+		kafkaMaxRetry:               params["kafkaMaxRetry"].(int),
+		kafkaRetryInterval:          params["kafkaRetryInterval"].(int),
+		newEventTopic:               params["newEventTopic"].(string),
+		grpcMaxRecvMsgSize:          params["grpcMaxRecvMsgSize"].(int),
+		ignoreKafkaOptions:          params["ignoreKafkaOptions"].(bool),
+		limiter:                     params["limiter"].(RateLimiter),
 	}
 }
 
@@ -157,30 +159,30 @@ func (s *producerService) Start() (err error) {
 	return grpcSrv.Serve(lis)
 }
 
-func (s *producerService) LaunchREST() (err error) {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+// func (s *producerService) LaunchREST() (err error) {
+// 	ctx := context.Background()
+// 	ctx, cancel := context.WithCancel(ctx)
+// 	defer cancel()
 
-	mux := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err = pb.RegisterProducerHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
-	if err != nil {
-		err = errkit.Concat(ErrRegisterGrpc, err)
-		return
-	}
+// 	mux := runtime.NewServeMux()
+// 	opts := []grpc.DialOption{grpc.WithInsecure()}
+// 	err = pb.RegisterProducerHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
+// 	if err != nil {
+// 		err = errkit.Concat(ErrRegisterGrpc, err)
+// 		return
+// 	}
 
-	s.reverseProxy = &http.Server{
-		Addr:    s.restAddr,
-		Handler: mux,
-	}
+// 	s.reverseProxy = &http.Server{
+// 		Addr:    s.restAddr,
+// 		Handler: mux,
+// 	}
 
-	err = s.reverseProxy.ListenAndServe()
-	if err != nil {
-		err = errkit.Concat(ErrReverseProxy, err)
-	}
-	return
-}
+// 	err = s.reverseProxy.ListenAndServe()
+// 	if err != nil {
+// 		err = errkit.Concat(ErrReverseProxy, err)
+// 	}
+// 	return
+// }
 
 func (s *producerService) Close() {
 	if s.reverseProxy != nil {
@@ -206,14 +208,14 @@ func (s *producerService) Close() {
 
 func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *pb.ProduceResult, err error) {
 	topic := s.topicPrefix + timber.GetContext().GetKafkaTopic() + s.topicSuffix
+	rateLimitKey, maxToken := s.getRateLimitInfo(timber.GetContext())
 
-	maxTokenIfNotExist := timber.GetContext().GetAppMaxTps()
-	if s.limiter.IsHitLimit(topic, 1, maxTokenIfNotExist) {
+	if s.limiter.IsHitLimit(rateLimitKey, 1, maxToken) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(topic, 1)
+		prome.IncreaseProducerTPSExceededCounter(rateLimitKey, 1)
 
 		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
-		prome.ObserveTPSExceededBytes(topic, s.topicSuffix, timber)
+		prome.ObserveTPSExceededBytes(rateLimitKey, s.topicSuffix, timber)
 		return
 	}
 
@@ -231,17 +233,17 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 
 func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
 	topic := s.topicPrefix + timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
+	rateLimitKey, maxToken := s.getRateLimitInfo(timberCollection.GetContext())
 
-	maxTokenIfNotExist := timberCollection.GetContext().GetAppMaxTps()
 	lengthMessages := len(timberCollection.GetItems())
-	if s.limiter.IsHitLimit(topic, lengthMessages, maxTokenIfNotExist) {
+	if s.limiter.IsHitLimit(rateLimitKey, lengthMessages, maxToken) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(topic, lengthMessages)
+		prome.IncreaseProducerTPSExceededCounter(rateLimitKey, lengthMessages)
 
 		for _, timber := range timberCollection.GetItems() {
 			timber.Context = timberCollection.GetContext()
 			timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
-			prome.ObserveTPSExceededBytes(topic, s.topicSuffix, timber)
+			prome.ObserveTPSExceededBytes(rateLimitKey, s.topicSuffix, timber)
 		}
 		return
 	}
@@ -320,4 +322,12 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 
 	prome.IncreaseKafkaMessagesStoredTotal(topic)
 	return
+}
+
+func (s *producerService) getRateLimitInfo(context *pb.TimberContext) (string, int32) {
+	if context.GetDisableAppTps() {
+		return RateLimitKeyAppGroup, context.GetAppGroupMaxTps()
+	} else {
+		return s.topicPrefix + context.GetKafkaTopic() + s.topicSuffix, context.GetAppMaxTps()
+	}
 }
