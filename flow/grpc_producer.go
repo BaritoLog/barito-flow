@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -209,6 +210,7 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
 	topic := s.topicPrefix + timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
 	rateLimitKey, maxToken := s.getRateLimitInfo(timberCollection.GetContext())
+	fmt.Println("rateLimitKey", rateLimitKey, "maxToken", maxToken, "topic", topic)
 
 	lengthMessages := len(timberCollection.GetItems())
 	if s.limiter.IsHitLimit(rateLimitKey, lengthMessages, maxToken) {
