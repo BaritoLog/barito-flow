@@ -159,31 +159,6 @@ func (s *producerService) Start() (err error) {
 	return grpcSrv.Serve(lis)
 }
 
-// func (s *producerService) LaunchREST() (err error) {
-// 	ctx := context.Background()
-// 	ctx, cancel := context.WithCancel(ctx)
-// 	defer cancel()
-
-// 	mux := runtime.NewServeMux()
-// 	opts := []grpc.DialOption{grpc.WithInsecure()}
-// 	err = pb.RegisterProducerHandlerFromEndpoint(ctx, mux, "localhost"+s.grpcAddr, opts)
-// 	if err != nil {
-// 		err = errkit.Concat(ErrRegisterGrpc, err)
-// 		return
-// 	}
-
-// 	s.reverseProxy = &http.Server{
-// 		Addr:    s.restAddr,
-// 		Handler: mux,
-// 	}
-
-// 	err = s.reverseProxy.ListenAndServe()
-// 	if err != nil {
-// 		err = errkit.Concat(ErrReverseProxy, err)
-// 	}
-// 	return
-// }
-
 func (s *producerService) Close() {
 	if s.reverseProxy != nil {
 		s.reverseProxy.Close()
@@ -212,10 +187,10 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 
 	if s.limiter.IsHitLimit(rateLimitKey, 1, maxToken) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(rateLimitKey, 1)
+		prome.IncreaseProducerTPSExceededCounter(topic, 1)
 
 		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
-		prome.ObserveTPSExceededBytes(rateLimitKey, s.topicSuffix, timber)
+		prome.ObserveTPSExceededBytes(topic, s.topicSuffix, timber)
 		return
 	}
 
@@ -238,12 +213,12 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 	lengthMessages := len(timberCollection.GetItems())
 	if s.limiter.IsHitLimit(rateLimitKey, lengthMessages, maxToken) {
 		err = onLimitExceededGrpc()
-		prome.IncreaseProducerTPSExceededCounter(rateLimitKey, lengthMessages)
+		prome.IncreaseProducerTPSExceededCounter(topic, lengthMessages)
 
 		for _, timber := range timberCollection.GetItems() {
 			timber.Context = timberCollection.GetContext()
 			timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
-			prome.ObserveTPSExceededBytes(rateLimitKey, s.topicSuffix, timber)
+			prome.ObserveTPSExceededBytes(topic, s.topicSuffix, timber)
 		}
 		return
 	}
