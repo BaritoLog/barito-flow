@@ -11,9 +11,9 @@ import (
 
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/instru"
+	pb "github.com/bentol/barito-proto/producer"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (

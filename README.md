@@ -12,7 +12,7 @@ to translate RESTful HTTP API into gRPC. Barito flow infrastructure consists of 
 
 Barito flow producer will turn on gRPC server and optionally REST gateway reverse proxy server.
 It will automatically create Kafka topic for the log if not exist yet.
-gRPC messages and services are declared in [barito-proto](https://github.com/vwidjaya/barito-proto) repository.
+gRPC messages and services are declared in [barito-proto](https://github.com/bentol/barito-proto) repository.
 
 Barito flow consumer will firstly create a topic event and generates the workers. Then based on the logs send,
 each topic inside this event topic will be created a cluster consumer separately. This cluster consumer will

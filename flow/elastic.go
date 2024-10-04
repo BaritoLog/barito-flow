@@ -10,10 +10,10 @@ import (
 
 	"time"
 
+	pb "github.com/bentol/barito-proto/producer"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
-	pb "github.com/vwidjaya/barito-proto/producer"
 
 	"github.com/zekroTJA/timedmap"
 )

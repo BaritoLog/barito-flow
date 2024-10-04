@@ -5,10 +5,10 @@ import (
 
 	"github.com/BaritoLog/go-boilerplate/errkit"
 	"github.com/Shopify/sarama"
+	pb "github.com/bentol/barito-proto/producer"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	stpb "github.com/golang/protobuf/ptypes/struct"
-	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 const (

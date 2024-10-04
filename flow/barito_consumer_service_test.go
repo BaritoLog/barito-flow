@@ -15,10 +15,10 @@ import (
 	. "github.com/BaritoLog/go-boilerplate/testkit"
 	"github.com/BaritoLog/go-boilerplate/timekit"
 	"github.com/Shopify/sarama"
+	pb "github.com/bentol/barito-proto/producer"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
-	pb "github.com/vwidjaya/barito-proto/producer"
 )
 
 func init() {
