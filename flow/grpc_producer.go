@@ -22,14 +22,12 @@ const (
 	ErrKafkaRetryLimitReached = errkit.Error("Error connecting to kafka, retry limit reached")
 	ErrInitGrpc               = errkit.Error("Failed to listen to gRPC address")
 	ErrRegisterGrpc           = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
-	ErrReverseProxy           = errkit.Error("Error serving REST reverse proxy")
 
 	RateLimitKeyAppGroup = "app_group"
 )
 
 type ProducerService interface {
 	Start() error
-	LaunchREST() error
 	Close()
 }
 
@@ -37,7 +35,6 @@ type producerService struct {
 	pb.UnimplementedProducerServer
 	factory            types.KafkaFactory
 	grpcAddr           string
-	restAddr           string
 	topicPrefix        string
 	topicSuffix        string
 	kafkaMaxRetry      int
@@ -59,7 +56,6 @@ func NewProducerService(params map[string]interface{}) *producerService {
 		UnimplementedProducerServer: pb.UnimplementedProducerServer{},
 		factory:                     params["factory"].(types.KafkaFactory),
 		grpcAddr:                    params["grpcAddr"].(string),
-		restAddr:                    params["restAddr"].(string),
 		topicPrefix:                 params["topicPrefix"].(string),
 		topicSuffix:                 params["topicSuffix"].(string),
 		kafkaMaxRetry:               params["kafkaMaxRetry"].(int),
