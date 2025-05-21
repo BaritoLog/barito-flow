@@ -22,6 +22,10 @@ var counter int = 0
 
 const (
 	DEFAULT_ELASTIC_DOCUMENT_TYPE = "_doc"
+
+	IndexMethodBulkProcessor = "BulkProcessor"
+	IndexMethodDatastream    = "DataStream"
+	IndexMethodSingleInsert  = "SingleInsert"
 )
 
 type Elastic interface {
@@ -31,12 +35,13 @@ type Elastic interface {
 }
 
 type elasticClient struct {
-	client           *elastic.Client
-	bulkProcessor    *elastic.BulkProcessor
-	onFailureFunc    func(*pb.Timber)
-	onStoreFunc      func(ctx context.Context, indexName, documentType, document string) (err error)
-	jspbMarshaler    *jsonpb.Marshaler
-	indexExistsCache *timedmap.TimedMap
+	client             *elastic.Client
+	bulkProcessor      *elastic.BulkProcessor
+	onFailureFunc      func(*pb.Timber)
+	onStoreFunc        func(ctx context.Context, indexName, documentType, document string) (err error)
+	jspbMarshaler      *jsonpb.Marshaler
+	indexExistsCache   *timedmap.TimedMap
+	indexUseDateSuffix bool
 
 	redactor Redactor
 }
@@ -101,16 +106,20 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 	}
 
 	client = elasticClient{
-		client:           c,
-		bulkProcessor:    p,
-		jspbMarshaler:    &jsonpb.Marshaler{},
-		indexExistsCache: timedmap.New(1 * time.Minute),
-		redactor:         &DummyRedactor{},
+		client:             c,
+		bulkProcessor:      p,
+		jspbMarshaler:      &jsonpb.Marshaler{},
+		indexExistsCache:   timedmap.New(1 * time.Minute),
+		redactor:           &DummyRedactor{},
+		indexUseDateSuffix: true,
 	}
 
-	if esConfig.indexMethod == "BulkProcessor" {
+	if esConfig.indexMethod == IndexMethodBulkProcessor {
 		client.onStoreFunc = client.bulkInsert
-	} else if esConfig.indexMethod == "SingleInsert" {
+	} else if esConfig.indexMethod == IndexMethodDatastream {
+		client.onStoreFunc = client.bulkInsertDataStream
+		client.indexUseDateSuffix = false
+	} else if esConfig.indexMethod == IndexMethodSingleInsert {
 		client.onStoreFunc = client.singleInsert
 	}
 
@@ -161,7 +170,10 @@ func (e *elasticClient) WithRedactor(r Redactor) *elasticClient {
 
 func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error) {
 	indexPrefix := timber.GetContext().GetEsIndexPrefix()
-	indexName := fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
+	indexName := indexPrefix
+	if e.indexUseDateSuffix {
+		indexName = fmt.Sprintf("%s-%s", indexPrefix, time.Now().Format("2006.01.02"))
+	}
 	documentType := DEFAULT_ELASTIC_DOCUMENT_TYPE
 	appSecret := timber.GetContext().GetAppSecret()
 
@@ -204,6 +216,16 @@ func (e *elasticClient) OnFailure(f func(*pb.Timber)) {
 
 func (e *elasticClient) bulkInsert(_ context.Context, indexName, documentType, document string) (err error) {
 	r := elastic.NewBulkIndexRequest().
+		Index(indexName).
+		Type(documentType).
+		Doc(document)
+	e.bulkProcessor.Add(r)
+	return
+}
+
+func (e *elasticClient) bulkInsertDataStream(_ context.Context, indexName, documentType, document string) (err error) {
+	r := elastic.NewBulkIndexRequest().
+		OpType("create").
 		Index(indexName).
 		Type(documentType).
 		Doc(document)
