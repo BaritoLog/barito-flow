@@ -238,7 +238,6 @@ func (e *elasticClient) Store(ctx context.Context, timber pb.Timber) (err error)
 		if e.ensureIndexIsExists(ctx, indexName) {
 			break
 		}
-		time.Sleep(10 * time.Second)
 	}
 
 	document, err := ConvertTimberToEsDocumentString(timber, e.jspbMarshaler)
