@@ -34,13 +34,14 @@ type Elastic interface {
 }
 
 type elasticClient struct {
-	client           *elastic.Client
-	bulkProcessor    *elastic.BulkProcessor
-	onFailureFunc    func(*pb.Timber)
-	onStoreFunc      func(ctx context.Context, indexName, documentType, document string) (err error)
-	jspbMarshaler    *jsonpb.Marshaler
-	indexExistsCache *timedmap.TimedMap
-	useDataStream    bool
+	client                             *elastic.Client
+	bulkProcessor                      *elastic.BulkProcessor
+	onFailureFunc                      func(*pb.Timber)
+	onStoreFunc                        func(ctx context.Context, indexName, documentType, document string) (err error)
+	jspbMarshaler                      *jsonpb.Marshaler
+	indexExistsCache                   *timedmap.TimedMap
+	useDataStream                      bool
+	dataStreamDefaultComponentTemplate string
 
 	redactor Redactor
 }
@@ -56,19 +57,21 @@ func (r *DummyRedactor) Redact(indexName, document string) (string, error) {
 }
 
 type esConfig struct {
-	indexMethod string
-	bulkSize    int
-	flushMs     time.Duration
-	printTPS    bool
+	indexMethod                        string
+	bulkSize                           int
+	flushMs                            time.Duration
+	printTPS                           bool
+	dataStreamDefaultComponentTemplate string
 }
 
-func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printTPS bool) esConfig {
+func NewEsConfig(indexMethod string, bulkSize int, flushMs time.Duration, printTPS bool, dataStreamDefaultComponentTemplate string) esConfig {
 
 	return esConfig{
-		indexMethod: indexMethod,
-		bulkSize:    bulkSize,
-		flushMs:     flushMs,
-		printTPS:    printTPS,
+		indexMethod:                        indexMethod,
+		bulkSize:                           bulkSize,
+		flushMs:                            flushMs,
+		printTPS:                           printTPS,
+		dataStreamDefaultComponentTemplate: dataStreamDefaultComponentTemplate,
 	}
 }
 
@@ -105,12 +108,13 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 	}
 
 	client = elasticClient{
-		client:           c,
-		bulkProcessor:    p,
-		jspbMarshaler:    &jsonpb.Marshaler{},
-		indexExistsCache: timedmap.New(1 * time.Minute),
-		redactor:         &DummyRedactor{},
-		useDataStream:    false,
+		client:                             c,
+		bulkProcessor:                      p,
+		jspbMarshaler:                      &jsonpb.Marshaler{},
+		indexExistsCache:                   timedmap.New(1 * time.Minute),
+		redactor:                           &DummyRedactor{},
+		useDataStream:                      false,
+		dataStreamDefaultComponentTemplate: esConfig.dataStreamDefaultComponentTemplate,
 	}
 
 	if esConfig.indexMethod == IndexMethodBulkProcessor {
@@ -179,21 +183,20 @@ func (e *elasticClient) ensureIndexIsExistsRegularIndex(ctx context.Context, ind
 	return true
 }
 
-func (e *elasticClient) ensureIndexIsExistsDataStream(ctx context.Context, indexName string) bool {
-	log.Warnf("ES datastream index '%s' is not exist", indexName)
-	defaultComponentTemplate := "barito-default-ilm-policy"
+func (e *elasticClient) ensureIndexIsExistsDataStream(ctx context.Context, datastreamName string) bool {
+	log.Warnf("ES datastream index '%s' is not exist", datastreamName)
 	payload := fmt.Sprintf(
 		`{"index_patterns":["%s"],"data_stream":{},"composed_of":["%s"],"priority":200,"_meta":{"description":"default template"}} `,
-		indexName,
-		defaultComponentTemplate,
+		datastreamName,
+		e.dataStreamDefaultComponentTemplate,
 	)
-	_, err := e.client.IndexPutIndexTemplate(indexName).
-		Name(indexName + "-template").
+	_, err := e.client.IndexPutIndexTemplate(datastreamName).
+		Name(datastreamName + "-template").
 		BodyString(payload).
 		Do(ctx)
 
 	if err != nil {
-		log.Errorf("Error creating index template %s: %s", indexName, err)
+		log.Errorf("Error creating index template %s: %s", datastreamName, err)
 		return false
 	}
 
@@ -212,9 +215,6 @@ func (e *elasticClient) ensureIndexIsExists(ctx context.Context, indexName strin
 		return false
 	}
 
-	// there are 2 approaches:
-	// 1. if using data stream, we just need to create the index template
-	// 2. if not using data stream, we need to create the index
 	if !exists {
 		if e.useDataStream {
 			return e.ensureIndexIsExistsDataStream(ctx, indexName)

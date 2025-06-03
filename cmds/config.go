@@ -17,10 +17,11 @@ const (
 	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
 	EnvKafkaRetryInterval = "BARITO_KAFKA_RETRY_INTERVAL"
 
-	EnvElasticsearchUrls = "BARITO_ELASTICSEARCH_URLS"
-	EnvEsIndexMethod     = "BARITO_ELASTICSEARCH_INDEX_METHOD"
-	EnvEsBulkSize        = "BARITO_ELASTICSEARCH_BULK_SIZE"
-	EnvEsFlushIntervalMs = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
+	EnvElasticsearchUrls                        = "BARITO_ELASTICSEARCH_URLS"
+	EnvEsIndexMethod                            = "BARITO_ELASTICSEARCH_INDEX_METHOD"
+	EnvEsBulkSize                               = "BARITO_ELASTICSEARCH_BULK_SIZE"
+	EnvEsFlushIntervalMs                        = "BARITO_ELASTICSEARCH_FLUSH_INTERVAL_MS"
+	EnvEsDatastreamDefaultComponentTemplateName = "BARITO_ELASTICSEARCH_DATASTREAM_DEFAULT_COMPONENT_TEMPLATE_NAME"
 
 	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
 
@@ -102,16 +103,17 @@ var (
 	DefaultProducerIgnoreKafkaOptions     = "false"
 	DefaultProducerMaxMessageBytes        = 1000000 // Should be set equal to or smaller than the broker's `message.max.bytes`.
 
-	DefaultNewTopicEventName              = "new_topic_events"
-	DefaultElasticsearchRetrierInterval   = "30s"
-	DefaultElasticsearchRetrierMaxRetry   = 10
-	DefaultConsumerRebalancingStrategy    = "RoundRobin"
-	DefaultEsIndexMethod                  = "BulkProcessor"
-	DefaultEsBulkSize                     = 100
-	DefaultEsFlushIntervalMs              = 500
-	DefaultConsumerGroupSessionTimeout    = 20
-	DefaultConsumerGroupHeartbeatInterval = 6
-	DefaultConsumerMaxProcessingTime      = 500
+	DefaultNewTopicEventName                        = "new_topic_events"
+	DefaultElasticsearchRetrierInterval             = "30s"
+	DefaultElasticsearchRetrierMaxRetry             = 10
+	DefaultConsumerRebalancingStrategy              = "RoundRobin"
+	DefaultEsIndexMethod                            = "BulkProcessor"
+	DefaultEsDatastreamDefaultComponentTemplateName = "barito-default-replica"
+	DefaultEsBulkSize                               = 100
+	DefaultEsFlushIntervalMs                        = 500
+	DefaultConsumerGroupSessionTimeout              = 20
+	DefaultConsumerGroupHeartbeatInterval           = 6
+	DefaultConsumerMaxProcessingTime                = 500
 
 	DefaultPrintTPS = "false"
 
@@ -173,6 +175,10 @@ func configEsBulkSize() (i int) {
 
 func configEsFlushIntervalMs() (i int) {
 	return intEnvOrDefault(EnvEsFlushIntervalMs, DefaultEsFlushIntervalMs)
+}
+
+func configEsDatastreamDefaultComponentTemplateName() (s string) {
+	return stringEnvOrDefault(EnvEsDatastreamDefaultComponentTemplateName, DefaultEsDatastreamDefaultComponentTemplateName)
 }
 
 func configGrpcMaxRecvMsgSize() (i int) {
