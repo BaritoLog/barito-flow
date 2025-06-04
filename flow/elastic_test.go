@@ -34,7 +34,7 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false, "")
 	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD, nil)
 	FatalIfError(t, err)
 
@@ -56,7 +56,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false, "")
 	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD, nil)
 	FatalIfError(t, err)
 
@@ -81,7 +81,7 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false)
+	esConfig := NewEsConfig("SingleInsert", 100, time.Duration(1000), false, "")
 	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD, nil)
 	FatalIfError(t, err)
 
@@ -141,7 +141,7 @@ func TestElasticStore_ExportMetrics(t *testing.T) {
 	defer ts.Close()
 
 	retrier := mockElasticRetrier()
-	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false)
+	esConfig := NewEsConfig("BulkProcessor", 100, time.Duration(1000), false, "")
 	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD, nil)
 	FatalIfError(t, err)
 

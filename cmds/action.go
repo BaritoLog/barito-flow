@@ -66,6 +66,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		esBulkSize,
 		time.Duration(esFlushIntervalMs),
 		printTPS,
+		configEsDatastreamDefaultComponentTemplateName(),
 	)
 
 	consumerParams := map[string]interface{}{

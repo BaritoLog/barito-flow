@@ -180,7 +180,7 @@ func TestBaritoConsumerService_onStoreTimber_ErrorStore(t *testing.T) {
 	}
 
 	retrier := service.elasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
+	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false, "")
 	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword, nil)
 	service.esClient = &elastic
 
@@ -205,7 +205,7 @@ func TestBaritoConsumerService_onStoreTimber(t *testing.T) {
 	elasticPassword := ""
 
 	retrier := service.elasticRetrier()
-	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false)
+	esConfig := NewEsConfig("SingleInsert", 1, time.Duration(1000), false, "")
 	elastic, _ := NewElastic(retrier, esConfig, elasticUrls, elasticUsername, elasticPassword, nil)
 	service.esClient = &elastic
 
@@ -351,7 +351,7 @@ func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
 		"newTopicEventName":      "",
 		"elasticRetrierInterval": "1s",
 		"elasticRetrierMaxRetry": 1,
-		"esConfig":               NewEsConfig("SingleInsert", 1, time.Duration(1000), false),
+		"esConfig":               NewEsConfig("SingleInsert", 1, time.Duration(1000), false, ""),
 		"elasticUsername":        "",
 		"elasticPassword":        "",
 	}
