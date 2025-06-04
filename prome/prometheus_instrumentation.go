@@ -26,6 +26,7 @@ var consumerBulkProcessTimeSecond prometheus.Summary
 var consumerKafkaMessagesIncomingCounter *prometheus.CounterVec
 var consumerElasticsearchClientFailed *prometheus.CounterVec
 var consumerCustomErrorTotal *prometheus.CounterVec
+var consumerFailedToEnsureIndexExists *prometheus.CounterVec
 
 var consumerGCSInfo *prometheus.GaugeVec
 var consumerGCSBufferSize *prometheus.GaugeVec
@@ -73,6 +74,10 @@ func InitConsumerInstrumentation() {
 		Help:       "Bulk process time in second ",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	})
+	consumerFailedToEnsureIndexExists = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "barito_consumer_failed_to_ensure_index_exists_total",
+		Help: "Number of failed to ensure index exists",
+	}, []string{"index"})
 	consumerKafkaMessagesIncomingCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "barito_consumer_kafka_message_incoming_total",
 		Help: "Number of messages incoming from kafka",
@@ -193,6 +198,10 @@ func ObserveBulkProcessTime(elapsedTime float64) {
 
 func IncreaseConsumerElasticsearchClientFailed(phase string) {
 	consumerElasticsearchClientFailed.WithLabelValues(phase).Inc()
+}
+
+func IncreaseConsumerFailedToEnsureIndexExists(index string) {
+	consumerFailedToEnsureIndexExists.WithLabelValues(index).Inc()
 }
 
 func IncreaseKafkaMessagesStoredTotal(topic string) {
