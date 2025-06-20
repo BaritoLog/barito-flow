@@ -72,3 +72,4 @@ tags
 
 .idea/
 .vscode/
+.go-version

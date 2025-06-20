@@ -156,3 +156,5 @@ require (
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
+
+replace github.com/baritolog/go-boilerplate => ../go-boilerplate
