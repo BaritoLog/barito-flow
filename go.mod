@@ -109,7 +109,6 @@ require (
 require (
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bouk/monkey v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -157,4 +156,4 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 )
 
-replace github.com/baritolog/go-boilerplate => ../go-boilerplate
+replace github.com/BaritoLog/go-boilerplate => ../go-boilerplate
