@@ -157,6 +157,13 @@ func ObserveByteIngestion(topic string, suffix string, timber *pb.Timber) {
 	producerTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(b))))
 }
 
+func ObserveByteIngestionCollection(topic string, suffix string, timberCollection *pb.TimberCollection) {
+	re := regexp.MustCompile(suffix + "$")
+	appName := re.ReplaceAllString(topic, "")
+	b, _ := proto.Marshal(timberCollection)
+	producerTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(b))))
+}
+
 func ObserveRedactByteIngestion(appName string, doc string) {
 	consumerRedactTotalLogBytesIngested.WithLabelValues(appName).Add(math.Round(float64(len(doc))))
 }

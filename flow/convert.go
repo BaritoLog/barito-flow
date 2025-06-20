@@ -24,6 +24,15 @@ type LogFormatGcsSimpler struct {
 	LogTime string      `json:"log_time"`
 }
 
+func ConvertTimberCollectionToKafkaMessage(timberCollection *pb.TimberCollection, topic string) *sarama.ProducerMessage {
+	b, _ := proto.Marshal(timberCollection)
+
+	return &sarama.ProducerMessage{
+		Topic: topic,
+		Value: sarama.ByteEncoder(b),
+	}
+}
+
 func ConvertTimberToKafkaMessage(timber *pb.Timber, topic string) *sarama.ProducerMessage {
 	b, _ := proto.Marshal(timber)
 
