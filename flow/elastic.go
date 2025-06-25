@@ -200,6 +200,7 @@ func (e *elasticClient) ensureIndexIsExistsDataStream(ctx context.Context, datas
 		return false
 	}
 
+	e.indexExistsCache.Set(datastreamName, true, 10*time.Minute)
 	return true
 }
 
@@ -209,7 +210,6 @@ func (e *elasticClient) ensureIndexIsExists(ctx context.Context, indexName strin
 		return true
 	}
 
-	log.Warn("Checking if index exists: ", indexName)
 	exists, err := e.client.IndexExists(indexName).Do(ctx)
 	if err != nil {
 		log.Errorf("Error checking if index exists: %s", err)
@@ -222,6 +222,7 @@ func (e *elasticClient) ensureIndexIsExists(ctx context.Context, indexName strin
 		}
 		return e.ensureIndexIsExistsRegularIndex(ctx, indexName)
 	}
+	e.indexExistsCache.Set(indexName, true, 10*time.Minute)
 	return true
 }
 
