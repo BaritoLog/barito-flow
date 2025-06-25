@@ -111,7 +111,7 @@ func NewElastic(retrierFunc *ElasticRetrier, esConfig esConfig, urls []string, e
 		client:                             c,
 		bulkProcessor:                      p,
 		jspbMarshaler:                      &jsonpb.Marshaler{},
-		indexExistsCache:                   timedmap.New(1 * time.Minute),
+		indexExistsCache:                   timedmap.New(10 * time.Minute),
 		redactor:                           &DummyRedactor{},
 		useDataStream:                      false,
 		dataStreamDefaultComponentTemplate: esConfig.dataStreamDefaultComponentTemplate,
@@ -179,7 +179,7 @@ func (e *elasticClient) ensureIndexIsExistsRegularIndex(ctx context.Context, ind
 		log.Errorf("Error creating index: %s", err)
 		return false
 	}
-	e.indexExistsCache.Set(indexName, true, 1*time.Minute)
+	e.indexExistsCache.Set(indexName, true, 10*time.Minute)
 	return true
 }
 
@@ -209,6 +209,7 @@ func (e *elasticClient) ensureIndexIsExists(ctx context.Context, indexName strin
 		return true
 	}
 
+	log.Warn("Checking if index exists: ", indexName)
 	exists, err := e.client.IndexExists(indexName).Do(ctx)
 	if err != nil {
 		log.Errorf("Error checking if index exists: %s", err)
