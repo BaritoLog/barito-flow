@@ -11,3 +11,7 @@ func NewConsumerOutputFactory() types.ConsumerOutputFactory {
 func (cf *consumerOutputFactory) MakeConsumerOutputGCS(name string) (types.ConsumerOutput, error) {
 	return NewGCSFromEnv(name), nil
 }
+
+func (cf *consumerOutputFactory) MakeConsumerOutputVLogs(name string) (types.ConsumerOutput, error) {
+	return NewVLogsFromEnv(name), nil
+}

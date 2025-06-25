@@ -44,6 +44,7 @@ type ConsumerWorker interface {
 
 type ConsumerOutputFactory interface {
 	MakeConsumerOutputGCS(string) (ConsumerOutput, error)
+	MakeConsumerOutputVLogs(string) (ConsumerOutput, error)
 }
 
 type ConsumerOutput interface {
