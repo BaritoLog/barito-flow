@@ -195,6 +195,45 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	return
 }
 
+func ActionBaritoConsumerVLogsService(c *cli.Context) (err error) {
+	log.SetLevel(log.DebugLevel)
+
+	prome.InitConsumerInstrumentation()
+	// TODO: init vlogs consumer instrumentation
+
+	brokers := configKafkaBrokers()
+
+	config := sarama.NewConfig()
+	// we want to use manual commit
+	// so use high interval to avoid auto commit
+	config.Consumer.Offsets.CommitInterval = 999999 * time.Hour
+	config.Consumer.Offsets.AutoCommit.Enable = false
+	config.Version = sarama.V2_6_0_0
+	config.Consumer.Fetch.Min = 100
+	config.Consumer.Fetch.Default = 5 * 1024 * 1024 // 5 MB
+	config.Consumer.Fetch.Max = 10 * 1024 * 1024    // 10 MB
+	config.Consumer.MaxProcessingTime = time.Duration(configConsumerMaxProcessingTime()) * time.Millisecond
+	config.Consumer.MaxWaitTime = time.Duration(5 * time.Second)
+	config.Consumer.Group.Session.Timeout = time.Duration(configConsumerGroupSessionTimeout()) * time.Second
+	config.Consumer.Group.Heartbeat.Interval = time.Duration(configConsumerGroupHeartbeatInterval()) * time.Second
+	config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
+
+	kafkaFactory := flow.NewKafkaFactory(brokers, config)
+	consumerOutputFactory := flow.NewConsumerOutputFactory()
+
+	service := flow.NewBaritoKafkaConsumerVLogsFromEnv(kafkaFactory, consumerOutputFactory)
+
+	callbackInstrumentation()
+
+	if err = service.Start(); err != nil {
+		return
+	}
+
+	srvkit.GracefullShutdown(service.Close)
+
+	return
+}
+
 func ActionBaritoConsumerGCSService(c *cli.Context) (err error) {
 	log.SetLevel(log.DebugLevel)
 

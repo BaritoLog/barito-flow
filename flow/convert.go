@@ -96,6 +96,11 @@ func ConvertTimberToLogFormatGCSSimpleString(timber pb.Timber) (string, error) {
 
 }
 
+func ConvertTimberToVlogsJson(timber *pb.Timber, m *jsonpb.Marshaler) (string, error) {
+	doc := timber.GetContent()
+	return m.MarshalToString(doc)
+}
+
 func ConvertTimberToEsDocumentString(timber pb.Timber, m *jsonpb.Marshaler) (string, error) {
 	doc := timber.GetContent()
 

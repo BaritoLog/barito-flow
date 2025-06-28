@@ -26,11 +26,10 @@ type baritoKafkaConsumerVLogsService struct {
 	workerMap      map[string]types.ConsumerWorker
 	VLogsOutputMap map[string]types.ConsumerOutput
 
-	kafkaAdmin            types.KafkaAdmin
-	kafkaFactory          types.KafkaFactory
-	consumerOuputFactory  types.ConsumerOutputFactory
-	marshaler             *jsonpb.Marshaler
-	timberToSimplerFormat bool
+	kafkaAdmin           types.KafkaAdmin
+	kafkaFactory         types.KafkaFactory
+	consumerOuputFactory types.ConsumerOutputFactory
+	marshaler            *jsonpb.Marshaler
 
 	logger *log.Entry
 	isStop bool
@@ -40,9 +39,16 @@ func NewBaritoKafkaConsumerVLogsFromEnv(kafkaFactory types.KafkaFactory, consume
 	settings := KafkaConsumerVLogsSettings{}
 	envconfig.MustProcess("", &settings)
 
-	kafkaAdmin, err := kafkaFactory.MakeKafkaAdmin()
-	if err != nil {
-		panic(fmt.Errorf("Error creating kafka admin: %s", err))
+	var err error
+	var kafkaAdmin types.KafkaAdmin
+	for {
+		kafkaAdmin, err = kafkaFactory.MakeKafkaAdmin()
+		if err != nil {
+			log.Error("Error creating kafka admin: ", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		break
 	}
 
 	s := &baritoKafkaConsumerVLogsService{
@@ -104,7 +110,7 @@ func (s *baritoKafkaConsumerVLogsService) spawnLogsWorker(topic string, initialO
 	// create VLogs types.ConsumerOutput
 	g, err := s.consumerOuputFactory.MakeConsumerOutputVLogs(topic)
 	if err != nil {
-		err = fmt.Errorf("Error creating VLogs output: %s", err)
+		err = fmt.Errorf("error creating VLogs output: %s", err)
 		s.logger.WithField("topic", topic).Error(err)
 		return err
 	}
@@ -137,25 +143,21 @@ func (s *baritoKafkaConsumerVLogsService) spawnLogsWorker(topic string, initialO
 			return
 		}
 
-		var content string
-		if s.timberToSimplerFormat {
-			content, err = ConvertTimberToLogFormatVLogsSimpleString(timber)
-		} else {
-			content, err = s.marshaler.MarshalToString(timber.GetContent())
-		}
+		content, err := ConvertTimberToVlogsJson(&timber, s.marshaler)
 		if err != nil {
 			s.logger.WithField("topic", topic).Error(err)
 			return
 		}
 
 		// retry indefinitely until success
+		// the buffer might be full, or there is still inflight request
 		for {
 			err := g.OnMessage([]byte(content))
 			if err == nil {
 				break
 			}
 			prome.IncreaseConsumerCustomErrorTotalf("VLogs_on_message: %s", topic)
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 		}
 	})
 

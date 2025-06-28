@@ -2,17 +2,16 @@ package flow
 
 import (
 	"bytes"
-	"compress/gzip"
-	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/prome"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/klauspost/compress/zstd"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,13 +22,15 @@ var ErrorVLogsBufferFull = fmt.Errorf("VLogs buffer is full")
 
 type VLogsSettings struct {
 	Endpoint            string `envconfig:"endpoint" required:"true"`
-	FlushMaxBatches     int    `envconfig:"flush_max_batches" default:"500"`     // max number of batches to flush at once
+	FlushMaxBatches     int    `envconfig:"flush_max_batches" default:"5000"`    // max number of batches to flush at once
 	FlushMaxTimeSeconds int    `envconfig:"flush_max_time_seconds" default:"10"` // max time to wait before flushing in seconds
 }
 
 type VLogs struct {
 	name     string
 	endpoint string
+
+	httpClient *http.Client
 
 	flushMaxBatches int
 	flushMaxTime    time.Duration
@@ -54,16 +55,17 @@ func NewVLogsFromEnv(name string) *VLogs {
 
 	logger := log.New().WithField("component", "VLogs").WithField("name", name)
 
-	vlogsClient, err := something()
-	if err != nil {
-		// TODO: should not panic
-		panic(err)
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
 	}
 
 	logger.Info("Created VLogs client")
 
+	name = strings.TrimSuffix(name, "_pb")
 	g := &VLogs{
+		name:            name,
 		endpoint:        settings.Endpoint,
+		httpClient:      httpClient,
 		flushMaxBatches: settings.FlushMaxBatches,
 		flushMaxTime:    time.Duration(settings.FlushMaxTimeSeconds) * time.Second,
 		logger:          logger,
@@ -71,7 +73,7 @@ func NewVLogsFromEnv(name string) *VLogs {
 		buffer:      bytes.NewBuffer(nil),
 		onFlushFunc: make([]func() error, 0),
 	}
-	g.uploadFunc = g.uploadToVLogs
+	g.uploadFunc = g.pushToVLogs
 
 	return g
 }
@@ -141,63 +143,39 @@ func (g *VLogs) Start() error {
 	}
 }
 
-func (g *VLogs) uploadToVLogs() error {
-	ctx := context.TODO()
+func (g *VLogs) pushToVLogs() error {
+	g.logger.Debug("pushToVLogs", g.name)
 
-	filename := fmt.Sprintf("%s/%s/%s-%s.log", g.bucketPath, g.name, g.name, g.clock.Now().Format(time.RFC3339))
-	// TODO: use dependency injection
-	if g.compressor == "zstd" {
-		filename = filename + ".zst"
-	} else if g.compressor == "gzip" {
-		filename = filename + ".gz"
-	}
-	bucket := g.storageClient.Bucket(g.bucketName)
-	obj := bucket.Object(filename)
-	objWriter := obj.NewWriter(ctx)
-	var w io.WriteCloser
-	w = objWriter
-
-	// TODO: use dependency injection
-	if g.compressor == "zstd" {
-		w, _ = zstd.NewWriter(w)
-	} else {
-		w = gzip.NewWriter(w)
-	}
-
-	n, err := io.Copy(w, g.buffer)
+	req, err := http.NewRequest("POST", g.endpoint, g.buffer)
 	if err != nil {
-		g.logger.Error(err)
-		prome.IncreaseConsumerCustomErrorTotalf("VLogs_copy_buffer_failed: %s", g.name)
-		return err
+		prome.IncreaseConsumerCustomErrorTotalf("vlogs_request_creation_failed: %s", g.name)
+		return fmt.Errorf("failed to create request: %w", err)
 	}
+	req.Header.Set("VL-Msg-Field", "@message")
+	req.Header.Set("VL-Extra-Fields", fmt.Sprintf("app_group=%s,app_name=%s", "hoke", g.name))
+	req.Header.Set("VL-Stream-Fields", "app_group,app_name")
+	req.Header.Set("VL-Time-Field", "client_trail.sent_at")
 
-	g.logger.Infof("Uploaded %s, %d bytes", filename, n)
-
-	// close the compressor
-	if g.compressor != "" {
-		err = w.Close()
-		if err != nil {
-			g.logger.Error(err)
-			prome.IncreaseConsumerVLogsUploadAttemptTotal(g.name, g.projectID, g.bucketName, g.bucketPath, "failed")
-			return err
-		}
-	}
-
-	// close the object writer to trigger upload
-	err = objWriter.Close()
+	resp, err := g.httpClient.Do(req)
 	if err != nil {
-		g.logger.Error(err)
-		prome.IncreaseConsumerVLogsUploadAttemptTotal(g.name, g.projectID, g.bucketName, g.bucketPath, "failed")
-		return err
+		prome.IncreaseConsumerCustomErrorTotalf("vlogs_request_failed: %s", g.name)
+		return fmt.Errorf("failed to send request: %w", err)
 	}
-	prome.IncreaseConsumerVLogsUploadedTotalBytes(g.name, g.projectID, g.bucketName, g.bucketPath, n)
-	prome.IncreaseConsumerVLogsUploadAttemptTotal(g.name, g.projectID, g.bucketName, g.bucketPath, "success")
+
+	if resp.StatusCode != http.StatusOK {
+		prome.IncreaseConsumerCustomErrorTotalf("vlogs_request_failed: %s", g.name)
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Println("Response body:", string(body))
+		return fmt.Errorf("failed to send request, status code: %d", resp.StatusCode)
+	}
+
+	// TODO: metrics
+
 	return nil
 }
 
 // will call the uploadFunc and onFlushFunc, and then reset the buffer
 func (g *VLogs) Flush() {
-	g.logger.Info("Flushing VLogs")
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -205,6 +183,7 @@ func (g *VLogs) Flush() {
 		g.logger.Info("buffer is empty, skip flushing")
 		return
 	}
+	g.logger.Debug("Flushing VLogs", g.name, " with logCounter:", g.logCounter)
 
 	// TODO: retry indefinitely
 	err := g.uploadFunc()

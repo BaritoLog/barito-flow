@@ -71,6 +71,18 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:      "consumer for vlogs",
+				ShortName: "consumer-vlogs",
+				Usage:     "start barito-flow as consumer for VLogs",
+				Action:    cmds.ActionBaritoConsumerVLogsService,
+				Flags: []cli.Flag{
+					cli.BoolFlag{
+						Name:  "verbose, V",
+						Usage: "Enable verbose mode",
+					},
+				},
+			},
 		},
 		UsageText: "barito-flow [commands]",
 		Before: func(c *cli.Context) error {
