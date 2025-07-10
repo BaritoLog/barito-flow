@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 
 	pb "github.com/bentol/barito-proto/producer"
@@ -168,7 +169,11 @@ func ObserveTPSExceededBytes(topic string, suffix string, timber *pb.Timber) {
 	producerTPSExceededLogBytes.WithLabelValues(appName).Add(math.Round(float64(len(b))))
 }
 
-func IncreaseLogStoredCounter(index string, result string, status int, errorMessage string) {
+func IncreaseLogStoredCounter(index string, result string, status int, errorDetail *elastic.ErrorDetails) {
+	errorMessage := ""
+	if errorDetail != nil {
+		errorMessage = errorDetail.Reason
+	}
 	errorType := ""
 	if errorMessage != "" {
 		errorType = "undefined_error"
@@ -176,6 +181,17 @@ func IncreaseLogStoredCounter(index string, result string, status int, errorMess
 			if strings.Contains(errorMessage, k) {
 				errorType = v
 				break
+			}
+		}
+
+		// try using caused_by.reason
+		if causedBy, ok := errorDetail.CausedBy["reason"]; ok && errorType == "undefined_error" {
+			causedBy, ok := causedBy.(string)
+			for k, v := range logStoredErrorMap {
+				if strings.Contains(causedBy, k) {
+					errorType = v
+					break
+				}
 			}
 		}
 
