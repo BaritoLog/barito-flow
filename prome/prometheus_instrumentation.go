@@ -1,6 +1,7 @@
 package prome
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
@@ -198,7 +199,8 @@ func IncreaseLogStoredCounter(index string, result string, status int, errorDeta
 		}
 
 		if errorType == "undefined_error" {
-			log.Errorf("Found undefined error when consumer fail: %s", errorMessage)
+			errorDetailStr, _ := json.Marshal(errorDetail)
+			log.Errorf("Found undefined error when consumer fail: %s, details: %s", errorMessage, string(errorDetailStr))
 		}
 	}
 
