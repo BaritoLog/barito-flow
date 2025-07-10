@@ -140,10 +140,6 @@ func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []
 
 		for _, response := range response.Items {
 			for _, responseItem := range response {
-				errorReason := ""
-				if responseItem.Error != nil {
-					errorReason = responseItem.Error.Reason
-				}
 				prome.IncreaseLogStoredCounter(responseItem.Index, responseItem.Result, responseItem.Status, responseItem.Error)
 			}
 		}

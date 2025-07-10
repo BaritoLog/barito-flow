@@ -187,10 +187,12 @@ func IncreaseLogStoredCounter(index string, result string, status int, errorDeta
 		// try using caused_by.reason
 		if causedBy, ok := errorDetail.CausedBy["reason"]; ok && errorType == "undefined_error" {
 			causedBy, ok := causedBy.(string)
-			for k, v := range logStoredErrorMap {
-				if strings.Contains(causedBy, k) {
-					errorType = v
-					break
+			if ok {
+				for k, v := range logStoredErrorMap {
+					if strings.Contains(causedBy, k) {
+						errorType = v
+						break
+					}
 				}
 			}
 		}
