@@ -68,6 +68,8 @@ const (
 
 	EnvRedactorRulesMap = "REDACTOR_RULES_MAP"
 	EnvMarketClientKey  = "MARKET_REDACT_CLIENT_KEY"
+
+	EnvCollectionsInKafka = "BARITO_COLLECTIONS_IN_KAFKA"
 )
 
 var (
@@ -82,6 +84,7 @@ var (
 	DefaultUniqueGroupID      = false
 	DefaultKafkaMaxRetry      = 0
 	DefaultKafkaRetryInterval = 10
+	DefaultCollectionsInKafka = false
 
 	DefaultElasticsearchUrls = []string{"http://localhost:9200"}
 
@@ -203,6 +206,10 @@ func configKafkaMaxRetry() (i int) {
 
 func configKafkaRetryInterval() (i int) {
 	return intEnvOrDefault(EnvKafkaRetryInterval, DefaultKafkaRetryInterval)
+}
+
+func configCollectionsInKafka() (b bool) {
+	return boolEnvOrDefault(EnvCollectionsInKafka, DefaultCollectionsInKafka)
 }
 
 func configPushMetricUrl() (s string) {
