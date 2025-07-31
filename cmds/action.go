@@ -130,6 +130,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
 	rateLimiterOpt := configRateLimiterOpt()
 	maxMessageBytes := configProducerMaxMessageBytes()
+	collectionsInKafka := configCollectionsInKafka()
 
 	if rateLimiterOpt == RateLimiterOptUndefined {
 		return fmt.Errorf("undefined rate limiter options, allowed options are %v", RateLimiterAllowedOpts)
@@ -185,6 +186,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"grpcMaxRecvMsgSize": grpcMaxRecvMsgSize,
 		"ignoreKafkaOptions": ignoreKafkaOptions,
 		"limiter":            rateLimiter,
+		"collectionsInKafka": collectionsInKafka,
 	}
 
 	service := flow.NewProducerService(producerParams)
