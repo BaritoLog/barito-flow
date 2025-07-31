@@ -42,6 +42,7 @@ type producerService struct {
 	newEventTopic      string
 	grpcMaxRecvMsgSize int
 	ignoreKafkaOptions bool
+	collectionsInKafka bool
 
 	producer sarama.SyncProducer
 	admin    types.KafkaAdmin
@@ -63,6 +64,7 @@ func NewProducerService(params map[string]interface{}) *producerService {
 		newEventTopic:               params["newEventTopic"].(string),
 		grpcMaxRecvMsgSize:          params["grpcMaxRecvMsgSize"].(int),
 		ignoreKafkaOptions:          params["ignoreKafkaOptions"].(bool),
+		collectionsInKafka:          params["collectionsInKafka"].(bool),
 		limiter:                     params["limiter"].(RateLimiter),
 	}
 }
@@ -191,9 +193,22 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	}
 
 	timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
-	err = s.handleProduce(timber, topic)
-	if err != nil {
-		return
+	if s.collectionsInKafka {
+		timberCollection := &pb.TimberCollection{
+			Items:   []*pb.Timber{timber},
+			Context: timber.GetContext(),
+		}
+		err = s.handleProduceBatch(timberCollection, topic)
+		if err != nil {
+			log.Infof("Failed send logs to kafka: %s", err)
+			return
+		}
+	} else {
+		err = s.handleProduce(timber, topic)
+		if err != nil {
+			log.Infof("Failed send logs to kafka: %s", err)
+			return
+		}
 	}
 
 	resp = &pb.ProduceResult{
@@ -219,14 +234,25 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 		return
 	}
 
-	for _, timber := range timberCollection.GetItems() {
-		timber.Context = timberCollection.GetContext()
-		timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
-
-		err = s.handleProduce(timber, topic)
+	if s.collectionsInKafka {
+		for _, timber := range timberCollection.GetItems() {
+			timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+		}
+		err = s.handleProduceBatch(timberCollection, topic)
 		if err != nil {
 			log.Infof("Failed send logs to kafka: %s", err)
 			return
+		}
+	} else {
+		for _, timber := range timberCollection.GetItems() {
+			timber.Context = timberCollection.GetContext()
+			timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
+
+			err = s.handleProduce(timber, topic)
+			if err != nil {
+				log.Infof("Failed send logs to kafka: %s", err)
+				return
+			}
 		}
 	}
 
@@ -238,6 +264,16 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 func (s *producerService) sendLogs(topic string, timber *pb.Timber) (err error) {
 	message := ConvertTimberToKafkaMessage(timber, topic)
+
+	startTime := time.Now()
+	_, _, err = s.producer.SendMessage(message)
+	timeDifference := float64(time.Now().Sub(startTime).Nanoseconds()) / float64(1000000000)
+	prome.ObserveSendToKafkaTime(topic, timeDifference)
+	return
+}
+
+func (s *producerService) sendLogsTimberCollection(topic string, timberCollection *pb.TimberCollection) (err error) {
+	message := ConvertTimberCollectionToKafkaMessage(timberCollection, topic)
 
 	startTime := time.Now()
 	_, _, err = s.producer.SendMessage(message)
@@ -290,6 +326,47 @@ func (s *producerService) handleProduce(timber *pb.Timber, topic string) (err er
 		return
 	}
 	prome.ObserveByteIngestion(topic, s.topicSuffix, timber)
+
+	prome.IncreaseKafkaMessagesStoredTotal(topic)
+	return
+}
+
+func (s *producerService) handleProduceBatch(timberCollection *pb.TimberCollection, topic string) (err error) {
+	timberContext := timberCollection.GetContext()
+	if !s.admin.Exist(topic) {
+		var numPartitions int32 = -1
+		var replicationFactor int32 = -1
+
+		if !s.ignoreKafkaOptions {
+			numPartitions = timberContext.GetKafkaPartition()
+			replicationFactor = timberContext.GetKafkaReplicationFactor()
+		}
+
+		log.Warnf("%s does not exist. Creating topic with partition:%v replication_factor:%v", topic, numPartitions, replicationFactor)
+
+		err = s.admin.CreateTopic(topic, numPartitions, int16(replicationFactor))
+		if err != nil {
+			err = onCreateTopicErrorGrpc(err)
+			prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "create_topic")
+			return
+		}
+
+		s.admin.AddTopic(topic)
+		err = s.sendCreateTopicEvents(topic)
+		if err != nil {
+			err = onSendCreateTopicErrorGrpc(err)
+			prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "send_create_topic_event")
+			return
+		}
+	}
+
+	err = s.sendLogsTimberCollection(topic, timberCollection)
+	if err != nil {
+		err = onStoreErrorGrpc(err)
+		prome.IncreaseKafkaMessagesStoredTotalWithError(topic, "send_log")
+		return
+	}
+	prome.ObserveByteIngestionCollection(topic, s.topicSuffix, timberCollection)
 
 	prome.IncreaseKafkaMessagesStoredTotal(topic)
 	return

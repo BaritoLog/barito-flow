@@ -33,6 +33,21 @@ func ConvertTimberToKafkaMessage(timber *pb.Timber, topic string) *sarama.Produc
 	}
 }
 
+func ConvertTimberCollectionToKafkaMessage(timberCollection *pb.TimberCollection, topic string) *sarama.ProducerMessage {
+	b, _ := proto.Marshal(timberCollection)
+
+	return &sarama.ProducerMessage{
+		Topic: topic,
+		Value: sarama.ByteEncoder(b),
+		Headers: []sarama.RecordHeader{
+			{
+				Key:   []byte("collection"),
+				Value: sarama.ByteEncoder("true"),
+			},
+		},
+	}
+}
+
 func ConvertKafkaMessageToTimber(message *sarama.ConsumerMessage) (timber pb.Timber, err error) {
 	err = proto.Unmarshal(message.Value, &timber)
 	if err != nil {
