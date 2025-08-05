@@ -274,22 +274,46 @@ func (s *baritoConsumerService) onElasticMaxRetryReached() {
 }
 
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
-	// convert kafka message
-	timber, err := ConvertKafkaMessageToTimber(message)
-	if err != nil {
-		s.logError(errkit.Concat(ErrConvertKafkaMessage, err))
-		return
+	messageIsCollection := false
+	timberCollection := pb.TimberCollection{}
+	err := error(nil)
+
+	if message.Headers != nil {
+		for _, header := range message.Headers {
+			if string(header.Key) == "collection" && string(header.Value) == "true" {
+				messageIsCollection = true
+			}
+		}
+	}
+
+	if messageIsCollection {
+		timberCollection, err = ConvertKafkaMessageToTimberCollection(message)
+		if err != nil {
+			s.logError(errkit.Concat(ErrConvertKafkaMessage, err))
+			return
+		}
+	} else {
+		timber, err := ConvertKafkaMessageToTimber(message)
+		if err != nil {
+			s.logError(errkit.Concat(ErrConvertKafkaMessage, err))
+			return
+		}
+		timberCollection = pb.TimberCollection{
+			Items: []*pb.Timber{&timber},
+		}
 	}
 
 	// store to elasticsearch
-	ctx := context.Background()
-	err = s.esClient.Store(ctx, timber)
-	if err != nil {
-		s.logError(errkit.Concat(ErrStore, err))
-		return
-	}
+	for _, timber := range timberCollection.GetItems() {
+		ctx := context.Background()
+		err = s.esClient.Store(ctx, *timber)
+		if err != nil {
+			s.logError(errkit.Concat(ErrStore, err))
+			return
+		}
 
-	s.logTimber(timber)
+		s.logTimber(*timber)
+	}
 }
 
 func (s *baritoConsumerService) onNewTopicEvent(message *sarama.ConsumerMessage) {

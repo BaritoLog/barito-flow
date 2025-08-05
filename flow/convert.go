@@ -58,6 +58,16 @@ func ConvertKafkaMessageToTimber(message *sarama.ConsumerMessage) (timber pb.Tim
 	return
 }
 
+func ConvertKafkaMessageToTimberCollection(message *sarama.ConsumerMessage) (timberCollection pb.TimberCollection, err error) {
+	err = proto.Unmarshal(message.Value, &timberCollection)
+	if err != nil {
+		err = errkit.Concat(ProtoParseError, err)
+		return
+	}
+
+	return
+}
+
 func ConvertTimberToLogFormatGCSSimpleString(timber pb.Timber) (string, error) {
 	doc := timber.GetContent()
 
