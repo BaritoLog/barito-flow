@@ -299,13 +299,15 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 			return
 		}
 		timberCollection = pb.TimberCollection{
-			Items: []*pb.Timber{&timber},
+			Items:   []*pb.Timber{&timber},
+			Context: timber.GetContext(),
 		}
 	}
 
 	// store to elasticsearch
 	for _, timber := range timberCollection.GetItems() {
 		ctx := context.Background()
+		timber.Context = timberCollection.GetContext()
 		err = s.esClient.Store(ctx, *timber)
 		if err != nil {
 			s.logError(errkit.Concat(ErrStore, err))
