@@ -16,6 +16,7 @@ const (
 	EnvKafkaTopicSuffix   = "BARITO_KAFKA_TOPIC_SUFFIX"
 	EnvKafkaMaxRetry      = "BARITO_KAFKA_MAX_RETRY"
 	EnvKafkaRetryInterval = "BARITO_KAFKA_RETRY_INTERVAL"
+	EnvKafkaMessageFormat = "BARITO_KAFKA_MESSAGE_FORMAT"
 
 	EnvElasticsearchUrls                        = "BARITO_ELASTICSEARCH_URLS"
 	EnvEsIndexMethod                            = "BARITO_ELASTICSEARCH_INDEX_METHOD"
@@ -68,8 +69,6 @@ const (
 
 	EnvRedactorRulesMap = "REDACTOR_RULES_MAP"
 	EnvMarketClientKey  = "MARKET_REDACT_CLIENT_KEY"
-
-	EnvCollectionsInKafka = "BARITO_COLLECTIONS_IN_KAFKA"
 )
 
 var (
@@ -84,7 +83,7 @@ var (
 	DefaultUniqueGroupID      = false
 	DefaultKafkaMaxRetry      = 0
 	DefaultKafkaRetryInterval = 10
-	DefaultCollectionsInKafka = false
+	DefaultKafkaMessageFormat = "Timber"
 
 	DefaultElasticsearchUrls = []string{"http://localhost:9200"}
 
@@ -208,8 +207,8 @@ func configKafkaRetryInterval() (i int) {
 	return intEnvOrDefault(EnvKafkaRetryInterval, DefaultKafkaRetryInterval)
 }
 
-func configCollectionsInKafka() (b bool) {
-	return boolEnvOrDefault(EnvCollectionsInKafka, DefaultCollectionsInKafka)
+func configKafkaMessageFormat() (s string) {
+	return stringEnvOrDefault(EnvKafkaMessageFormat, DefaultKafkaMessageFormat)
 }
 
 func configPushMetricUrl() (s string) {

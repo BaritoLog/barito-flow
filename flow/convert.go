@@ -41,7 +41,7 @@ func ConvertTimberCollectionToKafkaMessage(timberCollection *pb.TimberCollection
 		Value: sarama.ByteEncoder(b),
 		Headers: []sarama.RecordHeader{
 			{
-				Key:   []byte("collection"),
+				Key:   []byte(TimberCollectionMessageFormat),
 				Value: sarama.ByteEncoder("true"),
 			},
 		},

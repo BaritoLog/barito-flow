@@ -280,7 +280,7 @@ func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
 
 	if message.Headers != nil {
 		for _, header := range message.Headers {
-			if string(header.Key) == "collection" && string(header.Value) == "true" {
+			if string(header.Key) == TimberCollectionMessageFormat && string(header.Value) == "true" {
 				messageIsCollection = true
 			}
 		}
