@@ -12,6 +12,11 @@ import (
 	"github.com/Shopify/sarama"
 	pb "github.com/bentol/barito-proto/producer"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	_ "github.com/mostynb/go-grpc-compression/zstd"
@@ -24,6 +29,10 @@ const (
 	ErrRegisterGrpc           = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
 
 	RateLimitKeyAppGroup = "app_group"
+)
+
+var (
+	ProducerTracer = otel.Tracer("barito-flow/producer")
 )
 
 type ProducerService interface {
@@ -124,7 +133,10 @@ func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server, 
 		return
 	}
 
-	srv = grpc.NewServer(grpc.MaxRecvMsgSize(s.grpcMaxRecvMsgSize))
+	srv = grpc.NewServer(
+		grpc.MaxRecvMsgSize(s.grpcMaxRecvMsgSize),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	pb.RegisterProducerServer(srv, s)
 
 	s.grpcServer = srv
@@ -202,20 +214,28 @@ func (s *producerService) Produce(_ context.Context, timber *pb.Timber) (resp *p
 	return
 }
 
-func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
+func (s *producerService) ProduceBatch(ctx context.Context, timberCollection *pb.TimberCollection) (resp *pb.ProduceResult, err error) {
 	topic := s.topicPrefix + timberCollection.GetContext().GetKafkaTopic() + s.topicSuffix
 	rateLimitKey, maxToken := s.getRateLimitInfo(timberCollection.GetContext())
-
 	lengthMessages := len(timberCollection.GetItems())
+
+	ctx, span := ProducerTracer.Start(ctx, "rpc.ProduceBatch", trace.WithAttributes(
+		attribute.String("topic", topic),
+		attribute.Int("message_count", lengthMessages),
+	))
+	defer span.End()
+
 	if s.limiter.IsHitLimit(rateLimitKey, lengthMessages, maxToken) {
 		err = onLimitExceededGrpc()
 		prome.IncreaseProducerTPSExceededCounter(topic, lengthMessages)
+		span.SetAttributes(attribute.String("hit_tps", "1"))
 
 		for _, timber := range timberCollection.GetItems() {
 			timber.Context = timberCollection.GetContext()
 			timber.Timestamp = time.Now().UTC().Format(time.RFC3339)
 			prome.ObserveTPSExceededBytes(topic, s.topicSuffix, timber)
 		}
+		span.SetStatus(codes.Error, "limit_exceeded")
 		return
 	}
 
@@ -225,11 +245,13 @@ func (s *producerService) ProduceBatch(_ context.Context, timberCollection *pb.T
 
 		err = s.handleProduce(timber, topic)
 		if err != nil {
+			span.SetStatus(codes.Error, "produce_error")
 			log.Infof("Failed send logs to kafka: %s", err)
 			return
 		}
 	}
 
+	span.SetStatus(codes.Ok, "success")
 	resp = &pb.ProduceResult{
 		Topic: topic,
 	}
