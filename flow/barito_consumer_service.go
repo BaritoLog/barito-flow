@@ -273,20 +273,23 @@ func (s *baritoConsumerService) onElasticMaxRetryReached() {
 	s.HaltAllWorker()
 }
 
+func getKafkaMessageFormat(headers []*sarama.RecordHeader) string {
+	for _, header := range headers {
+		if string(header.Key) == MessageFormatHeaderKey {
+			return string(header.Value)
+		}
+	}
+	return TimberMessageFormat
+}
+
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
-	messageIsCollection := false
+	var kafkaMessageFormat string
 	timberCollection := pb.TimberCollection{}
 	err := error(nil)
 
-	if message.Headers != nil {
-		for _, header := range message.Headers {
-			if string(header.Key) == TimberCollectionMessageFormat && string(header.Value) == "true" {
-				messageIsCollection = true
-			}
-		}
-	}
+	kafkaMessageFormat = getKafkaMessageFormat(message.Headers)
 
-	if messageIsCollection {
+	if kafkaMessageFormat == TimberCollectionMessageFormat {
 		timberCollection, err = ConvertKafkaMessageToTimberCollection(message)
 		if err != nil {
 			s.logError(errkit.Concat(ErrConvertKafkaMessage, err))

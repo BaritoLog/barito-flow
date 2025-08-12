@@ -23,8 +23,11 @@ const (
 	ErrInitGrpc               = errkit.Error("Failed to listen to gRPC address")
 	ErrRegisterGrpc           = errkit.Error("Error registering gRPC server endpoint into reverse proxy")
 
-	RateLimitKeyAppGroup          = "app_group"
+	RateLimitKeyAppGroup = "app_group"
+
+	MessageFormatHeaderKey        = "message_format"
 	TimberCollectionMessageFormat = "TimberCollection"
+	TimberMessageFormat           = "Timber"
 )
 
 type ProducerService interface {
