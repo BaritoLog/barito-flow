@@ -283,11 +283,10 @@ func getKafkaMessageFormat(headers []*sarama.RecordHeader) string {
 }
 
 func (s *baritoConsumerService) onStoreTimber(message *sarama.ConsumerMessage) {
-	var kafkaMessageFormat string
 	timberCollection := pb.TimberCollection{}
 	err := error(nil)
 
-	kafkaMessageFormat = getKafkaMessageFormat(message.Headers)
+	kafkaMessageFormat := getKafkaMessageFormat(message.Headers)
 
 	if kafkaMessageFormat == TimberCollectionMessageFormat {
 		timberCollection, err = ConvertKafkaMessageToTimberCollection(message)
