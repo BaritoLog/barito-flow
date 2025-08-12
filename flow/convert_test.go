@@ -96,3 +96,31 @@ func TestConvertTimberToEsDocumentString_FieldsIsMissing(t *testing.T) {
 	expected := ""
 	FatalIf(t, expected != document, "expected %s, received %s", expected, document)
 }
+func TestConvertTimberCollectionToKafkaMessage(t *testing.T) {
+	topic := "test-topic"
+	timberCollection := &pb.TimberCollection{
+		Items: []*pb.Timber{
+			{Timestamp: "2024-06-01T12:00:00Z"},
+			{Timestamp: "2024-06-01T13:00:00Z"},
+		},
+	}
+
+	message := ConvertTimberCollectionToKafkaMessage(timberCollection, topic)
+	FatalIf(t, message.Topic != topic, "expected topic %s, got %s", topic, message.Topic)
+
+	get, _ := message.Value.Encode()
+	expected, _ := proto.Marshal(timberCollection)
+	FatalIf(t, string(get) != string(expected), "Wrong message value")
+}
+
+func TestConvertTimberCollectionToKafkaMessage_EmptyCollection(t *testing.T) {
+	topic := "empty-topic"
+	timberCollection := &pb.TimberCollection{}
+
+	message := ConvertTimberCollectionToKafkaMessage(timberCollection, topic)
+	FatalIf(t, message.Topic != topic, "expected topic %s, got %s", topic, message.Topic)
+
+	get, _ := message.Value.Encode()
+	expected, _ := proto.Marshal(timberCollection)
+	FatalIf(t, string(get) != string(expected), "Wrong message value for empty collection")
+}

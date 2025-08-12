@@ -1,4 +1,4 @@
-FROM --platform=arm64 golang:1.20-alpine as builder
+FROM --platform=arm64 golang:1.22.3-alpine as builder
 
 WORKDIR /go/src/github.com/BaritoLog/barito-flow
 COPY . .

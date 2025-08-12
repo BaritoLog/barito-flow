@@ -346,6 +346,7 @@ func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
 		"groupID":                "",
 		"elasticUrls":            []string{""},
 		"topicSuffix":            "_logs",
+		"topicPrefix":            "",
 		"kafkaMaxRetry":          1,
 		"kafkaRetryInterval":     10,
 		"newTopicEventName":      "",
@@ -354,5 +355,7 @@ func SampleConsumerParams(factory *dummyKafkaFactory) map[string]interface{} {
 		"esConfig":               NewEsConfig("SingleInsert", 1, time.Duration(1000), false, ""),
 		"elasticUsername":        "",
 		"elasticPassword":        "",
+		"uniqueGroupID":          false,
+		"redactor":               &DummyRedactor{},
 	}
 }

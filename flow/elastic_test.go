@@ -22,6 +22,7 @@ const (
 )
 
 func TestElasticStore_CreateIndexError(t *testing.T) {
+	resetPrometheusMetrics()
 	defer instru.Flush()
 
 	timber := *pb.SampleTimberProto()
@@ -38,12 +39,29 @@ func TestElasticStore_CreateIndexError(t *testing.T) {
 	client, err := NewElastic(retrier, esConfig, []string{ts.URL}, BARITO_DEFAULT_USERNAME, BARITO_DEFAULT_PASSWORD, nil)
 	FatalIfError(t, err)
 
-	err = client.Store(context.Background(), timber)
-	FatalIfWrongError(t, err, "elastic: Error 500 (Internal Server Error)")
-	FatalIf(t, instru.GetEventCount("es_create_index", "fail") != 1, "wrong total es_create_index.fail event")
+	// Run Store in goroutine since it will loop indefinitely
+	done := make(chan error, 1)
+	go func() {
+		err := client.Store(context.Background(), timber)
+		done <- err
+	}()
+
+	// Wait for the first index creation failure to be recorded
+	// The Store method will keep retrying, but we just want to verify
+	// that the index creation failure is properly recorded
+	for i := 0; i < 50; i++ { // Wait up to 5 seconds
+		if instru.GetEventCount("es_create_index", "fail") >= 1 {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// Verify that we got at least one create index failure
+	FatalIf(t, instru.GetEventCount("es_create_index", "fail") < 1, "should have at least one es_create_index.fail event")
 }
 
 func TestElasticStore_CreateindexSuccess(t *testing.T) {
+	resetPrometheusMetrics()
 	defer instru.Flush()
 
 	timber := *pb.SampleTimberProto()
@@ -69,6 +87,7 @@ func TestElasticStore_CreateindexSuccess(t *testing.T) {
 }
 
 func TestElasticStoreman_store_SaveError(t *testing.T) {
+	resetPrometheusMetrics()
 	defer instru.Flush()
 
 	timber := *pb.SampleTimberProto()
@@ -93,6 +112,7 @@ func TestElasticStoreman_store_SaveError(t *testing.T) {
 }
 
 func TestElasticStore_ExportMetrics(t *testing.T) {
+	resetPrometheusMetrics()
 	defer instru.Flush()
 
 	timber := *pb.SampleTimberProto()
