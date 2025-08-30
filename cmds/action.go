@@ -53,6 +53,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	config.Consumer.Group.Session.Timeout = time.Duration(configConsumerGroupSessionTimeout()) * time.Second
 	config.Consumer.Group.Heartbeat.Interval = time.Duration(configConsumerGroupHeartbeatInterval()) * time.Second
 	config.Consumer.MaxProcessingTime = time.Duration(configConsumerMaxProcessingTime()) * time.Millisecond
+	config.ChannelBufferSize = configConsumerChannelBufferSize()
 	if configConsumerRebalancingStrategy() == "RoundRobin" {
 		config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
 	} else if configConsumerRebalancingStrategy() == "Range" {
