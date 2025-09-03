@@ -132,12 +132,14 @@ func ConvertTimberToEsDocumentString(timber pb.Timber, m *jsonpb.Marshaler) (str
 		return "", TimberFieldsMissing
 	}
 
-	ts := &stpb.Value{
-		Kind: &stpb.Value_StringValue{
-			StringValue: timber.GetTimestamp(),
-		},
+	if _, ok := doc.Fields["@timestamp"]; !ok {
+		ts := &stpb.Value{
+			Kind: &stpb.Value_StringValue{
+				StringValue: timber.GetTimestamp(),
+			},
+		}
+		doc.Fields["@timestamp"] = ts
 	}
-	doc.Fields["@timestamp"] = ts
 
 	docStr, _ := m.MarshalToString(doc)
 	return docStr, nil
