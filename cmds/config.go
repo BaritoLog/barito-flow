@@ -25,6 +25,7 @@ const (
 	EnvEsDatastreamDefaultComponentTemplateName = "BARITO_ELASTICSEARCH_DATASTREAM_DEFAULT_COMPONENT_TEMPLATE_NAME"
 
 	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
+	EnvGrpcWithReflection = "BARITO_GRPC_WITH_REFLECTION"
 
 	EnvPushMetricUrl   = "BARITO_PUSH_METRIC_URL"
 	EnvMarketRedactUrl = "BARITO_MARKET_REDACT_ENDPOINT_URL"
@@ -89,6 +90,7 @@ var (
 	DefaultElasticsearchUrls = []string{"http://localhost:9200"}
 
 	DefaultGrpcMaxRecvMsgSize = 20 * 1000 * 1000
+	DefaultGrpcWithReflection = "false"
 
 	DefaultPushMetricUrl   = ""
 	DefaultMarketRedactUrl = ""
@@ -187,6 +189,10 @@ func configEsDatastreamDefaultComponentTemplateName() (s string) {
 
 func configGrpcMaxRecvMsgSize() (i int) {
 	return intEnvOrDefault(EnvGrpcMaxRecvMsgSize, DefaultGrpcMaxRecvMsgSize)
+}
+
+func configGrpcWithReflection() bool {
+	return (stringEnvOrDefault(EnvGrpcWithReflection, DefaultGrpcWithReflection) == "true")
 }
 
 func configConsulElasticsearchName() (s string) {

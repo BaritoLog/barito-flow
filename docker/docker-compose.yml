@@ -41,7 +41,7 @@ services:
     environment:
       - BARITO_KAFKA_BROKERS=kafka:9092
     ports:
-      - 8080:8080
+      - 8082:8082
   consumer:
     image: baritolog/barito-flow
     build:

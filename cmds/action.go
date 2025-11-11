@@ -129,6 +129,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
+	grpcWithReflection := configGrpcWithReflection()
 	rateLimiterOpt := configRateLimiterOpt()
 	maxMessageBytes := configProducerMaxMessageBytes()
 	kafkaMessageFormat := configKafkaMessageFormat()
@@ -185,6 +186,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"kafkaRetryInterval": kafkaRetryInterval,
 		"newEventTopic":      newTopicEventName,
 		"grpcMaxRecvMsgSize": grpcMaxRecvMsgSize,
+		"grpcWithReflection": grpcWithReflection,
 		"ignoreKafkaOptions": ignoreKafkaOptions,
 		"limiter":            rateLimiter,
 		"kafkaMessageFormat": kafkaMessageFormat,
