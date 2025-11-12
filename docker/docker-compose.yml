@@ -2,10 +2,20 @@ version: "3.7"
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
+    environment:
+      - discovery.type=single-node
     ports:
       - 9200:9200
       - 9300:9300
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.28
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - es
   zookeeper:
     image: confluentinc/cp-zookeeper:3.2.0
     environment:
