@@ -130,6 +130,8 @@ var (
 	DefaultRedisUrl       = "http://localhost:6379"
 	DefaultRedisPassword  = ""
 	DefaultRedisKeyPrefix = "barito:producer:ratelimit:"
+
+	DefaultRedactorRulesMap = "{}"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -349,7 +351,7 @@ func configRateLimiterOpt() RateLimiterOpt {
 }
 
 func configRedactorRulesMap() (s string) {
-	return stringEnvOrDefault(EnvRedactorRulesMap, "")
+	return stringEnvOrDefault(EnvRedactorRulesMap, DefaultRedactorRulesMap)
 }
 
 func configRedisUrl() (url string) {
