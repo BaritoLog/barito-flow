@@ -1,6 +1,6 @@
 module github.com/BaritoLog/barito-flow
 
-go 1.24.0
+go 1.24.10
 
 require (
 	cloud.google.com/go/storage v1.38.0
