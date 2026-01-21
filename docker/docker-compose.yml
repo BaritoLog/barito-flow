@@ -2,16 +2,40 @@ version: "3.7"
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
+    environment:
+      - discovery.type=single-node
     ports:
       - 9200:9200
       - 9300:9300
-
-  kafka:
-    image: spotify/kafka
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.28
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es:9200
     ports:
-      - 9092:9092
+      - "5601:5601"
+    depends_on:
+      - es
+  zookeeper:
+    image: confluentinc/cp-zookeeper:3.2.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports: 
       - 2181:2181
+  kafka:
+    depends_on:
+      - zookeeper
+    image: quay.io/strimzi/kafka:0.31.1-kafka-3.2.0
+    command: [
+      "sh", "-c",
+      "./bin/kafka-server-start.sh /tmp/server.properties"
+    ]
+    ports:
+      - "9092:9092"
+    environment:
+      LOG_DIR: "/tmp/logs"
+    volumes:
+      - ./server.properties:/tmp/server.properties:ro
   redis:
     image: redis:alpine3.16
     ports:
@@ -27,7 +51,7 @@ services:
     environment:
       - BARITO_KAFKA_BROKERS=kafka:9092
     ports:
-      - 8080:8080
+      - 8082:8082
   consumer:
     image: baritolog/barito-flow
     build:

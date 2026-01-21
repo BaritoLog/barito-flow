@@ -48,7 +48,11 @@ func (r *Redactor) UpdateRulesMap(newRulesMap map[string]Rules) {
 
 func NewRedactorFromJSON(jsonRulesMap string) (redactor *Redactor, err error) {
 	rulesMap := make(map[string]Rules)
-	json.Unmarshal([]byte(jsonRulesMap), &rulesMap)
+	err = json.Unmarshal([]byte(jsonRulesMap), &rulesMap)
+
+	if err != nil {
+		return nil, err
+	}
 
 	redactor = &Redactor{
 		RulesMap: rulesMap,

@@ -5,11 +5,12 @@
 package mock
 
 import (
+	reflect "reflect"
+
 	types "github.com/BaritoLog/barito-flow/flow/types"
 	sarama "github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockKafkaFactory is a mock of KafkaFactory interface

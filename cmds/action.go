@@ -129,6 +129,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 	kafkaRetryInterval := configKafkaRetryInterval()
 	newTopicEventName := configNewTopicEvent()
 	grpcMaxRecvMsgSize := configGrpcMaxRecvMsgSize()
+	grpcWithReflection := configGrpcWithReflection()
 	rateLimiterOpt := configRateLimiterOpt()
 	maxMessageBytes := configProducerMaxMessageBytes()
 	kafkaMessageFormat := configKafkaMessageFormat()
@@ -185,6 +186,7 @@ func ActionBaritoProducerService(c *cli.Context) (err error) {
 		"kafkaRetryInterval": kafkaRetryInterval,
 		"newEventTopic":      newTopicEventName,
 		"grpcMaxRecvMsgSize": grpcMaxRecvMsgSize,
+		"grpcWithReflection": grpcWithReflection,
 		"ignoreKafkaOptions": ignoreKafkaOptions,
 		"limiter":            rateLimiter,
 		"kafkaMessageFormat": kafkaMessageFormat,
@@ -285,8 +287,14 @@ func setupRedisRateLimiter(_ context.Context,
 func setupRedactor() *redact.Redactor {
 	var redactor *redact.Redactor
 	var err error
-	if redactorRulesMap := configRedactorRulesMap(); redactorRulesMap == "" {
-		marketEndpoint := configMarketRedactUrl()
+	if marketEndpoint := configMarketRedactUrl(); marketEndpoint == "" {
+		redactorRulesMap := configRedactorRulesMap()
+		redactor, err = redact.NewRedactorFromJSON(redactorRulesMap)
+		if err != nil {
+			log.Errorf("Error creating redactor from JSON rules map: %s", err)
+			return nil
+		}
+	} else {
 		clusterName := configClusterName()
 		marketClientKey := configMarketClientKey()
 		redactor, err = redact.NewRedactorFromMarket(marketEndpoint, clusterName, marketClientKey)
@@ -294,5 +302,6 @@ func setupRedactor() *redact.Redactor {
 			return nil
 		}
 	}
+
 	return redactor
 }

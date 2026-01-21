@@ -14,6 +14,7 @@ import (
 	pb "github.com/bentol/barito-proto/producer"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	_ "github.com/mostynb/go-grpc-compression/zstd"
 )
@@ -48,6 +49,7 @@ type producerService struct {
 	kafkaRetryInterval int
 	newEventTopic      string
 	grpcMaxRecvMsgSize int
+	grpcWithReflection bool
 	ignoreKafkaOptions bool
 	kafkaMessageFormat string
 
@@ -70,6 +72,7 @@ func NewProducerService(params map[string]interface{}) *producerService {
 		kafkaRetryInterval:          params["kafkaRetryInterval"].(int),
 		newEventTopic:               params["newEventTopic"].(string),
 		grpcMaxRecvMsgSize:          params["grpcMaxRecvMsgSize"].(int),
+		grpcWithReflection:          params["grpcWithReflection"].(bool),
 		ignoreKafkaOptions:          params["ignoreKafkaOptions"].(bool),
 		kafkaMessageFormat:          params["kafkaMessageFormat"].(string),
 		limiter:                     params["limiter"].(RateLimiter),
@@ -135,6 +138,10 @@ func (s *producerService) initGrpcServer() (lis net.Listener, srv *grpc.Server, 
 
 	srv = grpc.NewServer(grpc.MaxRecvMsgSize(s.grpcMaxRecvMsgSize))
 	pb.RegisterProducerServer(srv, s)
+
+	if s.grpcWithReflection {
+		reflection.Register(srv)
+	}
 
 	s.grpcServer = srv
 	return

@@ -163,6 +163,31 @@ Batch log entries endpoint:
 }
 ```
 
+### gRPC API
+Use [barito-proto](https://github.com/bentol/barito-proto/blob/master/producer/producer.proto) protocol or enable reflection in configuration.
+
+Produce single log using [gRPCurl](https://github.com/fullstorydev/grpcurl):
+``` 
+grpcurl -plaintext -d @ localhost:8082 producer.Producer/Produce << EOF
+{ 
+  "context": { 
+    "kafka_topic": "kafka_topic", 
+    "kafka_partition": 1, 
+    "kafka_replication_factor": 1, 
+    "es_index_prefix": "test", 
+    "es_document_type":"test", 
+    "app_max_tps":100, 
+    "app_secret":"app_secret" 
+  },
+  "content": { 
+    "hello": "world", 
+    "key": "value", 
+    "num": 100 
+  } 
+}
+EOF
+```
+
 ### Producer Configuration
 
 These environment variables can be modified to customize producer behavior:
@@ -180,6 +205,7 @@ These environment variables can be modified to customize producer behavior:
 | ProducerMaxRetry | Set kafka setting max retry | BARITO_PRODUCER_MAX_RETRY | 10 |
 | ProducerMaxTps | Producer rate limit trx per second | BARITO_PRODUCER_MAX_TPS | 100 |
 | ProducerRateLimitResetInterval | Producer rate limit reset interval (in seconds) | BARITO_PRODUCER_RATE_LIMIT_RESET_INTERVAL | 10 |
+| GrpcWithReflection | Toggle for using reflection in gRPC | BARITO_GRPC_WITH_REFLECTION | false |
 
 ## Consumer Mode
 

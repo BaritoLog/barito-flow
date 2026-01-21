@@ -25,6 +25,7 @@ const (
 	EnvEsDatastreamDefaultComponentTemplateName = "BARITO_ELASTICSEARCH_DATASTREAM_DEFAULT_COMPONENT_TEMPLATE_NAME"
 
 	EnvGrpcMaxRecvMsgSize = "BARITO_GRPC_MAX_RECV_MSG_SIZE"
+	EnvGrpcWithReflection = "BARITO_GRPC_WITH_REFLECTION"
 
 	EnvPushMetricUrl   = "BARITO_PUSH_METRIC_URL"
 	EnvMarketRedactUrl = "BARITO_MARKET_REDACT_ENDPOINT_URL"
@@ -89,6 +90,7 @@ var (
 	DefaultElasticsearchUrls = []string{"http://localhost:9200"}
 
 	DefaultGrpcMaxRecvMsgSize = 20 * 1000 * 1000
+	DefaultGrpcWithReflection = "false"
 
 	DefaultPushMetricUrl   = ""
 	DefaultMarketRedactUrl = ""
@@ -128,6 +130,8 @@ var (
 	DefaultRedisUrl       = "http://localhost:6379"
 	DefaultRedisPassword  = ""
 	DefaultRedisKeyPrefix = "barito:producer:ratelimit:"
+
+	DefaultRedactorRulesMap = "{}"
 )
 
 func configKafkaBrokers() (brokers []string) {
@@ -187,6 +191,10 @@ func configEsDatastreamDefaultComponentTemplateName() (s string) {
 
 func configGrpcMaxRecvMsgSize() (i int) {
 	return intEnvOrDefault(EnvGrpcMaxRecvMsgSize, DefaultGrpcMaxRecvMsgSize)
+}
+
+func configGrpcWithReflection() bool {
+	return (stringEnvOrDefault(EnvGrpcWithReflection, DefaultGrpcWithReflection) == "true")
 }
 
 func configConsulElasticsearchName() (s string) {
@@ -343,7 +351,7 @@ func configRateLimiterOpt() RateLimiterOpt {
 }
 
 func configRedactorRulesMap() (s string) {
-	return stringEnvOrDefault(EnvRedactorRulesMap, "")
+	return stringEnvOrDefault(EnvRedactorRulesMap, DefaultRedactorRulesMap)
 }
 
 func configRedisUrl() (url string) {
