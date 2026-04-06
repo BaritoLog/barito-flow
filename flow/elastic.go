@@ -2,7 +2,9 @@ package flow
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	"github.com/BaritoLog/barito-flow/prome"
@@ -151,6 +153,10 @@ func getCommitCallback() (func(int64, []elastic.BulkableRequest), func(int64, []
 		for _, item := range response.Items {
 			for _, responseItem := range item {
 				prome.IncreaseLogStoredCounter(responseItem.Index, responseItem.Result, responseItem.Status, responseItem.Error)
+				if responseItem.Error != nil && rand.Intn(100) == 0 {
+					responseItemJSON, _ := json.Marshal(responseItem)
+					log.Warnf("sampled ES error response (1/100): %s", string(responseItemJSON))
+				}
 			}
 		}
 	}
