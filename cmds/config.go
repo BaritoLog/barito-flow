@@ -114,7 +114,7 @@ var (
 	DefaultEsFlushIntervalMs                        = 500
 	DefaultConsumerGroupSessionTimeout              = 20
 	DefaultConsumerGroupHeartbeatInterval           = 6
-	DefaultConsumerMaxProcessingTime                = 500
+	DefaultConsumerMaxProcessingTime                = 30000
 	DefaultConsumerChannelBufferSize                = 256
 
 	DefaultPrintTPS = "false"

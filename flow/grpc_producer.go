@@ -14,8 +14,6 @@ import (
 	pb "github.com/bentol/barito-proto/producer"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-
-	_ "github.com/mostynb/go-grpc-compression/zstd"
 )
 
 const (

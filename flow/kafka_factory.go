@@ -70,9 +70,9 @@ func newConsumerGroupAdapter(group sarama.ConsumerGroup, topics []string) *consu
 	return &consumerGroupAdapter{
 		group:         group,
 		topics:        topics,
-		messages:      make(chan *sarama.ConsumerMessage, 256),
-		notifications: make(chan *types.Notification, 16),
-		errors:        make(chan error, 16),
+		messages:      make(chan *sarama.ConsumerMessage),
+		notifications: make(chan *types.Notification, 1),
+		errors:        make(chan error, 1),
 	}
 }
 

@@ -47,6 +47,7 @@ func (c *fakeClient) TransactionCoordinator(transactionID string) (*sarama.Broke
 }
 func (c *fakeClient) RefreshTransactionCoordinator(transactionID string) error { return nil }
 func (c *fakeClient) InitProducerID() (*sarama.InitProducerIDResponse, error)  { return nil, nil }
+func (c *fakeClient) PartitionNotReadable(topic string, partition int32) bool  { return false }
 func (c *fakeClient) LeastLoadedBroker() *sarama.Broker                        { return nil }
 func (c *fakeClient) Close() error                                             { return nil }
 func (c *fakeClient) Closed() bool                                             { return false }

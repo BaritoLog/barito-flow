@@ -1,14 +1,12 @@
 module github.com/BaritoLog/barito-flow
 
-go 1.21
-
-toolchain go1.22.3
+go 1.25.9
 
 require (
 	cloud.google.com/go/storage v1.38.0
 	github.com/BaritoLog/go-boilerplate v0.0.0-20210316061153-d736df54decc
 	github.com/BaritoLog/instru v0.0.0-20190715232619-ef001fffe4f0
-	github.com/IBM/sarama v1.45.0
+	github.com/IBM/sarama v1.47.0
 	github.com/bentol/barito-proto v0.0.0-20241002033123-9950f2edca81
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.0.6
@@ -17,12 +15,11 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/hashicorp/consul/api v1.15.2
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/mostynb/go-grpc-compression v1.2.3
 	github.com/olivere/elastic v6.2.35+incompatible
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli v1.22.5
 	github.com/zekroTJA/timedmap v1.5.2
 	google.golang.org/api v0.169.0
@@ -64,7 +61,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/pierrec/lz4/v4 v4.1.22 // indirect
+	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
@@ -83,12 +80,12 @@ require (
 	go.uber.org/goleak v1.1.12 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	golang.org/x/tools v0.43.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
@@ -114,10 +111,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
-	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.2.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
@@ -131,7 +126,7 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/klauspost/compress v1.17.11
+	github.com/klauspost/compress v1.18.5
 	github.com/mailgun/gubernator/v2 v2.0.0-rc.24
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
@@ -144,13 +139,13 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 )
