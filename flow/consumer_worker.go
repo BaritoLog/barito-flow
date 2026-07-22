@@ -115,13 +115,19 @@ func (w *consumerWorker) startProcessing() {
 func (w *consumerWorker) loopDispatch(partitionChans []chan *sarama.ConsumerMessage) {
 	defer func() { w.isStart = false }()
 
-	// Workers are assigned per partition in the order partitions are first
+	// Workers are assigned per topic-partition in the order they are first
 	// seen locally (not by partition number % worker count), so that the
 	// handful of partitions actually assigned to this pod spread evenly
 	// across workers instead of colliding whenever the partition spacing
 	// produced by the broker's assignment strategy shares a common factor
-	// with numProcessWorkers.
-	partitionWorker := make(map[int32]int)
+	// with numProcessWorkers. Keyed by topic+partition rather than partition
+	// alone so this stays correct if this worker is ever fed more than one
+	// topic.
+	type topicPartition struct {
+		topic     string
+		partition int32
+	}
+	partitionWorker := make(map[topicPartition]int)
 	nextWorker := 0
 
 	for {
@@ -130,10 +136,11 @@ func (w *consumerWorker) loopDispatch(partitionChans []chan *sarama.ConsumerMess
 			if !ok {
 				continue
 			}
-			idx, seen := partitionWorker[message.Partition]
+			key := topicPartition{message.Topic, message.Partition}
+			idx, seen := partitionWorker[key]
 			if !seen {
 				idx = nextWorker % len(partitionChans)
-				partitionWorker[message.Partition] = idx
+				partitionWorker[key] = idx
 				nextWorker++
 			}
 			target := partitionChans[idx]
