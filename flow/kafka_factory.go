@@ -54,7 +54,7 @@ func (f kafkaFactory) MakeSyncProducer() (producer sarama.SyncProducer, err erro
 }
 
 func (f kafkaFactory) MakeConsumerWorker(name string, consumer types.ClusterConsumer) types.ConsumerWorker {
-	return NewConsumerWorker(name, consumer)
+	return NewConsumerWorker(name, consumer, DefaultNumProcessWorkers)
 }
 
 type consumerGroupAdapter struct {

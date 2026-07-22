@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/BaritoLog/barito-flow/flow/types"
 	"github.com/BaritoLog/barito-flow/prome"
@@ -12,6 +13,15 @@ import (
 
 const (
 	RetrieveMessageFailedError = errkit.Error("Retrieve message failed")
+
+	// DefaultNumProcessWorkers is the fallback number of goroutines draining
+	// and processing messages per topic worker, used when no explicit count
+	// is provided (e.g. via BARITO_CONSUMER_NUM_PROCESS_WORKERS). Messages
+	// are routed to a worker by partition number, so a given partition is
+	// always handled by the same goroutine (preserving in-order
+	// processing/offset marking per partition) while different partitions
+	// can be processed concurrently.
+	DefaultNumProcessWorkers = 5
 )
 
 type consumerWorker struct {
@@ -21,15 +31,22 @@ type consumerWorker struct {
 	onErrorFunc        func(error)
 	onSuccessFunc      func(*sarama.ConsumerMessage)
 	onNotificationFunc func(*types.Notification)
-	stop               chan int
+	stop               chan struct{}
+	stopOnce           sync.Once
 	lastMessage        *sarama.ConsumerMessage
+	numProcessWorkers  int
 }
 
-func NewConsumerWorker(name string, consumer types.ClusterConsumer) types.ConsumerWorker {
+func NewConsumerWorker(name string, consumer types.ClusterConsumer, numProcessWorkers int) types.ConsumerWorker {
+	if numProcessWorkers <= 0 {
+		numProcessWorkers = DefaultNumProcessWorkers
+	}
+
 	return &consumerWorker{
-		name:     name,
-		consumer: consumer,
-		stop:     make(chan int),
+		name:              name,
+		consumer:          consumer,
+		stop:              make(chan struct{}),
+		numProcessWorkers: numProcessWorkers,
 	}
 }
 
@@ -38,7 +55,7 @@ func (w *consumerWorker) Start() {
 
 	go w.loopErrors()
 	go w.loopNotification()
-	go w.loopMain()
+	w.startProcessing()
 }
 
 func (w *consumerWorker) Stop() {
@@ -46,15 +63,11 @@ func (w *consumerWorker) Stop() {
 		w.consumer.Close()
 	}
 
-	go func() {
-		w.stop <- 1
-	}()
+	w.stopOnce.Do(func() { close(w.stop) })
 }
 
 func (w *consumerWorker) Halt() {
-	go func() {
-		w.stop <- 1
-	}()
+	w.stopOnce.Do(func() { close(w.stop) })
 	log.Warnf("Halt worker '%s'", w.name)
 }
 
@@ -83,18 +96,51 @@ func (w *consumerWorker) OnConsumerFlush() error {
 	return err
 }
 
-func (w *consumerWorker) loopMain() {
+// startProcessing fans out messages to numProcessWorkers goroutines, keyed by
+// partition. Routing by partition (rather than free-for-all) guarantees that
+// messages belonging to the same partition are always processed by the same
+// goroutine and therefore stay in order, which keeps offset marking safe.
+func (w *consumerWorker) startProcessing() {
 	w.isStart = true
+
+	partitionChans := make([]chan *sarama.ConsumerMessage, w.numProcessWorkers)
+	for i := range partitionChans {
+		partitionChans[i] = make(chan *sarama.ConsumerMessage)
+		go w.loopProcess(partitionChans[i])
+	}
+
+	go w.loopDispatch(partitionChans)
+}
+
+func (w *consumerWorker) loopDispatch(partitionChans []chan *sarama.ConsumerMessage) {
+	defer func() { w.isStart = false }()
+
 	for {
 		select {
 		case message, ok := <-w.consumer.Messages():
-			if ok {
-				prome.IncreaseKafkaMessagesIncoming(message.Topic)
-				w.fireSuccess(message)
-				w.consumer.MarkOffset(message, "")
+			if !ok {
+				continue
+			}
+			target := partitionChans[int(message.Partition)%len(partitionChans)]
+			select {
+			case target <- message:
+			case <-w.stop:
+				return
 			}
 		case <-w.stop:
-			w.isStart = false
+			return
+		}
+	}
+}
+
+func (w *consumerWorker) loopProcess(messages <-chan *sarama.ConsumerMessage) {
+	for {
+		select {
+		case message := <-messages:
+			prome.IncreaseKafkaMessagesIncoming(message.Topic)
+			w.fireSuccess(message)
+			w.consumer.MarkOffset(message, "")
+		case <-w.stop:
 			return
 		}
 	}

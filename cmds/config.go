@@ -53,6 +53,7 @@ const (
 	EnvConsumerGroupHeartbeatInterval       = "BARITO_CONSUMER_GROUP_HEARTBEAT_INTERVAL"
 	EnvConsumerMaxProcessingTime            = "BARITO_CONSUMER_MAX_PROCESSING_TIME"
 	EnvConsumerChannelBufferSize            = "BARITO_CONSUMER_CHANNEL_BUFFER_SIZE"
+	EnvConsumerNumProcessWorkers            = "BARITO_CONSUMER_NUM_PROCESS_WORKERS"
 
 	EnvPrintTPS = "BARITO_PRINT_TPS"
 
@@ -116,6 +117,7 @@ var (
 	DefaultConsumerGroupHeartbeatInterval           = 6
 	DefaultConsumerMaxProcessingTime                = 30000
 	DefaultConsumerChannelBufferSize                = 256
+	DefaultConsumerNumProcessWorkers                = 5
 
 	DefaultPrintTPS = "false"
 
@@ -306,6 +308,10 @@ func configConsumerMaxProcessingTime() int {
 
 func configConsumerChannelBufferSize() int {
 	return intEnvOrDefault(EnvConsumerChannelBufferSize, DefaultConsumerChannelBufferSize)
+}
+
+func configConsumerNumProcessWorkers() int {
+	return intEnvOrDefault(EnvConsumerNumProcessWorkers, DefaultConsumerNumProcessWorkers)
 }
 
 func configPrintTPS() bool {

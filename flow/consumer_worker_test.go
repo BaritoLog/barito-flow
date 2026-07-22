@@ -41,7 +41,7 @@ func TestConsumerWorker(t *testing.T) {
 	var got *sarama.ConsumerMessage
 	var gotNotification *types.Notification
 
-	worker := NewConsumerWorker("worker", consumer)
+	worker := NewConsumerWorker("worker", consumer, DefaultNumProcessWorkers)
 	worker.OnSuccess(func(message *sarama.ConsumerMessage) { got = message })
 	worker.OnNotification(func(notification *types.Notification) { gotNotification = notification })
 
@@ -81,7 +81,7 @@ func TestConsumerWorker_KafkaError(t *testing.T) {
 
 	var gotErr error
 
-	worker := NewConsumerWorker("worker", consumer)
+	worker := NewConsumerWorker("worker", consumer, DefaultNumProcessWorkers)
 	worker.OnError(func(err error) { gotErr = err })
 
 	worker.Start()

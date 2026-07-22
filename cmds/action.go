@@ -46,6 +46,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 	printTPS := configPrintTPS()
 	elasticUsername := configElasticUsername()
 	elasticPassword := configElasticPassword()
+	numProcessWorkers := configConsumerNumProcessWorkers()
 
 	config := sarama.NewConfig()
 	config.Consumer.Offsets.CommitInterval = time.Second
@@ -87,6 +88,7 @@ func ActionBaritoConsumerService(c *cli.Context) (err error) {
 		"elasticUsername":        elasticUsername,
 		"elasticPassword":        elasticPassword,
 		"redactor":               setupRedactor(),
+		"numProcessWorkers":      numProcessWorkers,
 	}
 
 	// if elasticsearch using mTLS

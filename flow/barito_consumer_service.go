@@ -56,6 +56,7 @@ type baritoConsumerService struct {
 	kafkaRetryInterval int
 	newTopicEventName  string
 	redactor           Redactor
+	numProcessWorkers  int
 
 	workerMap           map[string]types.ConsumerWorker
 	admin               types.KafkaAdmin
@@ -90,6 +91,12 @@ func NewBaritoConsumerService(params map[string]interface{}) BaritoConsumerServi
 		elasticUsername:        params["elasticUsername"].(string),
 		elasticPassword:        params["elasticPassword"].(string),
 		redactor:               params["redactor"].(Redactor),
+	}
+
+	if numProcessWorkers, ok := params["numProcessWorkers"].(int); ok && numProcessWorkers > 0 {
+		s.numProcessWorkers = numProcessWorkers
+	} else {
+		s.numProcessWorkers = DefaultNumProcessWorkers
 	}
 
 	httpClient := &http.Client{}
@@ -206,7 +213,7 @@ func (s *baritoConsumerService) initNewTopicWorker(groupID string) (worker types
 		return
 	}
 
-	worker = NewConsumerWorker(topic, consumer)
+	worker = NewConsumerWorker(topic, consumer, s.numProcessWorkers)
 	worker.OnSuccess(s.onNewTopicEvent)
 	worker.OnError(s.logError)
 
@@ -239,7 +246,7 @@ func (s *baritoConsumerService) spawnLogsWorker(topic string, initialOffset int6
 		return errkit.Concat(ErrConsumerWorker, err)
 	}
 
-	worker := NewConsumerWorker(topic, consumer)
+	worker := NewConsumerWorker(topic, consumer, s.numProcessWorkers)
 	worker.OnError(s.logError)
 	worker.OnSuccess(s.onStoreTimber)
 	worker.Start()
